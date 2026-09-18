@@ -1,0 +1,25 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --paper: #f8f8f6;
+  --ink: #24232d;
+  --muted: #777680;
+  --line: #e8e7e4;
+  --line-dark: #c9c8c5;
+  --card: #272631;
+  --blue: #5365d8;
+  --soft-blue: #e9ebfc;
+  --violet: #7060b8;
+  --orange: #c16e4d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: 'DM Sans', Arial, sans-serif;
+  margin: 0;
+}
