@@ -2,113 +2,94 @@
 
 ## 1. Actors and authorization
 
-### Operational manager
+The installation has one client and seeded users. A `ReadWrite` user may perform the mutations listed below. A `ReadOnly` user may view data but cannot mutate it. The API, not Angular guards, is the authorization boundary.
 
-An operational manager can:
+Both users can:
 
-- Review, approve, or reject pending company registrations.
-- Create, view, update, archive, and restore client users.
-- Manage client fleet cars.
-- Issue, suspend, replace, revoke, and view cards for any approved client.
-- Submit single-card or bulk issuance requests.
-- Create and manage Fleet Card Programs and effective-dated versions.
-- Allow or disallow a program for selected clients.
-- View audit entries and operational batch results.
+- Log in with a seeded username and password.
+- View client details.
+- Change the UI language between Polish and English.
+- Search and view cars, cards, transactions, and program comparisons.
+- View transaction totals for a selected date range.
 
-### Client representative
+A `ReadWrite` user can additionally:
 
-A client representative can:
+- Create, edit, archive, and restore cars.
+- Issue virtual cards through the mock provider.
+- Assign cards to cars.
+- Block cards, mark cards stolen, and archive cards.
+- Schedule, replace, or remove the client's program assignment.
 
-- Register one company and an initial representative account.
-- View their company approval state and registration outcome.
-- Add, update, deactivate, and list company users with read-write or read-only rights.
-- Create, update, archive, restore, and list their cars.
-- List cards belonging to their company and view non-sensitive card metadata.
-- Request or view cards issued to their company, subject to the final issuance workflow.
-- Assign their cards to cars and permitted programs.
-- List permitted programs and their effective fuel prices.
+## 2. Authentication and client details
 
-### Read-only client user
+1. Seeded users can authenticate with username and password.
+2. Invalid credentials produce a generic failure and do not reveal whether a username exists.
+3. An authenticated user sees only the seeded client associated with the installation.
+4. The client detail view includes Polish jurisdiction data such as legal name, NIP, and address.
+5. The selected language persists for the current user/session and all MVP screens have Polish and English labels.
 
-A read-only user can view the company’s users, cars, cards, assignments, and permitted programs, but cannot mutate them or submit issuance/assignment changes.
+## 3. Cars
 
-## 2. Company registration and approval
+- A car has a normalized registration plate and optional make, model, and description.
+- Plate search is case-insensitive and ignores insignificant whitespace.
+- Read-write users can create, edit, archive, and restore cars.
+- An archived car cannot receive a new card assignment.
+- Existing card assignment history is retained when a car is archived.
+- One card can be assigned to at most one active car; one car can have multiple cards.
 
-1. A visitor submits a registration containing normalized Polish NIP, legal name, registered address, representative name, email, and telephone.
-2. The system rejects a second active or pending registration for the same NIP.
-3. The system creates a pending company and initial client representative.
-4. The representative cannot administer cards or fleet data until approval.
-5. An operational manager approves or rejects the registration with an audit entry and optional reason.
-6. Approval activates the company and initial representative. Rejection preserves the record and reason for audit.
-7. Approval and rejection notifications are sent without exposing credentials or card secrets.
+## 4. Cards and mocked provider
 
-## 3. Users
+- Issuing a card calls a mocked provider adapter.
+- The adapter returns only a masked PAN, a unique provider token, and safe metadata. Full PAN, CVV, and PIN never cross the application boundary.
+- The provider mock generates a valid 16-digit Luhn PAN internally but exposes only its masked form.
+- Issuing a card persists the local card and generates 1-5 persisted transactions dated in the previous month.
+- A card can be assigned or reassigned to an active car.
+- A card can be blocked or marked stolen. These states are visible in the card list.
+- A card can be archived. Archive is terminal for card use, but card and transaction history remain visible.
+- There is no card return operation in this MVP.
 
-- Email addresses are unique within the identity system and normalized case-insensitively.
-- A company may have multiple users.
-- A representative can immediately create another user, choosing read-write or read-only rights.
-- User deactivation is reversible and prevents login and API access.
-- A user cannot elevate their own rights.
-- An operational manager can correct or deactivate any client user.
+## 5. Transactions and VAT
 
-## 4. Cars
+Each generated transaction contains:
 
-- A car has a normalized registration plate, make/model (optional), and optional descriptive metadata.
-- Plate normalization removes insignificant whitespace and normalizes case according to Polish registration rules.
-- A normalized plate can belong to only one active client fleet.
-- Archiving a car does not remove card assignment history.
-- An active card may be assigned to at most one active car at a time.
+- UTC date/time;
+- random station name;
+- one of `95`, `98`, `Diesel`, `95+`, `98+`, `Diesel+`;
+- quantity with three decimal places;
+- station unit price and transaction discount/premium with two decimal places;
+- VAT rate and VAT amount;
+- total without discount and amount paid with the transaction discount.
 
-## 5. Cards and issuance
+The generated records are immutable facts. A status may represent `Completed`, `Refunded`, `Cancelled`, or `Recalculated`; later corrections create a new version or related record rather than rewriting the original fact. The VAT rate is configurable per transaction and seeded with the applicable Polish MVP rate.
 
-- The backend never accepts, persists, logs, or returns a full PAN or CVV.
-- Issuance creates a local pending card and an idempotent provider request.
-- Provider callbacks or polling transition the card to active, failed, or retryable state.
-- Every batch has a durable status and per-item result, including provider correlation ID and safe error information.
-- Retrying a failed item must be idempotent and must not create duplicate cards.
-- Cards support pending, active, suspended, revoked, expired, and replaced states.
-- Revoke is terminal for that card; replacement creates a new card and preserves a link to the replaced card.
-- Only authorized operational managers can perform lifecycle actions that affect provider state.
+Users can filter transactions by period and see totals with and without discount. Totals state clearly whether they are net or gross and include VAT consistently.
 
 ## 6. Fleet Card Programs
 
-- A program has a name, description, lifecycle state, and one or more effective-dated versions.
-- A version contains fuel pricing rules for petrol, diesel, and LPG.
-- Pricing rules support fixed price, station price plus/minus amount, and station price multiplied by a percentage adjustment.
-- Each version has a start timestamp and optional end timestamp; overlapping active versions for the same program are forbidden.
-- A client allowlist determines which programs a client may newly assign.
-- Disallowing a program does not change existing card assignments.
-- Archived programs cannot receive new assignments.
-- Prices are displayed in PLN, with an explicit VAT-inclusive or VAT-exclusive flag per version.
+- Programs are read-only data imported or seeded from JSON.
+- Each program has a name, active period, fuel type, and percentage discount or premium. A negative percentage is a premium.
+- For a selected period, the system calculates the hypothetical amount for each available program by applying the fuel-type percentage to the station price of matching transactions.
+- The comparison shows the current amount without a program, the hypothetical amount, and the difference.
+- Program calculation respects transaction status, VAT basis, decimal precision, and the program's effective period.
 
-## 7. Assignments
+## 7. Client program assignment
 
-- Card-to-car and card-to-program assignments are independent.
-- Assignments have effective timestamps and history.
-- An assignment mutation checks tenant ownership, card state, car state, program allowlist, and effective pricing version.
-- A client cannot assign a card belonging to another client or use a disallowed program.
-- A card may have no car and/or no program while pending or during administration.
+- The client has zero or one active program at any instant.
+- A read-write user can schedule a program from a future start timestamp, replace an existing future assignment, or remove a future assignment.
+- When a new assignment starts, the previous assignment ends at that exact timestamp.
+- Assignment history is append-only and immutable; past assignments are never rewritten.
+- The system rejects overlapping assignments and invalid periods.
+- Removing an assignment means the client pays the station amount without a program discount for that period.
 
-## 8. Search and UX
+## 8. Acceptance criteria
 
-- All list screens are paginated and support stable sorting.
-- Cars, cards, users, programs, and registrations support exact or prefix search appropriate to their fields.
-- Sensitive card data is represented by provider token reference and last four digits only.
-- Mutating operations return a correlation ID suitable for support investigation.
-- Validation errors are field-specific and do not disclose whether unrelated accounts exist.
-
-## 9. Acceptance criteria
-
-The MVP is acceptable when:
-
-1. A duplicate NIP cannot create a second active/pending company.
-2. A rejected company cannot issue cards or mutate fleet data.
-3. Tenant isolation tests prove that a client user cannot read or mutate another client’s data.
-4. A read-only user cannot perform any write operation, including through direct API calls.
-5. PAN/CVV values do not occur in application database records, logs, telemetry, or API responses.
-6. Duplicate issuance retries produce one provider request and one local card.
-7. Effective-dated pricing resolves deterministically at an assignment/read timestamp.
-8. Program disallowing blocks new assignments while preserving existing assignments.
-9. Every state-changing domain action has an immutable audit record with actor, timestamp, tenant, action, entity, outcome, and correlation ID.
-10. Terraform can provision the documented single environment from a clean state.
-
+1. Seeded read-write and read-only users can log in; read-only direct API writes are rejected.
+2. Client data cannot be accessed outside the installation's authenticated client context.
+3. Switching the UI language changes the supported screens between Polish and English.
+4. Car CRUD, normalization, search, archive/restore, and card assignment rules work through the API and UI.
+5. Issuing a card stores only masked PAN and provider token; no full PAN/CVV appears in database records, logs, telemetry, or API responses.
+6. Each issued card has 1-5 persisted previous-month transactions with valid calculated totals and VAT fields.
+7. Card block, stolen, and archive transitions obey the documented lifecycle; archived cards cannot be used.
+8. Transaction period totals and program comparisons are deterministic and respect transaction status and VAT.
+9. Program history contains no overlapping intervals and never has more than one active program.
+10. Aspire starts the API, Angular SPA, SQL Server, and local telemetry for acceptance tests from a clean local environment.

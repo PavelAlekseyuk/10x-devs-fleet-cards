@@ -1,31 +1,25 @@
-# Open decisions and implementation slices
+# Decisions and open questions
 
-## Deferred decisions
+## Locked decisions
 
-These do not block the MVP specification but must be resolved before the related feature is implemented:
+1. The MVP is client-facing only; there is no operations UI or self-registration.
+2. Authentication is mocked with seeded accounts, including read-write and read-only users.
+3. The card provider is mocked behind an adapter and never exposes full PAN, CVV, or PIN.
+4. Card return is excluded. Read-write users may choose any card state in the MVP, including reactivating blocked, stolen, or archived cards.
+5. Programs are seeded/imported JSON and assigned to the whole client, not individual cards.
+6. Transactions are persisted mock facts generated on issue and include a configurable VAT rate supplied by the transaction-processing subsystem. MVP seed transactions use 23% VAT, and the UI displays both net and gross values.
+7. Program history is effective-dated, immutable, and contains zero or one active program.
+8. Relational persistence is the implementation direction: EF Core, local SQL Server, Azure SQL later.
+9. Aspire remains mandatory for local development and acceptance-test composition.
+10. Terraform, GitHub Actions, and Azure production hosting remain documented follow-up work.
+11. Quantity multiplication, program percentage calculations, VAT, and displayed totals use industry-standard decimal rounding away from zero.
+12. Future program assignment start and end times can be edited before the assignment becomes effective; effective and past history remains immutable.
+13. English is the baseline UI language. Polish translations are maintained in Angular application resources, and users can switch freely between languages.
+14. Every generated transaction stores a vehicle reference/snapshot so reporting preserves the vehicle associated with the transaction after later card reassignment.
 
-1. Select the production card processor and map its tokenization, issuance, callbacks, sandbox, and SLA.
-2. Confirm the exact Azure subscription, region, free grants, PostgreSQL availability, and monthly budget exception for email.
-3. Decide whether client representatives may request cards directly or only view cards issued by an operational manager.
-4. Define the complete Polish NIP checksum/validation policy and acceptable address/registration evidence.
-5. Choose cookie-based or token-based SPA authentication after threat-model review.
-6. Define whether pricing adjustments may be negative, their decimal precision, and maximum bounds.
-7. Confirm password/MFA policy and whether email verification is mandatory before first login.
-8. Define operational-manager break-glass and support-access procedures.
+## Deferred after MVP
 
-## Suggested feature slices
-
-1. Repository foundations, Terraform bootstrap, configuration, CI, health checks, and database migrations.
-2. Identity, self-registration, email verification, password reset, roles, and tenant authorization.
-3. Operational registration review and client lifecycle.
-4. Client users and read-write/read-only membership permissions.
-5. Fleet car CRUD, plate normalization, uniqueness, and assignment history.
-6. Card processor adapter, virtual-card issuance state machine, callbacks, and idempotency.
-7. Single-card lifecycle operations.
-8. Asynchronous bulk issuance, retries, and per-item results.
-9. Fleet Card Programs, effective-dated pricing, and client allowlists.
-10. Card-to-car and card-to-program assignments.
-11. Immutable audit trail, notifications, observability, and retention jobs.
-12. Angular UX hardening, accessibility, integration tests, threat-model tests, and production-readiness review.
-
-Each slice should include API authorization tests, tenant-isolation tests, audit assertions, and an Angular workflow before it is considered complete.
+- Real identity provider and password lifecycle.
+- Real card processor and provider callbacks.
+- Operations module and centrally synchronized program catalog.
+- Multi-client hosting, production deployment automation, alerting, and advanced audit retention.
