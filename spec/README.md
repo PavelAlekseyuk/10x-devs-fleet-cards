@@ -21,12 +21,12 @@ Each client has its own installation and database. Fleet Card Programs are the o
 | Cards | Virtual cards; provider mock returns masked PAN and unique token only |
 | PAN | Never stored or returned in full; provider owns BIN and generates a valid 16-digit Luhn PAN |
 | Card actions | Issue, assign to a car, block, mark stolen, archive; no return operation |
-| Card archive | Terminal and non-destructive; card and transaction history remain available |
+| Card archive | Non-destructive; read-write users may choose any card state, and card/transaction history remains available |
 | Transactions | Mock provider generates 1-5 persisted fuel transactions for the previous month per issued card |
 | Transaction facts | Date/time, station, fuel type, quantity, price, discount, totals, VAT, and status/version metadata |
 | Programs | Seeded/imported JSON; fuel-type percentage discount or premium |
 | Program assignment | Whole-client, effective-dated, immutable history; zero or one active program |
-| Program changes | A new future assignment closes the previous assignment at its start time |
+| Program changes | Future assignment start/end times are editable before activation; effective history remains immutable |
 | Database | Relational persistence with EF Core; SQL Server/Azure SQL direction |
 | Local environment | .NET Aspire composes API, Angular SPA, SQL Server, and telemetry |
 | Deployment | Azure and Terraform/GitHub Actions remain documented follow-up planning, not MVP functionality |

@@ -9,7 +9,7 @@
 - Mock authentication service backed by seeded users.
 - `ICardProvider` adapter whose MVP implementation returns masked PAN, provider token, and safe metadata only.
 - Transaction generator called after successful card issuance.
-- Append-only client program assignment history and immutable transaction facts.
+- Append-only client program assignment history and immutable transaction facts with vehicle references/snapshots.
 
 ## Aspire boundary
 
@@ -34,7 +34,7 @@ The deployed application uses the same configuration contracts but does not requ
 - `/api/programs`: available programs and hypothetical comparisons.
 - `/api/client-program`: effective-dated assignment and immutable history.
 
-All command endpoints enforce the seeded user's permission and validate state transitions. Correlation IDs are returned for mutation support diagnostics.
+All command endpoints enforce the seeded user's permission and validate the selected card state. Future program intervals may be edited before activation; effective history is immutable. Correlation IDs are returned for mutation support diagnostics.
 
 ## Persistence
 
@@ -43,6 +43,7 @@ Use EF Core migrations and relational constraints for:
 - normalized plate uniqueness;
 - card state and assignment relationships;
 - transaction decimal precision and VAT fields;
+- transaction vehicle ID and vehicle registration-plate snapshot fields;
 - non-overlapping client program intervals, enforced in application logic and covered by database-aware tests;
 - immutable history records.
 

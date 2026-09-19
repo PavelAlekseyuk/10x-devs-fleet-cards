@@ -4,7 +4,7 @@ The roadmap is intentionally vertical. Every slice keeps the solution buildable 
 
 ## 00. Repository and Aspire foundation
 
-- Keep the existing API, Domain, Application, Infrastructure, Worker, ServiceDefaults, AppHost, Angular, and test projects.
+- Keep the existing API, Domain, Application, Infrastructure, Contracts, ServiceDefaults, AppHost, Angular, and test projects.
 - Configure AppHost for API, Angular SPA, SQL Server, and telemetry.
 - Add restore/build/test/lint commands and health checks.
 
@@ -38,9 +38,9 @@ The roadmap is intentionally vertical. Every slice keeps the solution buildable 
 
 - Define `ICardProvider` and a mock implementation that returns masked PAN and token only.
 - Implement issue, list, assign, block, stolen, and archive operations.
-- Add card state transitions, redaction tests, and card/car assignment history.
+- Add unrestricted card state selection, redaction tests, and card/car assignment history.
 
-**Exit criteria:** issuing a card creates one local card without sensitive PAN data and archived cards are terminal.
+**Exit criteria:** issuing a card creates one local card without sensitive PAN data and every supported card state can be selected without losing history.
 
 ## 05. Generated transactions and VAT
 
@@ -54,7 +54,7 @@ The roadmap is intentionally vertical. Every slice keeps the solution buildable 
 
 - Import/seed read-only program JSON.
 - Implement hypothetical comparison by fuel type, effective period, VAT basis, and rounding policy.
-- Implement future assignment, replacement, removal, overlap rejection, and immutable history.
+- Implement future assignment, editable start/end timestamps before activation, replacement, removal, overlap rejection, and immutable effective history.
 - Add UI for comparison and client-level selection.
 
 **Exit criteria:** at most one program resolves at every instant and historical choices remain unchanged.

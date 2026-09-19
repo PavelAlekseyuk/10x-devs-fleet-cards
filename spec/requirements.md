@@ -45,7 +45,7 @@ A `ReadWrite` user can additionally:
 - Issuing a card persists the local card and generates 1-5 persisted transactions dated in the previous month.
 - A card can be assigned or reassigned to an active car.
 - A card can be blocked or marked stolen. These states are visible in the card list.
-- A card can be archived. Archive is terminal for card use, but card and transaction history remain visible.
+- A read-write user may choose any supported card state, including `Active`, `Blocked`, `Stolen`, and `Archived`. State changes are unrestricted in this MVP, and card/transaction history remains visible.
 - There is no card return operation in this MVP.
 
 ## 5. Transactions and VAT
@@ -58,6 +58,7 @@ Each generated transaction contains:
 - quantity with three decimal places;
 - station unit price and transaction discount/premium with two decimal places;
 - VAT rate and VAT amount;
+- vehicle ID and vehicle registration-plate snapshot;
 - total without discount and amount paid with the transaction discount.
 
 The generated records are immutable facts. A status may represent `Completed`, `Refunded`, `Cancelled`, or `Recalculated`; later corrections create a new version or related record rather than rewriting the original fact. The VAT rate is configurable per transaction and seeded with the applicable Polish MVP rate.
@@ -75,10 +76,10 @@ Users can filter transactions by period and see totals with and without discount
 ## 7. Client program assignment
 
 - The client has zero or one active program at any instant.
-- A read-write user can schedule a program from a future start timestamp, replace an existing future assignment, or remove a future assignment.
+- A read-write user can schedule a program from a future start timestamp, edit its start and end timestamps before activation, replace an existing future assignment, or remove a future assignment.
 - When a new assignment starts, the previous assignment ends at that exact timestamp.
 - Assignment history is append-only and immutable; past assignments are never rewritten.
-- The system rejects overlapping assignments and invalid periods.
+- The system rejects overlapping assignments and invalid periods. Editing is unavailable once an assignment becomes effective.
 - Removing an assignment means the client pays the station amount without a program discount for that period.
 
 ## 8. Acceptance criteria
@@ -89,7 +90,7 @@ Users can filter transactions by period and see totals with and without discount
 4. Car CRUD, normalization, search, archive/restore, and card assignment rules work through the API and UI.
 5. Issuing a card stores only masked PAN and provider token; no full PAN/CVV appears in database records, logs, telemetry, or API responses.
 6. Each issued card has 1-5 persisted previous-month transactions with valid calculated totals and VAT fields.
-7. Card block, stolen, and archive transitions obey the documented lifecycle; archived cards cannot be used.
+7. Read-write users can select any supported card state, including reactivating blocked, stolen, or archived cards; card and transaction history remains available.
 8. Transaction period totals and program comparisons are deterministic and respect transaction status and VAT.
 9. Program history contains no overlapping intervals and never has more than one active program.
 10. Aspire starts the API, Angular SPA, SQL Server, and local telemetry for acceptance tests from a clean local environment.
