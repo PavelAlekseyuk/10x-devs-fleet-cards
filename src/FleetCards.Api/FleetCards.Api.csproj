@@ -11,6 +11,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\FleetCards.Application\FleetCards.Application.csproj" />
+    <ProjectReference Include="..\FleetCards.Infrastructure\FleetCards.Infrastructure.csproj" />
+    <ProjectReference Include="..\FleetCards.Contracts\FleetCards.Contracts.csproj" />
     <ProjectReference Include="..\FleetCards.ServiceDefaults\FleetCards.ServiceDefaults.csproj" />
   </ItemGroup>
 

@@ -2,7 +2,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FleetCards.Api\FleetCards.Api.csproj" />
-    <ProjectReference Include="..\FleetCards.Worker\FleetCards.Worker.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.SqlServer" Version="13.0.0" />
   </ItemGroup>
 
   <PropertyGroup>

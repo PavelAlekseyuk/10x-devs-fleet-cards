@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FleetCards.Domain\FleetCards.Domain.csproj" />
+    <ProjectReference Include="..\FleetCards.Contracts\FleetCards.Contracts.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
