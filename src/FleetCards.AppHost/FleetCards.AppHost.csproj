@@ -1,0 +1,16 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.0.0">
+
+  <ItemGroup>
+    <ProjectReference Include="..\FleetCards.Api\FleetCards.Api.csproj" />
+    <ProjectReference Include="..\FleetCards.Worker\FleetCards.Worker.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>c5f76706-85c3-4c87-8ba3-5300eea28575</UserSecretsId>
+  </PropertyGroup>
+
+</Project>
