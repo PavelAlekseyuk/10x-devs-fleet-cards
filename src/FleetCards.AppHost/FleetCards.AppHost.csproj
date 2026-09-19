@@ -1,5 +1,4 @@
 <Project Sdk="Aspire.AppHost.Sdk/13.0.0">
-
   <ItemGroup>
     <ProjectReference Include="..\FleetCards.Api\FleetCards.Api.csproj" />
   </ItemGroup>
@@ -15,5 +14,4 @@
     <Nullable>enable</Nullable>
     <UserSecretsId>c5f76706-85c3-4c87-8ba3-5300eea28575</UserSecretsId>
   </PropertyGroup>
-
 </Project>

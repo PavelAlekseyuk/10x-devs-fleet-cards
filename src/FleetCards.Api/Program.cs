@@ -35,7 +35,11 @@ app.MapGet("/api/cards", (IFleetCardsReadService service) => service.GetCards())
     .WithName("GetCards")
     .WithTags("Cards");
 
-app.MapGet("/api/transactions", (DateTimeOffset? from, DateTimeOffset? to, IFleetCardsReadService service) => service.GetTransactions(from, to))
+app.MapGet(
+        "/api/transactions",
+        (DateTimeOffset? from, DateTimeOffset? to, IFleetCardsReadService service) =>
+            service.GetTransactions(from, to)
+    )
     .WithName("GetTransactions")
     .WithTags("Transactions");
 

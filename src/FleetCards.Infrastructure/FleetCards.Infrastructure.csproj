@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <ItemGroup>
     <ProjectReference Include="..\FleetCards.Application\FleetCards.Application.csproj" />
     <ProjectReference Include="..\FleetCards.Domain\FleetCards.Domain.csproj" />
@@ -14,5 +13,4 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
-
 </Project>

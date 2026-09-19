@@ -8,7 +8,10 @@ public interface IFleetCardsReadService
     ClientResponse GetClient();
     IReadOnlyList<FleetCarResponse> GetCars(string? search);
     IReadOnlyList<FleetCardResponse> GetCards();
-    IReadOnlyList<FuelTransactionResponse> GetTransactions(DateTimeOffset? from, DateTimeOffset? to);
+    IReadOnlyList<FuelTransactionResponse> GetTransactions(
+        DateTimeOffset? from,
+        DateTimeOffset? to
+    );
     IReadOnlyList<FleetCardProgramResponse> GetPrograms();
 }
 
@@ -19,25 +22,46 @@ public sealed class SeededFleetCardsReadService : IFleetCardsReadService
 
     public CurrentUserResponse GetCurrentUser() => new("anna.nowak", "ReadWrite");
 
-    public ClientResponse GetClient() => new("Baltic Logistics Sp. z o.o.", "5250001234", "Poland", "ul. Prosta 12, 00-850 Warszawa");
+    public ClientResponse GetClient() =>
+        new(
+            "Baltic Logistics Sp. z o.o.",
+            "5250001234",
+            "Poland",
+            "ul. Prosta 12, 00-850 Warszawa"
+        );
 
     public IReadOnlyList<FleetCarResponse> GetCars(string? search)
     {
         var cars = new[]
         {
             new FleetCarResponse(carId, "WA 12345", "Volvo", "FH", false),
-            new FleetCarResponse(Guid.Parse("33333333-3333-3333-3333-333333333333"), "PO 98765", "Toyota", "Corolla", false)
+            new FleetCarResponse(
+                Guid.Parse("33333333-3333-3333-3333-333333333333"),
+                "PO 98765",
+                "Toyota",
+                "Corolla",
+                false
+            ),
         };
 
         return string.IsNullOrWhiteSpace(search)
             ? cars
-            : cars.Where(car => car.RegistrationPlate.Contains(search.Trim(), StringComparison.OrdinalIgnoreCase)).ToArray();
+            : cars.Where(car =>
+                    car.RegistrationPlate.Contains(
+                        search.Trim(),
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
+                .ToArray();
     }
 
     public IReadOnlyList<FleetCardResponse> GetCards() =>
-    [new(cardId, "**** **** **** 4242", "mock-card-4242", "Active", carId)];
+        [new(cardId, "**** **** **** 4242", "mock-card-4242", "Active", carId)];
 
-    public IReadOnlyList<FuelTransactionResponse> GetTransactions(DateTimeOffset? from, DateTimeOffset? to)
+    public IReadOnlyList<FuelTransactionResponse> GetTransactions(
+        DateTimeOffset? from,
+        DateTimeOffset? to
+    )
     {
         var transaction = new FuelTransactionResponse(
             Guid.Parse("44444444-4444-4444-4444-444444444444"),
@@ -54,13 +78,23 @@ public sealed class SeededFleetCardsReadService : IFleetCardsReadService
             0.23m,
             61.07m,
             326.60m,
-            "Completed");
+            "Completed"
+        );
 
-        return (from is null || transaction.OccurredAt >= from) && (to is null || transaction.OccurredAt <= to)
+        return
+            (from is null || transaction.OccurredAt >= from)
+            && (to is null || transaction.OccurredAt <= to)
             ? [transaction]
             : [];
     }
 
     public IReadOnlyList<FleetCardProgramResponse> GetPrograms() =>
-    [new(Guid.Parse("55555555-5555-5555-5555-555555555555"), "Baltic Standard", DateTimeOffset.UtcNow.AddMonths(-6), null)];
+        [
+            new(
+                Guid.Parse("55555555-5555-5555-5555-555555555555"),
+                "Baltic Standard",
+                DateTimeOffset.UtcNow.AddMonths(-6),
+                null
+            ),
+        ];
 }
