@@ -1,9 +1,14 @@
 ---
 starter_id: dotnet
 package_manager: dotnet
-project_name: client-portal
+project_name: fleet-cards
 hints:
   language_family: dotnet
+  backend: aspnet-core-10-web-api
+  frontend: angular-20-spa
+  local_orchestration: dotnet-aspire
+  local_database: sql-server
+  production_database: azure-sql
   team_size: solo
   deployment_target: azure-app-service
   ci_provider: github-actions
@@ -21,4 +26,4 @@ hints:
 
 ## Why this stack
 
-The small web-app MVP has a five-week timeline, low scale, seeded authentication, and a Microsoft Azure hosting preference. The recommended .NET ASP.NET Core webapi starter provides strong typing, conventional structure, dependency injection, OpenAPI, and Entity Framework integration, and its bootstrapper support is verified. Azure App Service F1 is the selected deployment target, with GitHub Actions and auto-deploy on merge. The Angular TypeScript SPA and Azure database choice remain application-level setup decisions around the .NET API.
+The FleetCards MVP uses a separate ASP.NET Core 10 Web API backend and Angular 20 TypeScript SPA frontend. .NET Aspire composes the API, Angular development server, SQL Server, service references, and local telemetry for development and acceptance testing. EF Core provides relational persistence with SQL Server locally and Azure SQL in production. Azure App Service is the production hosting target, with GitHub Actions and auto-deploy on merge.
