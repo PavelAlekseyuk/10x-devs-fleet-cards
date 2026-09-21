@@ -85,6 +85,10 @@ resource "azurerm_mssql_server" "demo" {
   public_network_access_enabled = true
   tags                          = local.common_tags
 
+  identity {
+    type = "SystemAssigned"
+  }
+
   azuread_administrator {
     azuread_authentication_only = true
     login_username              = var.azuread_administrator_login

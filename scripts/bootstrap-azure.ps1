@@ -147,6 +147,8 @@ if (-not $dotnet10Runtime) {
 
 Write-Host 'Bootstrap completed. Configure these GitHub repository variables:'
 Write-Host "AZURE_CLIENT_ID=$appId"
+Write-Host "AZURE_PRINCIPAL_OBJECT_ID=$servicePrincipalObjectId"
+Write-Host "AZURE_PRINCIPAL_DISPLAY_NAME=$appDisplayName"
 Write-Host "AZURE_TENANT_ID=$((Invoke-AzCli @('account', 'show', '--query', 'tenantId', '--output', 'tsv')).Trim())"
 Write-Host "AZURE_SUBSCRIPTION_ID=$SubscriptionId"
 Write-Host "TF_STATE_RESOURCE_GROUP=$stateResourceGroup"

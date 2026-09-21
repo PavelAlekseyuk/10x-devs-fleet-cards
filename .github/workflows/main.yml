@@ -1,0 +1,190 @@
+name: Build and Deploy Demo
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fleetcards-demo
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: true
+  NUGET_XMLDOC_MODE: skip
+
+jobs:
+  build:
+    name: Build, Test, and Package
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.2
+
+      - name: Restore .NET tools
+        run: dotnet tool restore
+
+      - name: Restore .NET dependencies
+        run: dotnet restore FleetCards.sln
+
+      - name: Test .NET solution
+        run: dotnet test FleetCards.sln --no-restore --configuration Release
+
+      - name: Test Angular application
+        run: |
+          npm --prefix web ci
+          npm --prefix web test -- --watch=false --browsers=ChromeHeadless
+
+      - name: Validate Terraform
+        run: |
+          terraform -chdir=infra/terraform fmt -check
+          terraform -chdir=infra/terraform init -backend=false
+          terraform -chdir=infra/terraform validate
+
+      - name: Publish deployable application
+        run: dotnet publish src/FleetCards.Api/FleetCards.Api.csproj --no-restore --configuration Release --output artifacts/publish
+
+      - name: Generate idempotent database migration script
+        run: |
+          dotnet ef migrations script --idempotent --no-build --configuration Release \
+            --project src/FleetCards.Infrastructure/FleetCards.Infrastructure.csproj \
+            --context FleetCardsDbContext \
+            --output artifacts/database-migration.sql
+
+      - name: Create application archive
+        run: |
+          cd artifacts/publish
+          zip --recurse-paths ../fleetcards-api.zip .
+
+      - name: Upload deployment artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fleet-cards-deployment
+          path: |
+            artifacts/fleetcards-api.zip
+            artifacts/database-migration.sql
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy:
+    name: Provision, Migrate, and Deploy
+    needs: build
+    runs-on: ubuntu-24.04
+    environment: demo
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      ARM_USE_OIDC: true
+      ARM_USE_AZUREAD: true
+      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      TF_STATE_RESOURCE_GROUP: ${{ vars.TF_STATE_RESOURCE_GROUP }}
+      TF_STATE_STORAGE_ACCOUNT: ${{ vars.TF_STATE_STORAGE_ACCOUNT }}
+      TF_STATE_CONTAINER: ${{ vars.TF_STATE_CONTAINER }}
+      TF_VAR_resource_group_name: ${{ vars.DEMO_RESOURCE_GROUP }}
+      TF_VAR_location: ${{ vars.AZURE_LOCATION }}
+      TF_VAR_project_prefix: ${{ vars.TF_PROJECT_PREFIX }}
+      TF_VAR_resource_suffix: ${{ vars.TF_RESOURCE_SUFFIX }}
+      TF_VAR_app_service_sku: ${{ vars.TF_APP_SERVICE_SKU }}
+      TF_VAR_sql_database_sku_name: ${{ vars.TF_SQL_DATABASE_SKU_NAME }}
+      TF_VAR_sql_database_is_free: ${{ vars.TF_SQL_DATABASE_IS_FREE }}
+      TF_VAR_allow_paid_resources: ${{ vars.TF_ALLOW_PAID_RESOURCES }}
+      TF_VAR_enable_azure_services_sql_firewall_rule: ${{ vars.TF_ENABLE_AZURE_SERVICES_SQL_FIREWALL_RULE }}
+      TF_VAR_budget_amount: ${{ vars.TF_BUDGET_AMOUNT }}
+      TF_VAR_budget_alert_email: ${{ vars.TF_BUDGET_ALERT_EMAIL }}
+      TF_VAR_budget_start_date: ${{ vars.TF_BUDGET_START_DATE }}
+      TF_VAR_azuread_administrator_login: ${{ vars.AZURE_SQL_ADMINISTRATOR_LOGIN }}
+      TF_VAR_azuread_administrator_object_id: ${{ vars.AZURE_SQL_ADMINISTRATOR_OBJECT_ID }}
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.2
+
+      - name: Sign in to Azure with OpenID Connect
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Initialize remote Terraform state
+        run: |
+          terraform -chdir=infra/terraform init -reconfigure \
+            -backend-config="resource_group_name=$TF_STATE_RESOURCE_GROUP" \
+            -backend-config="storage_account_name=$TF_STATE_STORAGE_ACCOUNT" \
+            -backend-config="container_name=$TF_STATE_CONTAINER" \
+            -backend-config="key=fleetcards-demo.tfstate" \
+            -backend-config="use_oidc=true" \
+            -backend-config="use_azuread_auth=true"
+
+      - name: Plan and apply infrastructure
+        run: |
+          terraform -chdir=infra/terraform plan -out=demo.tfplan
+          terraform -chdir=infra/terraform apply -auto-approve demo.tfplan
+
+      - name: Read deployed resource outputs
+        run: |
+          echo "APP_SERVICE_NAME=$(terraform -chdir=infra/terraform output -raw app_service_name)" >> "$GITHUB_ENV"
+          echo "APP_URL=$(terraform -chdir=infra/terraform output -raw app_url)" >> "$GITHUB_ENV"
+          echo "SQL_SERVER_NAME=$(terraform -chdir=infra/terraform output -raw sql_server_name)" >> "$GITHUB_ENV"
+          echo "SQL_DATABASE_NAME=$(terraform -chdir=infra/terraform output -raw sql_database_name)" >> "$GITHUB_ENV"
+
+      - name: Download deployment artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: fleet-cards-deployment
+          path: artifacts
+
+      - name: Install sqlcmd
+        run: |
+          curl --fail --silent --show-error https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | sudo tee /usr/share/keyrings/microsoft-prod.gpg > /dev/null
+          curl --fail --silent --show-error https://packages.microsoft.com/config/ubuntu/24.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list > /dev/null
+          sudo apt-get update
+          sudo ACCEPT_EULA=Y apt-get install --yes mssql-tools18 unixodbc-dev
+          echo "/opt/mssql-tools18/bin" >> "$GITHUB_PATH"
+
+      - name: Apply database schema and grant application access
+        run: |
+          access_token="$(az account get-access-token --resource https://database.windows.net/ --query accessToken --output tsv)"
+          sqlcmd -S "$SQL_SERVER_NAME.database.windows.net" -d "$SQL_DATABASE_NAME" -G -P "$access_token" -b -i artifacts/database-migration.sql
+          sqlcmd -S "$SQL_SERVER_NAME.database.windows.net" -d "$SQL_DATABASE_NAME" -G -P "$access_token" -b -Q "IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'$APP_SERVICE_NAME') BEGIN CREATE USER [$APP_SERVICE_NAME] FROM EXTERNAL PROVIDER; END; IF NOT EXISTS (SELECT 1 FROM sys.database_role_members memberships JOIN sys.database_principals roles ON roles.principal_id = memberships.role_principal_id JOIN sys.database_principals members ON members.principal_id = memberships.member_principal_id WHERE roles.name = N'db_datareader' AND members.name = N'$APP_SERVICE_NAME') ALTER ROLE [db_datareader] ADD MEMBER [$APP_SERVICE_NAME]; IF NOT EXISTS (SELECT 1 FROM sys.database_role_members memberships JOIN sys.database_principals roles ON roles.principal_id = memberships.role_principal_id JOIN sys.database_principals members ON members.principal_id = memberships.member_principal_id WHERE roles.name = N'db_datawriter' AND members.name = N'$APP_SERVICE_NAME') ALTER ROLE [db_datawriter] ADD MEMBER [$APP_SERVICE_NAME];"
+
+      - name: Deploy application archive
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.APP_SERVICE_NAME }}
+          package: artifacts/fleetcards-api.zip
+
+      - name: Smoke test deployed application
+        run: |
+          curl --fail --silent --show-error --retry 12 --retry-delay 10 --retry-connrefused "$APP_URL/" > /dev/null
+          curl --fail --silent --show-error --retry 12 --retry-delay 10 --retry-connrefused "$APP_URL/api" > /dev/null
+          curl --fail --silent --show-error --retry 12 --retry-delay 10 --retry-connrefused "$APP_URL/api/cards" > /dev/null
