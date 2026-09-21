@@ -5,7 +5,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
-builder.Services.AddFleetCardsInfrastructure();
+builder.Services.AddFleetCardsInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 app.UseExceptionHandler();
