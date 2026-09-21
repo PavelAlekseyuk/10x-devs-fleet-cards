@@ -16,6 +16,9 @@ param(
     [ValidatePattern('^[^/\s]+/[^/\s]+$')]
     [string]$GitHubRepository,
 
+    [ValidatePattern('^[A-Za-z0-9_-]+$')]
+    [string]$GitHubEnvironment = 'demo',
+
     [Parameter(Mandatory)]
     [ValidatePattern('^[a-z0-9]{3,24}$')]
     [string]$StateStorageAccountName,
@@ -25,13 +28,32 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$azureCliCommand = (Get-Command az -ErrorAction SilentlyContinue).Path
+$githubCliCommand = (Get-Command gh -ErrorAction SilentlyContinue).Path
+if (-not $githubCliCommand) {
+    $githubCliFallbackPath = Join-Path $env:ProgramFiles 'GitHub CLI\gh.exe'
+    if (Test-Path -LiteralPath $githubCliFallbackPath) {
+        $githubCliCommand = $githubCliFallbackPath
+    }
+}
 
 function Invoke-AzCli {
     param([Parameter(Mandatory)][string[]]$Arguments)
 
-    $result = & az @Arguments
+    $result = & $azureCliCommand @Arguments
     if ($LASTEXITCODE -ne 0) {
         throw "Azure CLI command failed: az $($Arguments -join ' ')"
+    }
+
+    return $result
+}
+
+function Invoke-GitHubCli {
+    param([Parameter(Mandatory)][string[]]$Arguments)
+
+    $result = & $githubCliCommand @Arguments
+    if ($LASTEXITCODE -ne 0) {
+        throw "GitHub CLI command failed: gh $($Arguments -join ' ')"
     }
 
     return $result
@@ -57,8 +79,12 @@ function Ensure-RoleAssignment {
     }
 }
 
-if (-not (Get-Command az -ErrorAction SilentlyContinue)) {
+if (-not $azureCliCommand) {
     throw 'Azure CLI is required. Install it from https://learn.microsoft.com/cli/azure/install-azure-cli-windows.'
+}
+
+if (-not $githubCliCommand) {
+    throw 'GitHub CLI is required to read the repository OIDC subject customization. Install it from https://cli.github.com/ and authenticate with gh auth login.'
 }
 
 Invoke-AzCli @('account', 'set', '--subscription', $SubscriptionId) | Out-Null
@@ -80,7 +106,7 @@ if (-not $appId) {
 }
 $appId = $appId.Trim()
 
-$servicePrincipalObjectId = & az ad sp show --id $appId --query 'id' --output 'tsv' 2>$null
+$servicePrincipalObjectId = & $azureCliCommand ad sp show --id $appId --query 'id' --output 'tsv' 2>$null
 if ($LASTEXITCODE -ne 0) {
     $servicePrincipalObjectId = Invoke-AzCli @(
         'ad', 'sp', 'create', '--id', $appId, '--query', 'id', '--output', 'tsv'
@@ -88,21 +114,29 @@ if ($LASTEXITCODE -ne 0) {
 }
 $servicePrincipalObjectId = $servicePrincipalObjectId.Trim()
 
-$federatedCredentialSubject = 'repo:{0}:ref:refs/heads/main' -f $GitHubRepository
+$githubOidcSubjectPrefix = (Invoke-GitHubCli @(
+    'api', "repos/$GitHubRepository/actions/oidc/customization/sub", '--jq', '.sub_claim_prefix'
+)).Trim()
+if (-not $githubOidcSubjectPrefix) {
+    throw "GitHub did not return an OIDC subject prefix for $GitHubRepository."
+}
+
+$federatedCredentialName = "github-$GitHubEnvironment"
+$federatedCredentialSubject = '{0}:environment:{1}' -f $githubOidcSubjectPrefix, $GitHubEnvironment
 $federatedCredential = @{
-    name      = 'github-main'
+    name      = $federatedCredentialName
     issuer    = 'https://token.actions.githubusercontent.com'
     subject   = $federatedCredentialSubject
     audiences = @('api://AzureADTokenExchange')
 } | ConvertTo-Json -Compress
 
 $existingFederatedCredentialSubject = Invoke-AzCli @(
-    'ad', 'app', 'federated-credential', 'list', '--id', $appId, '--query', "[?name=='github-main'].subject | [0]",
+    'ad', 'app', 'federated-credential', 'list', '--id', $appId, '--query', "[?name=='$federatedCredentialName'].subject | [0]",
     '--output', 'tsv'
 )
 if ($existingFederatedCredentialSubject -and $existingFederatedCredentialSubject.Trim() -ne $federatedCredentialSubject) {
     Invoke-AzCli @(
-        'ad', 'app', 'federated-credential', 'delete', '--id', $appId, '--federated-credential-id', 'github-main'
+        'ad', 'app', 'federated-credential', 'delete', '--id', $appId, '--federated-credential-id', $federatedCredentialName
     ) | Out-Null
     $existingFederatedCredentialSubject = $null
 }
@@ -118,6 +152,16 @@ if (-not $existingFederatedCredentialSubject) {
     finally {
         Remove-Item -LiteralPath $federatedCredentialPath -Force -ErrorAction SilentlyContinue
     }
+}
+
+$legacyFederatedCredential = Invoke-AzCli @(
+    'ad', 'app', 'federated-credential', 'list', '--id', $appId, '--query', "[?name=='github-main'].id | [0]",
+    '--output', 'tsv'
+)
+if ($legacyFederatedCredential) {
+    Invoke-AzCli @(
+        'ad', 'app', 'federated-credential', 'delete', '--id', $appId, '--federated-credential-id', 'github-main'
+    ) | Out-Null
 }
 
 Invoke-AzCli @(
