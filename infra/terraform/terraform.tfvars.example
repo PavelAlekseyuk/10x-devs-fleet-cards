@@ -1,13 +1,28 @@
 # Copy outside version control as terraform.tfvars after completing the Azure SKU/region preflight.
 resource_group_name = "fleetcards-demo-rg"
 project_prefix      = "fleetcards"
+resource_suffix     = "demo2026"
 location            = "westeurope"
 
 # F1 is a quota-limited public demo tier without an SLA.
 app_service_sku = "F1"
 
-# Record the exact SKU shown by your Azure subscription. Keep this null until it is verified.
-sql_database_sku_name = null
+# Record the exact SKU shown by your Azure subscription. Do not apply with an unverified value.
+sql_database_sku_name = "Free"
+sql_database_is_free  = true
 
-# Set to true only after consciously selecting the cheapest paid Azure SQL SKU available to this subscription.
+# Set to true only after consciously selecting a paid Azure SQL SKU available to this subscription.
 allow_paid_resources = false
+
+# F1's stable outbound addresses are not available until the app exists. This limited public-demo exception
+# lets the Web App and the GitHub-hosted deployment runner reach Azure SQL. See demo-constraints.md.
+enable_azure_services_sql_firewall_rule = true
+
+# Azure Cost Management requires a non-zero alert budget even when a free SKU is selected.
+budget_amount      = 10
+budget_alert_email = "owner@example.com"
+budget_start_date  = "2026-10-01T00:00:00Z"
+
+# Use a Microsoft Entra user or group object ID, not the GitHub deployment service principal.
+azuread_administrator_login     = "FleetCards Demo Administrators"
+azuread_administrator_object_id = "00000000-0000-0000-0000-000000000000"

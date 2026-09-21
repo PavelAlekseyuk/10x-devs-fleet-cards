@@ -35,12 +35,19 @@ public sealed class EfFleetCardsReadService(FleetCardsDbContext dbContext) : IFl
 
         return query
             .OrderBy(car => car.RegistrationPlate)
-            .Select(car => new FleetCarResponse(car.Id, car.RegistrationPlate, car.Make, car.Model, car.IsArchived))
+            .Select(car => new FleetCarResponse(
+                car.Id,
+                car.RegistrationPlate,
+                car.Make,
+                car.Model,
+                car.IsArchived
+            ))
             .ToArray();
     }
 
     public IReadOnlyList<FleetCardResponse> GetCards() =>
-        dbContext.Cards.AsNoTracking()
+        dbContext
+            .Cards.AsNoTracking()
             .OrderBy(card => card.MaskedPan)
             .Select(card => new FleetCardResponse(
                 card.Id,
@@ -90,7 +97,8 @@ public sealed class EfFleetCardsReadService(FleetCardsDbContext dbContext) : IFl
     }
 
     public IReadOnlyList<FleetCardProgramResponse> GetPrograms() =>
-        dbContext.Programs.AsNoTracking()
+        dbContext
+            .Programs.AsNoTracking()
             .OrderBy(program => program.ActiveFrom)
             .Select(program => new FleetCardProgramResponse(
                 program.Id,

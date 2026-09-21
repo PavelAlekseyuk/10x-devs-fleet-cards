@@ -2,7 +2,8 @@
 
 This root owns Azure resources inside the dedicated demo resource group created by
 `scripts/bootstrap-azure.ps1`. The bootstrap owns the resource group, remote-state storage, GitHub OIDC
-application, and its role assignments; Terraform owns the application resources added in later phases.
+application, and its role assignments. Terraform creates the Windows App Service plan/Web App, Azure SQL
+server/database, system-assigned Web App identity, SQL firewall exception, and cost budget.
 
 ## Prerequisites
 
@@ -41,3 +42,19 @@ terraform -chdir=infra/terraform validate
 
 The CI pipeline will initialize the Azure Storage backend with OIDC and the non-secret state variables.
 No real `.tfvars`, state files, or backend credentials belong in the repository.
+
+## Apply safeguards
+
+`terraform apply` deliberately fails unless the following are explicitly supplied in ignored runtime
+configuration or CI variables:
+
+- a globally unique `resource_suffix`;
+- an exact `sql_database_sku_name` and either a verified `sql_database_is_free` declaration or
+  `allow_paid_resources = true`;
+- a budget amount, start date, and alert recipient;
+- a Microsoft Entra user or group acting as the Azure SQL administrator;
+- acknowledgement of the `AllowAzureServicesForDemo` firewall rule.
+
+The firewall exception permits Azure-hosted workloads, including the F1 App Service and the GitHub-hosted
+deployment runner, to reach the SQL server. It is acceptable only for this synthetic-data demo. Replace it
+with explicit outbound IP allow rules or private networking before any non-demo data is deployed.

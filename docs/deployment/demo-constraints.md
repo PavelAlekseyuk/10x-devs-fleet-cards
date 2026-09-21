@@ -12,6 +12,10 @@ synthetic data. Never deploy real client data, credentials, full PAN, CVV, PIN, 
 - If a free Azure SQL offer is unavailable, select the cheapest viable paid SKU explicitly, set
   `allow_paid_resources = true`, and update this document with the SKU, estimated monthly price, and date.
 - Add an Azure Cost Management budget and email alert before the first paid deployment.
+- The F1 Web App plan does not expose stable outbound IP addresses before creation. This demo therefore uses
+  Azure SQL's `AllowAzureServicesForDemo` firewall rule, which permits Azure-hosted services and the
+  GitHub-hosted deployment runner. It is acceptable only for synthetic demo data and must be replaced before
+  handling any non-demo data.
 
 ## Required Preflight Record
 

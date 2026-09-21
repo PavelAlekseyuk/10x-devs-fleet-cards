@@ -14,7 +14,9 @@ public static class FleetCardsInfrastructure
         var connectionString = configuration.GetConnectionString("fleetcards");
         if (!string.IsNullOrWhiteSpace(connectionString))
         {
-            services.AddDbContext<FleetCardsDbContext>(options => options.UseSqlServer(connectionString));
+            services.AddDbContext<FleetCardsDbContext>(options =>
+                options.UseSqlServer(connectionString)
+            );
             services.AddScoped<IFleetCardsReadService, EfFleetCardsReadService>();
             return services;
         }
