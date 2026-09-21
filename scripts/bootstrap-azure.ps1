@@ -45,7 +45,7 @@ function Ensure-RoleAssignment {
     )
 
     $existingAssignment = Invoke-AzCli @(
-        'role', 'assignment', 'list', '--assignee-object-id', $PrincipalObjectId, '--scope', $Scope,
+        'role', 'assignment', 'list', '--assignee', $PrincipalObjectId, '--scope', $Scope,
         '--query', "[?roleDefinitionName=='$RoleName'].id | [0]", '--output', 'tsv'
     )
 
@@ -88,18 +88,26 @@ if ($LASTEXITCODE -ne 0) {
 }
 $servicePrincipalObjectId = $servicePrincipalObjectId.Trim()
 
+$federatedCredentialSubject = 'repo:{0}:ref:refs/heads/main' -f $GitHubRepository
 $federatedCredential = @{
     name      = 'github-main'
     issuer    = 'https://token.actions.githubusercontent.com'
-    subject   = "repo:$GitHubRepository:ref:refs/heads/main"
+    subject   = $federatedCredentialSubject
     audiences = @('api://AzureADTokenExchange')
 } | ConvertTo-Json -Compress
 
-$existingFederatedCredential = Invoke-AzCli @(
-    'ad', 'app', 'federated-credential', 'list', '--id', $appId, '--query', "[?name=='github-main'].id | [0]",
+$existingFederatedCredentialSubject = Invoke-AzCli @(
+    'ad', 'app', 'federated-credential', 'list', '--id', $appId, '--query', "[?name=='github-main'].subject | [0]",
     '--output', 'tsv'
 )
-if (-not $existingFederatedCredential) {
+if ($existingFederatedCredentialSubject -and $existingFederatedCredentialSubject.Trim() -ne $federatedCredentialSubject) {
+    Invoke-AzCli @(
+        'ad', 'app', 'federated-credential', 'delete', '--id', $appId, '--federated-credential-id', 'github-main'
+    ) | Out-Null
+    $existingFederatedCredentialSubject = $null
+}
+
+if (-not $existingFederatedCredentialSubject) {
     $federatedCredentialPath = New-TemporaryFile
     try {
         Set-Content -LiteralPath $federatedCredentialPath -Value $federatedCredential -NoNewline
@@ -138,7 +146,7 @@ Ensure-RoleAssignment -PrincipalObjectId $servicePrincipalObjectId -RoleName 'St
 Ensure-RoleAssignment -PrincipalObjectId $servicePrincipalObjectId -RoleName 'Contributor' -Scope $demoResourceGroupScope
 
 $dotnet10Runtime = Invoke-AzCli @(
-    'webapp', 'list-runtimes', '--os', 'windows', '--query', "[?contains(value, 'DOTNET') && contains(value, '10')].value",
+    'webapp', 'list-runtimes', '--os', 'windows', '--query', "[?contains(@, 'dotnet:10')]",
     '--output', 'tsv'
 )
 if (-not $dotnet10Runtime) {

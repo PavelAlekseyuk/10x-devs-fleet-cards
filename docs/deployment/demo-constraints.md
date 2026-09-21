@@ -24,15 +24,15 @@ this demo's resources so it can be torn down safely.
 
 | Field | Value |
 | --- | --- |
-| Checked on | Not yet checked |
-| Selected region | Not yet selected |
-| West Europe availability/price | Not yet checked |
-| Poland Central availability/price | Not yet checked |
-| Windows .NET 10 runtime verified | Not yet checked |
-| App Service SKU | Not yet selected |
-| Azure SQL offer/SKU | Not yet selected |
-| Estimated monthly cost | Not yet checked |
-| Budget alert recipient | Not yet selected |
+| Checked on | 2026-09-21 |
+| Selected region | West Europe |
+| West Europe availability/price | Azure SQL Free tier available; App Service F1 selected. |
+| Poland Central availability/price | Azure SQL Free tier available; not selected. |
+| Windows .NET 10 runtime verified | `dotnet:10` available. |
+| App Service SKU | F1 |
+| Azure SQL offer/SKU | Free |
+| Estimated monthly cost | Intended zero-cost demo tiers; Azure Cost Management price-sheet API is unavailable for this subscription. |
+| Budget alert recipient | pavel.alexeyuk@gmail.com |
 
 ## Teardown
 
