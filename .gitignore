@@ -3,8 +3,16 @@
 **/obj/
 
 # Angular
-frontend/node_modules/
-frontend/dist/
+web/node_modules/
+web/dist/
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
 
 # IDE and local settings
 .vs/

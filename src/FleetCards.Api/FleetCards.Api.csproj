@@ -3,6 +3,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <FrontendProjectDirectory>$(MSBuildProjectDirectory)\..\..\web</FrontendProjectDirectory>
+    <FrontendPublishDirectory>$(FrontendProjectDirectory)\dist\web\browser</FrontendPublishDirectory>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,4 +17,23 @@
     <ProjectReference Include="..\FleetCards.Contracts\FleetCards.Contracts.csproj" />
     <ProjectReference Include="..\FleetCards.ServiceDefaults\FleetCards.ServiceDefaults.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="wwwroot\index.html">
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <Target Name="PublishFrontend" AfterTargets="CopyFilesToPublishDirectory">
+    <Exec Command="npm ci" WorkingDirectory="$(FrontendProjectDirectory)" />
+    <Exec Command="npm run build" WorkingDirectory="$(FrontendProjectDirectory)" />
+    <ItemGroup>
+      <FrontendPublishFiles Include="$(FrontendPublishDirectory)\**\*" />
+    </ItemGroup>
+    <Copy
+      SourceFiles="@(FrontendPublishFiles)"
+      DestinationFiles="@(FrontendPublishFiles->'$(PublishDir)wwwroot\%(RecursiveDir)%(Filename)%(Extension)')"
+      SkipUnchangedFiles="true"
+    />
+  </Target>
 </Project>

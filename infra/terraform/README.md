@@ -1,0 +1,43 @@
+# Terraform Infrastructure
+
+This root owns Azure resources inside the dedicated demo resource group created by
+`scripts/bootstrap-azure.ps1`. The bootstrap owns the resource group, remote-state storage, GitHub OIDC
+application, and its role assignments; Terraform owns the application resources added in later phases.
+
+## Prerequisites
+
+- Azure CLI logged in as a subscription owner or equivalent bootstrap administrator.
+- Terraform `1.9.x` or later.
+- A globally unique lower-case storage account name.
+- A price/SKU check for both `westeurope` and `polandcentral`, recorded in
+  `docs/deployment/demo-constraints.md` before any apply.
+
+## Bootstrap
+
+Run once from PowerShell. It creates two resource groups, the state backend, a GitHub OIDC application
+restricted to `main`, and minimum roles for deployment.
+
+```powershell
+./scripts/bootstrap-azure.ps1 `
+  -SubscriptionId '<subscription-id>' `
+  -ProjectPrefix 'fleetcards' `
+  -Location 'westeurope' `
+  -GitHubRepository '<owner>/10x-devs-fleet-cards' `
+  -StateStorageAccountName '<globally-unique-name>'
+```
+
+Store the printed values as GitHub **repository variables**. Do not create a client secret or publish
+profile. The action will exchange its GitHub token through the federated credential.
+
+## Local validation
+
+Copy `terraform.tfvars.example` to an ignored `terraform.tfvars`, then run:
+
+```powershell
+terraform -chdir=infra/terraform fmt -check
+terraform -chdir=infra/terraform init -backend=false
+terraform -chdir=infra/terraform validate
+```
+
+The CI pipeline will initialize the Azure Storage backend with OIDC and the non-secret state variables.
+No real `.tfvars`, state files, or backend credentials belong in the repository.

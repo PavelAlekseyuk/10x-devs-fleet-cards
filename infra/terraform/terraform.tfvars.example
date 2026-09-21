@@ -1,0 +1,13 @@
+# Copy outside version control as terraform.tfvars after completing the Azure SKU/region preflight.
+resource_group_name = "fleetcards-demo-rg"
+project_prefix      = "fleetcards"
+location            = "westeurope"
+
+# F1 is a quota-limited public demo tier without an SLA.
+app_service_sku = "F1"
+
+# Record the exact SKU shown by your Azure subscription. Keep this null until it is verified.
+sql_database_sku_name = null
+
+# Set to true only after consciously selecting the cheapest paid Azure SQL SKU available to this subscription.
+allow_paid_resources = false

@@ -9,13 +9,15 @@ builder.Services.AddFleetCardsInfrastructure();
 
 var app = builder.Build();
 app.UseExceptionHandler();
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
-app.MapGet("/", () => new ApiInfo("Fleet Cards API", "0.1.0"))
+app.MapGet("/api", () => new ApiInfo("Fleet Cards API", "0.1.0"))
     .WithName("GetApiInfo")
     .WithTags("Platform");
 
@@ -48,6 +50,23 @@ app.MapGet("/api/programs", (IFleetCardsReadService service) => service.GetProgr
     .WithTags("Programs");
 
 app.MapDefaultEndpoints();
+app.MapFallback(async context =>
+{
+    var path = context.Request.Path.Value ?? string.Empty;
+    if (
+        path.StartsWith("/api", StringComparison.OrdinalIgnoreCase)
+        || path.StartsWith("/health", StringComparison.OrdinalIgnoreCase)
+        || Path.HasExtension(path)
+    )
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
+
+    await Results
+        .File(Path.Combine(app.Environment.WebRootPath, "index.html"), "text/html")
+        .ExecuteAsync(context);
+});
 app.Run();
 
 public partial class Program;
