@@ -13,6 +13,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
   DOTNET_NOLOGO: true
   NUGET_XMLDOC_MODE: skip
 
@@ -54,7 +55,7 @@ jobs:
       - name: Test Angular application
         run: |
           npm --prefix web ci
-          npm --prefix web test -- --watch=false --browsers=ChromeHeadless
+          npm --prefix web test -- --watch=false
 
       - name: Validate Terraform
         run: |
