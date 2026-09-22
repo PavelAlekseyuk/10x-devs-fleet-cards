@@ -127,14 +127,16 @@ public sealed class FleetCardsDbContext(DbContextOptions<FleetCardsDbContext> op
                 {
                     Id = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
                     UserName = "anna.nowak",
-                    PasswordHash = "pbkdf2-sha256:120000:32:YW5uYS5ub3dha3xmbGVldGNhcmRzfHYx:ii5CUBhy/r7ijfx9rxha1fx84ADBy5blrUopRVSUQOE=",
+                    PasswordHash =
+                        "pbkdf2-sha256:120000:32:YW5uYS5ub3dha3xmbGVldGNhcmRzfHYx:ii5CUBhy/r7ijfx9rxha1fx84ADBy5blrUopRVSUQOE=",
                     Permission = "ReadWrite",
                 },
                 new FleetUser
                 {
                     Id = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc"),
                     UserName = "piotr.wisniewski",
-                    PasswordHash = "pbkdf2-sha256:120000:32:cGlvdHIud2lzbmlld3NraXxmbGVldGNhcmRzfHYx:Jey8SEvmKOAL0FlmRyh51nW+zGLSsICzEqjEb9w9bgQ=",
+                    PasswordHash =
+                        "pbkdf2-sha256:120000:32:cGlvdHIud2lzbmlld3NraXxmbGVldGNhcmRzfHYx:Jey8SEvmKOAL0FlmRyh51nW+zGLSsICzEqjEb9w9bgQ=",
                     Permission = "ReadOnly",
                 }
             );
