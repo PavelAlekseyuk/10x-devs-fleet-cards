@@ -14,7 +14,7 @@ milestone_status: open
 
 # Roadmap: Beznynowicz Fleet Cards Client Portal
 
-> Derived from `context/foundation/prd.md` (v1), `spec/implementation-roadmap.md`, and an auto-researched codebase baseline.
+> Derived from `context/foundation/prd.md` (v1), `context/foundation/implementation-roadmap.md`, and an auto-researched codebase baseline.
 > Edit in place; archive when superseded.
 > Slices below are listed in dependency order. The "At a glance" table is the index.
 
@@ -23,7 +23,7 @@ milestone_status: open
 **M-1: First operational card flow** - Status: open
 
 - **Intent:** Deliver the required representative journey from a seeded sign-in through vehicle and virtual-card handling to generated spending and totals. Keep the scope to the primary MVP outcome so the client can exercise one complete operational flow.
-- **Source materials:** `context/foundation/prd.md` (v1), `spec/implementation-roadmap.md`
+- **Source materials:** `context/foundation/prd.md` (v1), `context/foundation/implementation-roadmap.md`
 - **Done when:** every F-NN and S-NN below is `done`, and a seeded full-access user completes US-01 with totals that reconcile to the generated transactions.
 - **Scope anchors:** FR-001 through FR-007; US-01; the PRD's transaction-correctness and unauthenticated-access requirements.
 
