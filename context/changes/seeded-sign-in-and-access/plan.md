@@ -262,9 +262,9 @@ Add one forward EF migration for the required password-hash column and the secon
 
 #### Automated
 
-- [ ] 2.1 API integration tests cover valid login for both roles, generic invalid-login behavior, logout, current-user resolution, session expiry configuration, and CSRF rejection/acceptance.
-- [ ] 2.2 API integration tests prove anonymous access is denied, ReadWrite access is allowed, ReadOnly commands are denied, and ReadOnly program access is denied.
-- [ ] 2.3 API tests verify health/platform endpoints retain their intended availability and authentication logs use only allowlisted fields.
+- [x] 2.1 API integration tests cover valid login for both roles, generic invalid-login behavior, logout, current-user resolution, session expiry configuration, and CSRF rejection/acceptance.
+- [x] 2.2 API integration tests prove anonymous access is denied, ReadWrite access is allowed, ReadOnly commands are denied, and ReadOnly program access is denied.
+- [x] 2.3 API tests verify health/platform endpoints retain their intended availability and authentication logs use only allowlisted fields.
 
 #### Manual
 
@@ -275,22 +275,22 @@ Add one forward EF migration for the required password-hash column and the secon
 
 #### Automated
 
-- [ ] 3.1 Angular tests cover login state transitions, generic errors, logout, guard redirects, CSRF/header wiring, local language persistence, and ReadOnly route/navigation filtering.
-- [ ] 3.2 Angular component tests verify authenticated user/client bindings replace the preview identity and unauthorized program controls are absent.
-- [ ] 3.3 `npm run build` and `npm test` pass in `web/`.
+- [x] 3.1 Angular tests cover login state transitions, generic errors, logout, guard redirects, CSRF/header wiring, local language persistence, and ReadOnly route/navigation filtering.
+- [x] 3.2 Angular component tests verify authenticated user/client bindings replace the preview identity and unauthorized program controls are absent.
+- [x] 3.3 `npm run build` and `npm test` pass in `web/`.
 
 #### Manual
 
-- [ ] 3.4 In a browser, log in as each seeded user, refresh the page, switch EN/PL, navigate through the permitted shell routes, and log out.
-- [ ] 3.5 Confirm the ReadOnly user sees client, vehicle, card, and transaction views but cannot reach the program view or command controls.
-- [ ] 3.6 Confirm expired or invalid sessions return to login with a recoverable non-sensitive notice.
+- [x] 3.4 In a browser, log in as each seeded user, refresh the page, switch EN/PL, navigate through the permitted shell routes, and log out.
+- [x] 3.5 Confirm the ReadOnly user sees client, vehicle, card, and transaction views but cannot reach the program view or command controls.
+- [x] 3.6 Confirm expired or invalid sessions return to login with a recoverable non-sensitive notice.
 
 ### Phase 4: Focused Verification and Operational Documentation
 
 #### Automated
 
-- [ ] 4.1 `dotnet test` passes for the API and application test projects with the new authorization cases.
-- [ ] 4.2 `npm test` and `npm run build` pass from `web/`.
+- [x] 4.1 `dotnet test` passes for the API and application test projects with the new authorization cases.
+- [x] 4.2 `npm test` and `npm run build` pass from `web/`.
 - [ ] 4.3 A clean solution build and the documented focused test commands reproduce the same results without warnings introduced by this change.
 
 #### Manual

@@ -10,6 +10,7 @@ nav a:hover, nav a.active { color: #fff; background: #24372f; border-left-color:
 .nav-icon { width: 18px; text-align: center; color: #e9b25f; font-size: 17px; }
 .sidebar-footer { margin-top: auto; display: grid; gap: 24px; }
 .language-button, .icon-button, .quiet-button { border: 0; cursor: pointer; }
+.logout-button { padding: 0; border: 0; color: #aebbb1; background: transparent; cursor: pointer; text-align: left; font-size: 12px; }
 .language-button { padding: 10px 12px; display: flex; justify-content: space-between; color: #d7e3d9; background: #24372f; font-size: 12px; }
 .user-chip { display: flex; align-items: center; gap: 10px; }
 .user-chip span:last-child { display: grid; gap: 2px; }

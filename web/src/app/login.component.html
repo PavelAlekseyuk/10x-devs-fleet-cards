@@ -1,0 +1,28 @@
+<main class="login-page">
+  <section class="login-visual" [attr.aria-label]="language.text('clientPortal')">
+    <div class="visual-mark">FC</div>
+    <p class="eyebrow">Fleet Cards</p>
+    <h1>{{ language.text('clearDecisions') }}</h1>
+    <p>{{ language.text('manageDescription') }}</p>
+  </section>
+  <section class="login-panel">
+    <button class="language-button" type="button" (click)="language.toggle()">
+      {{ language.language() }} <span aria-hidden="true">↔</span>
+    </button>
+    <div class="login-form-wrap">
+      <p class="eyebrow">{{ language.text('clientPortal') }}</p>
+      <h2>{{ language.text('welcome') }}</h2>
+      <p class="muted">{{ language.text('signInDescription') }}</p>
+      <form (ngSubmit)="submit()">
+        <label for="username">{{ language.text('username') }}</label>
+        <input id="username" name="username" [(ngModel)]="username" autocomplete="username" />
+        <label for="password">{{ language.text('password') }}</label>
+        <input id="password" name="password" type="password" [(ngModel)]="password" autocomplete="current-password" />
+        @if (auth.error()) { <p class="error" role="alert">{{ auth.error() }}</p> }
+        <button class="primary-button" type="submit" [disabled]="auth.loading()">
+          {{ auth.loading() ? '...' : language.text('signInButton') }} <span aria-hidden="true">→</span>
+        </button>
+      </form>
+    </div>
+  </section>
+</main>

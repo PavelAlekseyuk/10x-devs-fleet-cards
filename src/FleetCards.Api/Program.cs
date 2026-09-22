@@ -1,16 +1,77 @@
+using System.Security.Claims;
+using FleetCards.Api;
 using FleetCards.Application;
+using FleetCards.Contracts;
 using FleetCards.Infrastructure;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
+builder
+    .Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.Cookie.Name = "FleetCards.Session";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+            ? CookieSecurePolicy.SameAsRequest
+            : CookieSecurePolicy.Always;
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.SlidingExpiration = true;
+        options.Events.OnRedirectToLogin = context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return Task.CompletedTask;
+        };
+        options.Events.OnRedirectToAccessDenied = context =>
+        {
+            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return Task.CompletedTask;
+        };
+    });
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("ReadWrite", policy => policy.RequireClaim("permission", "ReadWrite"));
+});
+builder.Services.AddSingleton<LoginAttemptTracker>();
 builder.Services.AddFleetCardsInfrastructure(builder.Configuration);
 
 var app = builder.Build();
+
+if (!string.IsNullOrWhiteSpace(builder.Configuration.GetConnectionString("fleetcards")))
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<FleetCardsDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
+
 app.UseExceptionHandler();
 app.UseDefaultFiles();
 app.UseStaticFiles();
+app.UseAuthentication();
+app.UseAuthorization();
+app.Use(
+    async (context, next) =>
+    {
+        await next();
+        if (
+            context.Response.StatusCode == StatusCodes.Status403Forbidden
+            && context.Request.Path.StartsWithSegments("/api")
+        )
+        {
+            app.Logger.LogWarning(
+                "Authorization denied for {Path} with correlation {CorrelationId}",
+                context.Request.Path,
+                context.TraceIdentifier
+            );
+        }
+    }
+);
 
 if (app.Environment.IsDevelopment())
 {
@@ -21,19 +82,136 @@ app.MapGet("/api", () => new ApiInfo("Fleet Cards API", "0.1.0"))
     .WithName("GetApiInfo")
     .WithTags("Platform");
 
-app.MapGet("/api/auth/me", (IFleetCardsReadService service) => service.GetCurrentUser())
+app.MapGet(
+        "/api/auth/csrf",
+        (HttpContext context) =>
+        {
+            CsrfProtection.Issue(context);
+            return Results.NoContent();
+        }
+    )
+    .AllowAnonymous()
+    .WithName("GetCsrfToken")
+    .WithTags("Auth");
+
+app.MapPost(
+        "/api/auth/login",
+        async (
+            LoginRequest request,
+            HttpContext context,
+            FleetCards.Application.IAuthenticationService authentication,
+            LoginAttemptTracker throttle
+        ) =>
+        {
+            var correlationId = context.TraceIdentifier;
+            if (!CsrfProtection.IsValid(context))
+            {
+                app.Logger.LogWarning(
+                    "Authentication rejected for {Reason} with correlation {CorrelationId}",
+                    "csrf",
+                    correlationId
+                );
+                return Results.StatusCode(StatusCodes.Status403Forbidden);
+            }
+
+            var userName = request.UserName.Trim();
+            var throttleKey = $"{context.Connection.RemoteIpAddress}|{userName}";
+            if (throttle.IsThrottled(throttleKey))
+            {
+                app.Logger.LogWarning(
+                    "Authentication throttled for {UserName} with correlation {CorrelationId}",
+                    userName,
+                    correlationId
+                );
+                return Results.StatusCode(StatusCodes.Status429TooManyRequests);
+            }
+
+            var user = authentication.ValidateCredentials(userName, request.Password);
+            if (user is null)
+            {
+                throttle.RecordFailure(throttleKey);
+                app.Logger.LogWarning(
+                    "Authentication failed for {UserName} with correlation {CorrelationId}",
+                    userName,
+                    correlationId
+                );
+                return Results.Unauthorized();
+            }
+
+            throttle.Reset(throttleKey);
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.Name, user.UserName),
+                new Claim("permission", user.Permission),
+            };
+            await context.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(
+                    new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)
+                )
+            );
+            app.Logger.LogInformation(
+                "Authentication succeeded for {UserName} with {Permission} and correlation {CorrelationId}",
+                user.UserName,
+                user.Permission,
+                correlationId
+            );
+            return Results.Ok(user);
+        }
+    )
+    .AllowAnonymous()
+    .WithName("Login")
+    .WithTags("Auth");
+
+app.MapPost(
+        "/api/auth/logout",
+        async (HttpContext context) =>
+        {
+            if (!CsrfProtection.IsValid(context))
+            {
+                return Results.StatusCode(StatusCodes.Status403Forbidden);
+            }
+
+            var userName = context.User.Identity?.Name ?? "unknown";
+            await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            context.Response.Cookies.Delete(CsrfProtection.CookieName);
+            app.Logger.LogInformation(
+                "Authentication logout for {UserName} with correlation {CorrelationId}",
+                userName,
+                context.TraceIdentifier
+            );
+            return Results.NoContent();
+        }
+    )
+    .RequireAuthorization()
+    .WithName("Logout")
+    .WithTags("Auth");
+
+app.MapGet(
+        "/api/auth/me",
+        (HttpContext context, FleetCards.Application.IAuthenticationService authentication) =>
+        {
+            var userName = context.User.Identity?.Name;
+            var user = userName is null ? null : authentication.GetCurrentUser(userName);
+            return user is null ? Results.Unauthorized() : Results.Ok(user);
+        }
+    )
+    .RequireAuthorization()
     .WithName("GetCurrentUser")
     .WithTags("Auth");
 
 app.MapGet("/api/client", (IFleetCardsReadService service) => service.GetClient())
+    .RequireAuthorization()
     .WithName("GetClient")
     .WithTags("Client");
 
 app.MapGet("/api/cars", (string? search, IFleetCardsReadService service) => service.GetCars(search))
+    .RequireAuthorization()
     .WithName("GetCars")
     .WithTags("Cars");
 
 app.MapGet("/api/cards", (IFleetCardsReadService service) => service.GetCards())
+    .RequireAuthorization()
     .WithName("GetCards")
     .WithTags("Cards");
 
@@ -42,10 +220,12 @@ app.MapGet(
         (DateTimeOffset? from, DateTimeOffset? to, IFleetCardsReadService service) =>
             service.GetTransactions(from, to)
     )
+    .RequireAuthorization()
     .WithName("GetTransactions")
     .WithTags("Transactions");
 
 app.MapGet("/api/programs", (IFleetCardsReadService service) => service.GetPrograms())
+    .RequireAuthorization("ReadWrite")
     .WithName("GetPrograms")
     .WithTags("Programs");
 

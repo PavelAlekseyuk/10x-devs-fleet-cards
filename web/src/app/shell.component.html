@@ -1,0 +1,31 @@
+<main class="app-shell">
+  <aside class="sidebar">
+    <div class="brand-mark" aria-label="Fleet Cards">FC</div>
+    <div class="brand-copy"><strong>Fleet Cards</strong><span>{{ language.text('clientPortal') }}</span></div>
+    <nav [attr.aria-label]="language.text('clientPortal')">
+      @for (item of visibleNavigation; track item.key) {
+        <a [class.active]="activeSection === item.key" [routerLink]="'/' + item.key">
+          <span class="nav-icon" aria-hidden="true">{{ item.icon }}</span><span>{{ language.text(item.key === 'cars' ? 'vehicles' : item.key) }}</span>
+        </a>
+      }
+    </nav>
+    <div class="sidebar-footer">
+      <button class="language-button" type="button" (click)="language.toggle()"><span>{{ language.language() }}</span><span aria-hidden="true">↔</span></button>
+      <button class="logout-button" type="button" (click)="logout()">{{ language.text('logout') }}</button>
+      <div class="user-chip"><span class="avatar">{{ initials }}</span><span><strong>{{ displayName }}</strong><small>{{ auth.user()?.permission === 'ReadOnly' ? language.text('readOnly') : language.text('readWrite') }}</small></span></div>
+    </div>
+  </aside>
+  <section class="workspace">
+    <header class="topbar"><div><span class="eyebrow">{{ client?.legalName ?? 'Fleet Cards' }}</span><h1>{{ activeTitle }}</h1></div><div class="topbar-meta"><span class="status-dot">{{ language.text('demoEnvironment') }}</span><button class="icon-button" type="button" [attr.aria-label]="language.text('notifications')">♢</button></div></header>
+    <div class="content">
+      @if (activeSection === 'overview') {
+        <section class="hero-row"><div><p class="eyebrow">{{ language.text('fleetSummary') }}</p><h2>{{ language.text('goodMorning') }}, {{ displayName }}.</h2><p class="muted">{{ language.text('manageDescription') }}</p></div>@if (canWrite()) {<button class="primary-button" type="button" routerLink="/cards">{{ language.text('issueCard') }} <span>+</span></button>}</section>
+        <section class="metric-grid" [attr.aria-label]="language.text('fleetSummary')"><article class="metric-card accent-coral"><span>{{ language.text('fleetVehicles') }}</span><strong>2</strong><small>{{ language.text('seededVehicles') }}</small></article><article class="metric-card accent-teal"><span>{{ language.text('activeCards') }}</span><strong>1</strong><small>{{ language.text('virtualFleetCard') }}</small></article><article class="metric-card accent-gold"><span>{{ language.text('septemberSpend') }}</span><strong>326,60 zł</strong><small>{{ language.text('seededTransaction') }}</small></article><article class="metric-card accent-ink"><span>{{ language.text('client') }}</span><strong>{{ client?.jurisdiction ?? '...' }}</strong><small>{{ client?.nip ?? '' }}</small></article></section>
+        <section class="dashboard-grid"><article class="panel spend-panel"><div class="panel-heading"><div><p class="eyebrow">{{ language.text('spendOverview') }}</p><h3>{{ language.text('fuelSpend') }}</h3></div><span class="record-count">{{ language.text('last30Days') }}</span></div><div class="chart-placeholder" role="img" [attr.aria-label]="language.text('fuelSpend')"><span>326,60 zł</span><small>{{ language.text('totalPaidWithDiscount') }}</small><div class="chart-line"></div></div></article><article class="panel program-panel"><div class="panel-heading"><div><p class="eyebrow">{{ language.text('client') }}</p><h3>{{ client?.legalName ?? language.text('loading') }}</h3></div><span class="spark">✦</span></div><p class="muted">{{ client?.address }}</p>@if (canWrite()) {<a class="text-button" routerLink="/programs">{{ language.text('comparePrograms') }} <span>→</span></a>}</article></section>
+      } @else {
+        <section class="section-intro"><div><p class="eyebrow">{{ language.text('clientWorkspace') }}</p><h2>{{ activeTitle }}</h2><p class="muted">{{ language.text('authenticatedAccess') }} {{ displayName }}.</p></div>@if (canWrite()) {<button class="primary-button" type="button">{{ language.text('addNew') }} <span>+</span></button>}</section>
+        <section class="panel table-panel"><div class="panel-heading"><div><p class="eyebrow">{{ language.text('seededData') }}</p><h3>{{ activeTitle }}</h3></div><span class="record-count">{{ activeSection === 'cars' ? language.text('vehiclesCount') : activeSection === 'cards' ? language.text('cardCount') : activeSection === 'transactions' ? language.text('transactionCount') : language.text('programCount') }}</span></div><div class="table-row table-header"><span>{{ language.text('name') }}</span><span>{{ language.text('status') }}</span><span>{{ language.text('updated') }}</span><span></span></div><div class="table-row"><span><strong>{{ activeSection === 'cars' ? 'WA 12345' : activeTitle }}</strong><small>{{ client?.legalName }}</small></span><span class="badge">{{ language.text('active') }}</span><span class="muted">{{ language.text('today') }}</span><span class="row-arrow">→</span></div></section>
+      }
+    </div>
+  </section>
+</main>

@@ -4,6 +4,55 @@ The workflow in `.github/workflows/main.yml` runs only for pushes to `main`. A s
 provisions the demo resources, applies the idempotent database migration, deploys the exact published API/SPA
 archive, and checks the public root, API metadata, and database-backed card endpoint.
 
+## Local seeded sign-in
+
+Start the composed local runtime from the repository root:
+
+```powershell
+dotnet run --project src/FleetCards.AppHost/FleetCards.AppHost.csproj
+```
+
+Open the Angular portal at `http://localhost:4200/`. The API applies pending EF migrations during startup,
+including the seeded credential migration. The local seeded accounts are:
+
+| Username | Password | Permission |
+| --- | --- | --- |
+| `anna.nowak` | `Anna123!` | ReadWrite |
+| `piotr.wisniewski` | `Piotr123!` | ReadOnly |
+
+These credentials are synthetic MVP demo credentials only. Persistence stores password hashes, never these
+password values. Do not reuse them outside a local demonstration or promote them to production configuration.
+
+The browser first requests `GET /api/auth/csrf`, then sends the returned `XSRF-TOKEN` cookie value in the
+`X-XSRF-TOKEN` header for login and logout. Successful login creates an eight-hour sliding,
+HttpOnly `FleetCards.Session` cookie. Refreshing the browser restores the session through `GET /api/auth/me`.
+Logout clears the session; subsequent client-data requests return `401`.
+
+### Local permission matrix
+
+| Capability | ReadWrite | ReadOnly |
+| --- | --- | --- |
+| Client, vehicle, card, and transaction views | Allowed | Allowed |
+| Program view and benefit area | Allowed | Denied (`403`) |
+| Mutating commands | Allowed when implemented | Denied (`403`) |
+| Unauthenticated client-data requests | Denied (`401`) | Denied (`401`) |
+
+Authentication outcomes are currently represented by structured logs with correlation IDs. Durable audit rows,
+production identity integration, password reset, and production-grade distributed throttling are deferred MVP work.
+
+Focused local verification:
+
+```powershell
+dotnet test tests/FleetCards.Api.Tests/FleetCards.Api.Tests.csproj
+dotnet test tests/FleetCards.Application.Tests/FleetCards.Application.Tests.csproj
+Push-Location web; npm test; npm run build; Pop-Location
+dotnet build FleetCards.sln
+```
+
+During a composed run, inspect the `api` resource logs in the Aspire dashboard or the AppHost terminal for
+successful, failed, throttled, logout, and denied authentication events. Logs must not contain passwords,
+session values, full PAN, CVV, or PIN data.
+
 ## One-time owner setup
 
 1. Complete the region and SKU record in `docs/deployment/demo-constraints.md`.
