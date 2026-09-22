@@ -255,8 +255,8 @@ Add one forward EF migration for the required password-hash column and the secon
 
 #### Manual
 
-- [ ] 1.4 Inspect the local database/model snapshot and confirm no plaintext demo password is stored or logged.
-- [ ] 1.5 Confirm both documented seeded identities are available to the later login flow with the expected permissions.
+- [x] 1.4 Inspect the local database/model snapshot and confirm no plaintext demo password is stored or logged.
+- [x] 1.5 Confirm both documented seeded identities are available to the later login flow with the expected permissions.
 
 ### Phase 2: Protected API Access and Auth Observability
 
@@ -268,8 +268,8 @@ Add one forward EF migration for the required password-hash column and the secon
 
 #### Manual
 
-- [ ] 2.4 Use an HTTP client or browser to sign in, refresh, call a protected endpoint, log out, and confirm the same endpoint is denied afterward.
-- [ ] 2.5 Repeat failed logins and confirm the response remains generic while throttling eventually applies without revealing account existence.
+- [x] 2.4 Use an HTTP client or browser to sign in, refresh, call a protected endpoint, log out, and confirm the same endpoint is denied afterward.
+- [x] 2.5 Repeat failed logins and confirm the response remains generic while throttling eventually applies without revealing account existence.
 
 ### Phase 3: Angular Login and Guarded Bilingual Shell
 
@@ -291,7 +291,7 @@ Add one forward EF migration for the required password-hash column and the secon
 
 - [x] 4.1 `dotnet test` passes for the API and application test projects with the new authorization cases.
 - [x] 4.2 `npm test` and `npm run build` pass from `web/`.
-- [ ] 4.3 A clean solution build and the documented focused test commands reproduce the same results without warnings introduced by this change.
+- [x] 4.3 A clean solution build and the documented focused test commands reproduce the same results without warnings introduced by this change.
 
 #### Manual
 
