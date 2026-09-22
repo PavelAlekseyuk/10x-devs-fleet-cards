@@ -205,7 +205,7 @@ jobs:
           curl --fail --silent --show-error --retry 12 --retry-delay 10 --retry-connrefused "$APP_URL/" > /dev/null
           curl --fail --silent --show-error --retry 12 --retry-delay 10 --retry-connrefused "$APP_URL/api" > /dev/null
 
-          csrf_token="$(curl --fail --silent --show-error --retry 12 --retry-delay 10 --retry-connrefused -c "$cookie_jar" -D - "$APP_URL/api/auth/csrf" | awk '/^Set-Cookie:/ {print $2}' | head -n 1 | tr -d '\r' | cut -d= -f2-)"
+          csrf_token="$(curl --fail --silent --show-error --retry 12 --retry-delay 10 --retry-connrefused -c "$cookie_jar" -D - "$APP_URL/api/auth/csrf" | tr -d '\r' | sed -n 's/^Set-Cookie: XSRF-TOKEN=\([^;]*\).*/\1/p' | head -n 1)"
           if [ -z "$csrf_token" ]; then
             echo "Failed to retrieve CSRF token from $APP_URL/api/auth/csrf" >&2
             exit 1
@@ -215,7 +215,6 @@ jobs:
             -b "$cookie_jar" \
             -c "$cookie_jar" \
             -H "Content-Type: application/json" \
-            -H "Cookie: XSRF-TOKEN=$csrf_token" \
             -H "X-XSRF-TOKEN: $csrf_token" \
             --data '{"UserName":"anna.nowak","Password":"Anna123!"}' \
             "$APP_URL/api/auth/login" > /dev/null
