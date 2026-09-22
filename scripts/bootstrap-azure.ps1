@@ -187,6 +187,7 @@ $demoResourceGroupScope = $demoResourceGroupScope.Trim()
 
 Ensure-RoleAssignment -PrincipalObjectId $servicePrincipalObjectId -RoleName 'Storage Blob Data Contributor' `
     -Scope "$stateStorageScope/blobServices/default/containers/$StateContainerName"
+Ensure-RoleAssignment -PrincipalObjectId $servicePrincipalObjectId -RoleName 'Contributor' -Scope "/subscriptions/$SubscriptionId"
 Ensure-RoleAssignment -PrincipalObjectId $servicePrincipalObjectId -RoleName 'Contributor' -Scope $demoResourceGroupScope
 
 $dotnet10Runtime = Invoke-AzCli @(

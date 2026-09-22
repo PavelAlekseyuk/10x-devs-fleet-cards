@@ -28,7 +28,11 @@ archive, and checks the public root, API metadata, and database-backed card endp
    | `AZURE_SQL_ADMINISTRATOR_LOGIN` | Value of `AZURE_PRINCIPAL_DISPLAY_NAME`. |
    | `AZURE_SQL_ADMINISTRATOR_OBJECT_ID` | Value of `AZURE_PRINCIPAL_OBJECT_ID`. |
 
-4. Run the workflow once or apply Terraform locally to create the SQL logical server. Read the
+4. Re-run the bootstrap script or assign the deployment identity `Contributor` at the subscription scope.
+   Terraform needs subscription-level provider-registration rights before it can create the demo resource
+   group and Azure SQL resources. Resource-group-only access is not enough.
+
+5. Run the workflow once or apply Terraform locally to create the SQL logical server. Read the
    `sql_server_identity_principal_id` Terraform output.
 5. As a Microsoft Entra Privileged Role Administrator, run:
 

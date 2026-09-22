@@ -145,6 +145,14 @@ jobs:
             -backend-config="use_oidc=true" \
             -backend-config="use_azuread_auth=true"
 
+      - name: Ensure Azure resource providers are registered
+        run: |
+          az provider register --namespace Microsoft.Web --wait
+          az provider register --namespace Microsoft.Sql --wait
+          az provider register --namespace Microsoft.Insights --wait
+          az provider register --namespace Microsoft.OperationalInsights --wait
+          az provider register --namespace Microsoft.Resources --wait
+
       - name: Plan and apply infrastructure
         run: |
           terraform -chdir=infra/terraform plan -out=demo.tfplan
