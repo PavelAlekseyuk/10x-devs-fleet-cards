@@ -108,3 +108,24 @@ public sealed class EfFleetCardsReadService(FleetCardsDbContext dbContext) : IFl
             ))
             .ToArray();
 }
+
+public sealed class EfAuthenticationService(FleetCardsDbContext dbContext) : IAuthenticationService
+{
+    public CurrentUserResponse? ValidateCredentials(string userName, string password)
+    {
+        var user = FindUser(userName);
+
+        return user is not null && CredentialHashing.Verify(password, user.PasswordHash)
+            ? new CurrentUserResponse(user.UserName, user.Permission)
+            : null;
+    }
+
+    public CurrentUserResponse? GetCurrentUser(string userName)
+    {
+        var user = FindUser(userName);
+        return user is null ? null : new CurrentUserResponse(user.UserName, user.Permission);
+    }
+
+    private FleetUser? FindUser(string userName) =>
+        dbContext.Users.AsNoTracking().SingleOrDefault(user => user.UserName == userName.Trim());
+}

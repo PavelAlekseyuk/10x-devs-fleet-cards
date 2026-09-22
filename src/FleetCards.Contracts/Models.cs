@@ -1,5 +1,7 @@
 namespace FleetCards.Contracts;
 
+public sealed record LoginRequest(string UserName, string Password);
+
 public sealed record CurrentUserResponse(string UserName, string Permission);
 
 public sealed record ClientResponse(

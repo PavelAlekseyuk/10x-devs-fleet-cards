@@ -42,7 +42,7 @@ Company representatives need both access to several fuel networks and clear cost
 | ID | Change ID | Outcome (user can ...) | Prerequisites | PRD refs | Status |
 | --- | --- | --- | --- | --- | --- |
 | F-01 | repeatable-demo-runtime | (foundation) run a repeatable local demonstration with safe seeded data and a verified health path | - | US-01, FR-001 | ready |
-| S-01 | seeded-sign-in-and-access | sign in with a seeded account and access only the portal actions permitted to that account | F-01 | FR-001 | planning |
+| S-01 | seeded-sign-in-and-access | sign in with a seeded account and access only the portal actions permitted to that account | F-01 | FR-001 | in-progress |
 | S-02 | manage-fleet-vehicles | create, view, change, archive, and restore fleet vehicles with allowed fuel types | S-01 | FR-002, US-01 | proposed |
 | S-03 | issue-and-assign-virtual-cards | issue, manage, return, and assign a virtual card without exposing full PAN data | S-02 | FR-003, FR-004, US-01 | proposed |
 | S-04 | review-generated-card-spending | review generated fuel transactions for a selected period and reconcile them to the landing-page total | S-03 | FR-005, FR-006, FR-007, US-01 | blocked |
@@ -100,7 +100,7 @@ What is already in place in the codebase as of `2026-09-22` (auto-researched and
   - Add Angular routing, language switching, client details, and permission-aware navigation.
   - Add API authorization tests for authenticated, unauthenticated, read-only, and read-write users.
 - **Exit criteria:** both seeded permission levels work and all MVP shell views have Polish and English text.
-- **Status:** planning
+- **Status:** in-progress
 
 ### S-02: Manage fleet vehicles
 

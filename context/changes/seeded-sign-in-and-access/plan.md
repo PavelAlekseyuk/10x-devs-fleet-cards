@@ -249,9 +249,9 @@ Add one forward EF migration for the required password-hash column and the secon
 
 #### Automated
 
-- [ ] 1.1 The new EF migration applies and the seeded user rows contain hashes rather than plaintext passwords.
-- [ ] 1.2 Application and Infrastructure tests validate both seeded users and reject invalid credentials without exposing account-existence detail.
-- [ ] 1.3 `dotnet build FleetCards.sln` passes after the model, contracts, and service changes.
+- [x] 1.1 The new EF migration applies and the seeded user rows contain hashes rather than plaintext passwords.
+- [x] 1.2 Application and Infrastructure tests validate both seeded users and reject invalid credentials without exposing account-existence detail.
+- [x] 1.3 `dotnet build FleetCards.sln` passes after the model, contracts, and service changes.
 
 #### Manual
 
