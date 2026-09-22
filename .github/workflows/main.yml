@@ -182,7 +182,7 @@ jobs:
 
       - name: Install sqlcmd
         run: |
-          curl --fail --silent --show-error https://github.com/microsoft/go-sqlcmd/releases/latest/download/sqlcmd-linux-amd64.tar.bz2 \
+          curl --fail --location --silent --show-error https://github.com/microsoft/go-sqlcmd/releases/latest/download/sqlcmd-linux-amd64.tar.bz2 \
             | sudo tar --extract --bzip2 --file - --directory /usr/local/bin sqlcmd
           sqlcmd --version
 
