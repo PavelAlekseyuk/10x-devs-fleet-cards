@@ -14,7 +14,7 @@ milestone_status: open
 
 # Roadmap: Beznynowicz Fleet Cards Client Portal
 
-> Derived from `context/foundation/prd.md` (v1), `context/foundation/implementation-roadmap.md`, and an auto-researched codebase baseline.
+> Derived from `context/foundation/prd.md` (v1) and an auto-researched codebase baseline.
 > Edit in place; archive when superseded.
 > Slices below are listed in dependency order. The "At a glance" table is the index.
 
@@ -23,7 +23,7 @@ milestone_status: open
 **M-1: First operational card flow** - Status: open
 
 - **Intent:** Deliver the required representative journey from a seeded sign-in through vehicle and virtual-card handling to generated spending and totals. Keep the scope to the primary MVP outcome so the client can exercise one complete operational flow.
-- **Source materials:** `context/foundation/prd.md` (v1), `context/foundation/implementation-roadmap.md`
+- **Source materials:** `context/foundation/prd.md` (v1)
 - **Done when:** every F-NN and S-NN below is `done`, and a seeded full-access user completes US-01 with totals that reconcile to the generated transactions.
 - **Scope anchors:** FR-001 through FR-007; US-01; the PRD's transaction-correctness and unauthenticated-access requirements.
 
@@ -46,6 +46,7 @@ Company representatives need both access to several fuel networks and clear cost
 | S-02 | manage-fleet-vehicles | create, view, change, archive, and restore fleet vehicles with allowed fuel types | S-01 | FR-002, US-01 | proposed |
 | S-03 | issue-and-assign-virtual-cards | issue, manage, return, and assign a virtual card without exposing full PAN data | S-02 | FR-003, FR-004, US-01 | proposed |
 | S-04 | review-generated-card-spending | review generated fuel transactions for a selected period and reconcile them to the landing-page total | S-03 | FR-005, FR-006, FR-007, US-01 | blocked |
+| S-05 | harden-operational-card-flow | verify the completed operational card flow through Aspire and document its local demonstration contract | S-04 | Acceptance criteria 1-6, 10; US-01 | proposed |
 
 ## Baseline
 
@@ -71,6 +72,14 @@ What is already in place in the codebase as of `2026-09-22` (auto-researched and
 - **Blockers:** -
 - **Unknowns:** -
 - **Risk:** Existing persistence and composition are only partly wired, so a narrow repeatable runtime contract must land before user-flow work can be verified safely.
+- **Implementation scope:**
+  - Keep the existing API, Domain, Application, Infrastructure, Contracts, ServiceDefaults, AppHost, Angular, and test projects.
+  - Configure AppHost for API, Angular SPA, SQL Server, and telemetry.
+  - Add restore, build, test, lint commands, and health checks.
+  - Add the EF Core SQL Server provider, migrations, database initializer, and local connection wiring.
+  - Seed one Polish client, read-write/read-only users, cars, programs, and safe demo data.
+  - Make mock generation deterministic for acceptance tests.
+- **Exit criteria:** a clean local environment starts the composed stack and exposes health endpoints; Aspire creates the database and safely repeats the same seed setup.
 - **Status:** ready
 
 ## Slices
@@ -86,6 +95,11 @@ What is already in place in the codebase as of `2026-09-22` (auto-researched and
 - **Unknowns:**
   - What are the final client-role boundaries beyond the seeded full-access and read-only users? - Owner: product/client stakeholders. Block: no.
 - **Risk:** The PRD deliberately uses mocked identities, so this slice must enforce the documented two roles without prematurely deciding production identity rules.
+- **Implementation scope:**
+  - Implement seeded username/password login, logout, current-user endpoint, and session handling.
+  - Add Angular routing, language switching, client details, and permission-aware navigation.
+  - Add API authorization tests for authenticated, unauthenticated, read-only, and read-write users.
+- **Exit criteria:** both seeded permission levels work and all MVP shell views have Polish and English text.
 - **Status:** proposed
 
 ### S-02: Manage fleet vehicles
@@ -98,11 +112,16 @@ What is already in place in the codebase as of `2026-09-22` (auto-researched and
 - **Blockers:** -
 - **Unknowns:** -
 - **Risk:** Vehicle history must remain usable by later card assignments and transactions, so archival behavior precedes destructive removal.
+- **Implementation scope:**
+  - Implement normalized plate CRUD, search, archive/restore, and validation.
+  - Add Angular fleet list and edit flow.
+  - Add assignment-safe archive rules and audit events.
+- **Exit criteria:** car behavior and permission rules pass API and browser acceptance tests.
 - **Status:** proposed
 
 ### S-03: Issue and assign virtual cards
 
-- **Outcome:** user can issue, manage, return, and assign a virtual card to a vehicle without seeing or storing full PAN data.
+- **Outcome:** user can issue, manage, and assign a virtual card to a vehicle without seeing or storing full PAN data.
 - **Change ID:** issue-and-assign-virtual-cards
 - **PRD refs:** FR-003, FR-004, US-01, Non-Functional Requirements (full PAN boundary)
 - **Prerequisites:** S-02
@@ -110,6 +129,11 @@ What is already in place in the codebase as of `2026-09-22` (auto-researched and
 - **Blockers:** -
 - **Unknowns:** -
 - **Risk:** Card state changes and vehicle reassignment need effective history so future reporting cannot rewrite past vehicle context.
+- **Implementation scope:**
+  - Define `ICardProvider` and a mock implementation that returns masked PAN and token only.
+  - Implement issue, list, assign, block, stolen, and archive operations.
+  - Add unrestricted card state selection, redaction tests, and card/car assignment history.
+- **Exit criteria:** issuing a card creates one local card without sensitive PAN data and every supported card state can be selected without losing history.
 - **Status:** proposed
 
 ### S-04: Review generated card spending
@@ -123,7 +147,29 @@ What is already in place in the codebase as of `2026-09-22` (auto-researched and
 - **Unknowns:**
   - What are the exact rules for VAT, refunds, cancellations, and recalculations? - Owner: product/client stakeholders. Block: yes.
 - **Risk:** The primary journey cannot claim reconciled transaction correctness until the calculation rules are explicit; resolving them makes the required totals verifiable.
+- **Implementation scope:**
+  - Generate and persist 1-5 previous-month transactions after issuance.
+  - Implement decimal precision, VAT fields, transaction status/version metadata, filtering, totals, and UI views.
+  - Add deterministic calculation tests for discounted and non-discounted totals.
+- **Exit criteria:** users can inspect transactions and period totals with explicit net/gross/VAT presentation.
 - **Status:** blocked
+
+### S-05: Harden operational card flow
+
+- **Outcome:** user can rely on the completed operational card flow because it is verified through Aspire and its local demonstration contract is documented.
+- **Change ID:** harden-operational-card-flow
+- **PRD refs:** US-01; Acceptance criteria 1-6 and 10; Non-Functional Requirements
+- **Prerequisites:** S-04
+- **Parallel with:** -
+- **Blockers:** -
+- **Unknowns:** -
+- **Risk:** Cross-service behavior may appear correct in isolated tests but fail under the composed runtime, particularly at authentication, persistence, and sensitive-data boundaries.
+- **Implementation scope:**
+  - Run end-to-end tests through Aspire for login, cars, cards, and transactions.
+  - Add architecture tests, migration checks, sensitive-data scans, and accessibility checks for the core workflows.
+  - Document seeded accounts, local startup, test-data reset, and known MVP limitations.
+- **Exit criteria:** all primary-flow requirements pass locally through Aspire.
+- **Status:** proposed
 
 ## Backlog Handoff
 
@@ -134,6 +180,7 @@ What is already in place in the codebase as of `2026-09-22` (auto-researched and
 | S-02 | manage-fleet-vehicles | Deliver fleet vehicle management | no | Requires S-01. |
 | S-03 | issue-and-assign-virtual-cards | Deliver virtual-card issue and assignment | no | Requires S-02. |
 | S-04 | review-generated-card-spending | Deliver generated transaction and total review | no | Requires S-03 and the VAT decision. |
+| S-05 | harden-operational-card-flow | Harden the operational card flow | no | Requires S-04. |
 
 ## Open Roadmap Questions
 
@@ -145,12 +192,16 @@ What is already in place in the codebase as of `2026-09-22` (auto-researched and
 ## Parked
 
 - **Fleet-card program selection and comparison (FR-008).** - Why parked: it is nice-to-have and depends on an unresolved formula; the speed goal prioritizes the required operational flow.
+  - Implementation scope: import or seed read-only program JSON; implement hypothetical comparison by fuel type, effective period, VAT basis, and rounding policy; implement future assignment with editable pre-activation start/end timestamps, replacement, removal, overlap rejection, and immutable effective history; add UI for comparison and client-level selection.
+  - Exit criteria: at most one program resolves at every instant and historical choices remain unchanged.
+  - When this work is promoted, include program comparison and program-switching coverage in the Aspire end-to-end suite.
 - **Self-onboarding and real identity-provider integration.** - Why parked: PRD Non-Goals retain seeded accounts as the MVP demonstration model.
 - **PIN management and storage of full PAN.** - Why parked: PRD Non-Goals prohibit handling these values; the provider stays mocked.
 - **Operations Team functions and centrally defined program editing.** - Why parked: PRD Non-Goals exclude them from the client portal.
 - **Spending limits, card-group budgets, loans, and overdrafts.** - Why parked: PRD Non-Goals defer credit and budget capabilities.
 - **Multi-region and offline-first guarantees.** - Why parked: PRD Non-Goals limit the MVP to one client installation.
-- **Production deployment completion.** - Why parked: the existing implementation roadmap defers it until the local MVP contract is stable, and the isolation decision remains open.
+- **Production deployment completion.** - Why parked: the local MVP contract must stabilize first, and the isolation decision remains open.
+  - Implementation scope: document Azure App Service or equivalent hosting, Azure SQL, secrets, and telemetry choices; add Terraform/GitHub Actions only after the local MVP contract is stable; keep production deployment outside the MVP release gate unless explicitly re-scoped.
 
 ## Milestone History
 
