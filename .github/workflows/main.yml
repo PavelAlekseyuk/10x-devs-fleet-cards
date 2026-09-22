@@ -182,16 +182,12 @@ jobs:
 
       - name: Install sqlcmd
         run: |
-          curl --fail --silent --show-error https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor | sudo tee /usr/share/keyrings/microsoft-prod.gpg > /dev/null
-          curl --fail --silent --show-error https://packages.microsoft.com/config/ubuntu/24.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list > /dev/null
-          sudo apt-get update
-          sudo ACCEPT_EULA=Y apt-get install --yes mssql-tools18 unixodbc-dev
-          echo "/opt/mssql-tools18/bin" >> "$GITHUB_PATH"
+          curl --fail --silent --show-error https://github.com/microsoft/go-sqlcmd/releases/latest/download/sqlcmd-linux-amd64.tar.bz2 \
+            | sudo tar --extract --bzip2 --file - --directory /usr/local/bin sqlcmd
+          sqlcmd --version
 
       - name: Apply database schema and grant application access
         run: |
-          access_token="$(az account get-access-token --resource https://database.windows.net/ --query accessToken --output tsv)"
-          export SQLCMDPASSWORD="$access_token"
           sqlcmd -S "$SQL_SERVER_NAME.database.windows.net" -d "$SQL_DATABASE_NAME" -G -b -i artifacts/database-migration.sql
           sqlcmd -S "$SQL_SERVER_NAME.database.windows.net" -d "$SQL_DATABASE_NAME" -G -b -Q "IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'$APP_SERVICE_NAME') BEGIN CREATE USER [$APP_SERVICE_NAME] FROM EXTERNAL PROVIDER; END; IF NOT EXISTS (SELECT 1 FROM sys.database_role_members memberships JOIN sys.database_principals roles ON roles.principal_id = memberships.role_principal_id JOIN sys.database_principals members ON members.principal_id = memberships.member_principal_id WHERE roles.name = N'db_datareader' AND members.name = N'$APP_SERVICE_NAME') ALTER ROLE [db_datareader] ADD MEMBER [$APP_SERVICE_NAME]; IF NOT EXISTS (SELECT 1 FROM sys.database_role_members memberships JOIN sys.database_principals roles ON roles.principal_id = memberships.role_principal_id JOIN sys.database_principals members ON members.principal_id = memberships.member_principal_id WHERE roles.name = N'db_datawriter' AND members.name = N'$APP_SERVICE_NAME') ALTER ROLE [db_datawriter] ADD MEMBER [$APP_SERVICE_NAME];"
 
