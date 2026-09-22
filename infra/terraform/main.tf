@@ -66,6 +66,7 @@ resource "azurerm_windows_web_app" "demo" {
   site_config {
     ftps_state          = "Disabled"
     minimum_tls_version = "1.2"
+    always_on           = !contains(["Free", "F1", "D1"], var.app_service_sku)
     health_check_path   = var.app_service_sku == "F1" ? null : "/health"
 
     application_stack {
