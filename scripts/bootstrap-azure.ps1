@@ -23,6 +23,9 @@ param(
     [ValidatePattern('^[a-z0-9]{3,24}$')]
     [string]$StateStorageAccountName,
 
+    [ValidatePattern('^[0-9a-fA-F-]{36}$')]
+    [string]$SqlServerPrincipalId,
+
     [ValidatePattern('^[a-z0-9-]{3,63}$')]
     [string]$StateContainerName = 'tfstate'
 )
@@ -57,6 +60,74 @@ function Invoke-GitHubCli {
     }
 
     return $result
+}
+
+function Invoke-MicrosoftGraph {
+    param(
+        [Parameter(Mandatory)][ValidateSet('GET', 'POST')][string]$Method,
+        [Parameter(Mandatory)][string]$Url,
+        [string]$Body
+    )
+
+    $bodyPath = $null
+    try {
+        $arguments = @('rest', '--method', $Method, '--url', $Url, '--resource', 'https://graph.microsoft.com/')
+        if ($Body) {
+            $bodyPath = New-TemporaryFile
+            Set-Content -LiteralPath $bodyPath -Value $Body -Encoding utf8 -NoNewline
+            $arguments += @('--headers', 'Content-Type=application/json', '--body', "@$bodyPath")
+        }
+
+        $response = Invoke-AzCli $arguments
+        return $response | ConvertFrom-Json
+    }
+    finally {
+        if ($bodyPath) {
+            Remove-Item -LiteralPath $bodyPath -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+function Ensure-DirectoryReaders {
+    param([Parameter(Mandatory)][string]$PrincipalId)
+
+    $directoryRoles = Invoke-MicrosoftGraph -Method GET -Url (
+        "https://graph.microsoft.com/v1.0/directoryRoles?`$filter=displayName%20eq%20'Directory%20Readers'"
+    )
+    $directoryRole = $directoryRoles.value | Select-Object -First 1
+
+    if (-not $directoryRole) {
+        $templates = Invoke-MicrosoftGraph -Method GET -Url (
+            "https://graph.microsoft.com/v1.0/directoryRoleTemplates?`$filter=displayName%20eq%20'Directory%20Readers'"
+        )
+        $template = $templates.value | Select-Object -First 1
+        if (-not $template) {
+            throw 'The Directory Readers role template was not found in this tenant.'
+        }
+
+        Invoke-MicrosoftGraph -Method POST -Url 'https://graph.microsoft.com/v1.0/directoryRoles' -Body (
+            @{ roleTemplateId = $template.id } | ConvertTo-Json -Compress
+        ) | Out-Null
+        $directoryRoles = Invoke-MicrosoftGraph -Method GET -Url (
+            "https://graph.microsoft.com/v1.0/directoryRoles?`$filter=displayName%20eq%20'Directory%20Readers'"
+        )
+        $directoryRole = $directoryRoles.value | Select-Object -First 1
+    }
+
+    $members = Invoke-MicrosoftGraph -Method GET -Url (
+        "https://graph.microsoft.com/v1.0/directoryRoles/$($directoryRole.id)/members"
+    )
+    if ($members.value | Where-Object id -eq $PrincipalId) {
+        Write-Host 'The Azure SQL server identity already has Directory Readers.'
+        return
+    }
+
+    $reference = @{ '@odata.id' = "https://graph.microsoft.com/v1.0/directoryObjects/$PrincipalId" } |
+        ConvertTo-Json -Compress
+    Invoke-MicrosoftGraph -Method POST -Url (
+        "https://graph.microsoft.com/v1.0/directoryRoles/$($directoryRole.id)/members/`$ref"
+    ) -Body $reference | Out-Null
+    Write-Host 'Granted Directory Readers to the Azure SQL server identity.'
 }
 
 function Ensure-RoleAssignment {
@@ -190,6 +261,10 @@ Ensure-RoleAssignment -PrincipalObjectId $servicePrincipalObjectId -RoleName 'St
 Ensure-RoleAssignment -PrincipalObjectId $servicePrincipalObjectId -RoleName 'Contributor' -Scope "/subscriptions/$SubscriptionId"
 Ensure-RoleAssignment -PrincipalObjectId $servicePrincipalObjectId -RoleName 'Contributor' -Scope $demoResourceGroupScope
 
+if ($SqlServerPrincipalId) {
+    Ensure-DirectoryReaders -PrincipalId $SqlServerPrincipalId
+}
+
 $dotnet10Runtime = Invoke-AzCli @(
     'webapp', 'list-runtimes', '--os', 'windows', '--query', "[?contains(@, 'dotnet:10')]",
     '--output', 'tsv'
@@ -209,3 +284,6 @@ Write-Host "TF_STATE_STORAGE_ACCOUNT=$StateStorageAccountName"
 Write-Host "TF_STATE_CONTAINER=$StateContainerName"
 Write-Host "DEMO_RESOURCE_GROUP=$demoResourceGroup"
 Write-Host "AZURE_LOCATION=$Location"
+if (-not $SqlServerPrincipalId) {
+    Write-Host 'After Terraform creates the SQL server, rerun this script with -SqlServerPrincipalId <terraform-output> as a Microsoft Entra Privileged Role Administrator.'
+}
