@@ -199,6 +199,26 @@ jobs:
 
       - name: Smoke test deployed application
         run: |
+          mkdir -p artifacts/smoke
+          cookie_jar="artifacts/smoke/cookies.txt"
+
           curl --fail --silent --show-error --retry 12 --retry-delay 10 --retry-connrefused "$APP_URL/" > /dev/null
           curl --fail --silent --show-error --retry 12 --retry-delay 10 --retry-connrefused "$APP_URL/api" > /dev/null
-          curl --fail --silent --show-error --retry 12 --retry-delay 10 --retry-connrefused "$APP_URL/api/cards" > /dev/null
+
+          csrf_token="$(curl --fail --silent --show-error --retry 12 --retry-delay 10 --retry-connrefused -c "$cookie_jar" -D - "$APP_URL/api/auth/csrf" | awk '/^Set-Cookie:/ {print $2}' | head -n 1 | tr -d '\r' | cut -d= -f2-)"
+          if [ -z "$csrf_token" ]; then
+            echo "Failed to retrieve CSRF token from $APP_URL/api/auth/csrf" >&2
+            exit 1
+          fi
+
+          curl --fail --silent --show-error \
+            -b "$cookie_jar" \
+            -c "$cookie_jar" \
+            -H "Content-Type: application/json" \
+            -H "Cookie: XSRF-TOKEN=$csrf_token" \
+            -H "X-XSRF-TOKEN: $csrf_token" \
+            --data '{"UserName":"anna.nowak","Password":"Anna123!"}' \
+            "$APP_URL/api/auth/login" > /dev/null
+
+          curl --fail --silent --show-error --retry 12 --retry-delay 10 --retry-connrefused -b "$cookie_jar" -c "$cookie_jar" "$APP_URL/api/auth/me" > /dev/null
+          curl --fail --silent --show-error --retry 12 --retry-delay 10 --retry-connrefused -b "$cookie_jar" -c "$cookie_jar" "$APP_URL/api/client" > /dev/null
