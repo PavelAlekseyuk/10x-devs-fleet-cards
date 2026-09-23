@@ -289,6 +289,46 @@ Add one forward EF migration for the required password-hash column and the secon
 
 #### Automated
 
+- [ ] 4.1 `dotnet test` passes for the API and application test projects with the new authorization cases.
+- [ ] 4.2 `npm test` and `npm run build` pass from `web/`.
+- [ ] 4.3 A clean solution build and the documented focused test commands reproduce the same results without warnings introduced by this change.
+
+#### Manual
+
+- [ ] 4.4 Follow the documented seeded sign-in flow from a clean local runtime and verify the role matrix end to end at the HTTP/UI boundary.
+- [ ] 4.5 Review logs during successful, failed, throttled, logout, and denied requests and confirm sensitive values are absent.
+
+### Phase 2: Protected API Access and Auth Observability
+
+#### Automated
+
+- [x] 2.1 API integration tests cover valid login for both roles, generic invalid-login behavior, logout, current-user resolution, session expiry configuration, and CSRF rejection/acceptance.
+- [x] 2.2 API integration tests prove anonymous access is denied, ReadWrite access is allowed, ReadOnly commands are denied, and ReadOnly program access is denied.
+- [x] 2.3 API tests verify health/platform endpoints retain their intended availability and authentication logs use only allowlisted fields.
+
+#### Manual
+
+- [x] 2.4 Use an HTTP client or browser to sign in, refresh, call a protected endpoint, log out, and confirm the same endpoint is denied afterward.
+- [x] 2.5 Repeat failed logins and confirm the response remains generic while throttling eventually applies without revealing account existence.
+
+### Phase 3: Angular Login and Guarded Bilingual Shell
+
+#### Automated
+
+- [x] 3.1 Angular tests cover login state transitions, generic errors, logout, guard redirects, CSRF/header wiring, local language persistence, and ReadOnly route/navigation filtering.
+- [x] 3.2 Angular component tests verify authenticated user/client bindings replace the preview identity and unauthorized program controls are absent.
+- [x] 3.3 `npm run build` and `npm test` pass in `web/`.
+
+#### Manual
+
+- [x] 3.4 In a browser, log in as each seeded user, refresh the page, switch EN/PL, navigate through the permitted shell routes, and log out.
+- [x] 3.5 Confirm the ReadOnly user sees client, vehicle, card, and transaction views but cannot reach the program view or command controls.
+- [x] 3.6 Confirm expired or invalid sessions return to login with a recoverable non-sensitive notice.
+
+### Phase 4: Focused Verification and Operational Documentation
+
+#### Automated
+
 - [x] 4.1 `dotnet test` passes for the API and application test projects with the new authorization cases.
 - [x] 4.2 `npm test` and `npm run build` pass from `web/`.
 - [x] 4.3 A clean solution build and the documented focused test commands reproduce the same results without warnings introduced by this change.
