@@ -62,8 +62,8 @@ public sealed class EfFleetVehicleService(FleetCardsDbContext dbContext) : IFlee
 
         var displayPlate = request.RegistrationPlate.Trim();
         var normalizedPlate = FleetVehicleRules.NormalizeRegistrationPlate(displayPlate);
-        var clientId = await dbContext.Clients
-            .Select(client => client.Id)
+        var clientId = await dbContext
+            .Clients.Select(client => client.Id)
             .SingleAsync(cancellationToken);
         if (await HasActivePlateAsync(clientId, normalizedPlate, null, cancellationToken))
         {
@@ -109,7 +109,10 @@ public sealed class EfFleetVehicleService(FleetCardsDbContext dbContext) : IFlee
             return validation;
         }
 
-        var car = await dbContext.Cars.SingleOrDefaultAsync(vehicle => vehicle.Id == id, cancellationToken);
+        var car = await dbContext.Cars.SingleOrDefaultAsync(
+            vehicle => vehicle.Id == id,
+            cancellationToken
+        );
         if (car is null)
         {
             return VehicleCommandResult.NotFound();
@@ -146,7 +149,10 @@ public sealed class EfFleetVehicleService(FleetCardsDbContext dbContext) : IFlee
         CancellationToken cancellationToken = default
     )
     {
-        var car = await dbContext.Cars.SingleOrDefaultAsync(vehicle => vehicle.Id == id, cancellationToken);
+        var car = await dbContext.Cars.SingleOrDefaultAsync(
+            vehicle => vehicle.Id == id,
+            cancellationToken
+        );
         if (car is null)
         {
             return VehicleCommandResult.NotFound();
@@ -169,7 +175,10 @@ public sealed class EfFleetVehicleService(FleetCardsDbContext dbContext) : IFlee
         CancellationToken cancellationToken = default
     )
     {
-        var car = await dbContext.Cars.SingleOrDefaultAsync(vehicle => vehicle.Id == id, cancellationToken);
+        var car = await dbContext.Cars.SingleOrDefaultAsync(
+            vehicle => vehicle.Id == id,
+            cancellationToken
+        );
         if (car is null)
         {
             return VehicleCommandResult.NotFound();

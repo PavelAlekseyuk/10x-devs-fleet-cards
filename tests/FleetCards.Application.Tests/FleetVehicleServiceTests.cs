@@ -138,8 +138,9 @@ public sealed class FleetVehicleServiceTests
             "anna.nowak",
             "restore-original"
         );
-        var archivedOriginal = (await service.GetCarsAsync("XY12", includeArchived: true))
-            .Single(car => car.Id == original.Vehicle.Id);
+        var archivedOriginal = (await service.GetCarsAsync("XY12", includeArchived: true)).Single(
+            car => car.Id == original.Vehicle.Id
+        );
 
         Assert.True(archived.IsSuccess);
         Assert.True(replacement.IsSuccess);

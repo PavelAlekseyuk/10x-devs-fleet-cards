@@ -98,18 +98,24 @@ public static class FleetVehicleRules
         if (string.IsNullOrWhiteSpace(registrationPlate))
         {
             errors[nameof(CreateFleetCarRequest.RegistrationPlate)] =
-            ["Registration plate is required."];
+            [
+                "Registration plate is required.",
+            ];
         }
         else if (registrationPlate.Trim().Length > 20)
         {
             errors[nameof(CreateFleetCarRequest.RegistrationPlate)] =
-            ["Registration plate must be 20 characters or fewer."];
+            [
+                "Registration plate must be 20 characters or fewer.",
+            ];
         }
 
         if (fuelType is null || !SupportedFuelTypes.Contains(fuelType))
         {
             errors[nameof(CreateFleetCarRequest.FuelType)] =
-            ["Fuel type must be one of the supported values."];
+            [
+                "Fuel type must be one of the supported values.",
+            ];
         }
 
         if (make?.Trim().Length > 100)
@@ -120,7 +126,9 @@ public static class FleetVehicleRules
         if (model?.Trim().Length > 100)
         {
             errors[nameof(CreateFleetCarRequest.Model)] =
-            ["Model must be 100 characters or fewer."];
+            [
+                "Model must be 100 characters or fewer.",
+            ];
         }
 
         return errors.Count == 0 ? null : VehicleCommandResult.Invalid(errors);

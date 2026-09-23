@@ -77,10 +77,17 @@ public sealed class FleetVehicleApiTests : IClassFixture<WebApplicationFactory<P
         var created = (await create.Content.ReadFromJsonAsync<FleetCarResponse>())!;
         Assert.EndsWith($"/api/cars/{created.Id}", create.Headers.Location!.ToString());
         Assert.Equal("ab\t- 123", created.RegistrationPlate);
-        Assert.DoesNotContain("NormalizedRegistrationPlate", await create.Content.ReadAsStringAsync());
+        Assert.DoesNotContain(
+            "NormalizedRegistrationPlate",
+            await create.Content.ReadAsStringAsync()
+        );
 
-        using var normalizedSearch = await client.GetAsync("/api/cars?search=A%20B%20-%201%202%203");
-        var searchResults = (await normalizedSearch.Content.ReadFromJsonAsync<FleetCarResponse[]>())!;
+        using var normalizedSearch = await client.GetAsync(
+            "/api/cars?search=A%20B%20-%201%202%203"
+        );
+        var searchResults = (
+            await normalizedSearch.Content.ReadFromJsonAsync<FleetCarResponse[]>()
+        )!;
         Assert.Contains(searchResults, car => car.Id == created.Id);
 
         using var update = await client.PutAsJsonAsync(
@@ -133,7 +140,10 @@ public sealed class FleetVehicleApiTests : IClassFixture<WebApplicationFactory<P
             new CreateFleetCarRequest("REST 1", "95", null, null)
         );
         var originalCar = (await original.Content.ReadFromJsonAsync<FleetCarResponse>())!;
-        using var archiveOriginal = await client.PostAsync($"/api/cars/{originalCar.Id}/archive", null);
+        using var archiveOriginal = await client.PostAsync(
+            $"/api/cars/{originalCar.Id}/archive",
+            null
+        );
         using var replacement = await client.PostAsJsonAsync(
             "/api/cars",
             new CreateFleetCarRequest("REST1", "98", null, null)
@@ -150,23 +160,33 @@ public sealed class FleetVehicleApiTests : IClassFixture<WebApplicationFactory<P
 
         await using var scope = host.Services.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<FleetCardsDbContext>();
-        var audits = await dbContext.AuditEvents.AsNoTracking().OrderBy(eventRow => eventRow.OccurredAt).ToArrayAsync();
+        var audits = await dbContext
+            .AuditEvents.AsNoTracking()
+            .OrderBy(eventRow => eventRow.OccurredAt)
+            .ToArrayAsync();
         Assert.Equal(8, audits.Length);
         Assert.Equal(3, audits.Count(eventRow => eventRow.Action == "VehicleCreated"));
         Assert.Equal(1, audits.Count(eventRow => eventRow.Action == "VehicleUpdated"));
         Assert.Equal(3, audits.Count(eventRow => eventRow.Action == "VehicleArchived"));
         Assert.Equal(1, audits.Count(eventRow => eventRow.Action == "VehicleRestored"));
-        Assert.All(audits, audit =>
-        {
-            Assert.Equal("anna.nowak", audit.Actor);
-            Assert.Equal("FleetCar", audit.EntityType);
-            Assert.True(audit.Succeeded);
-            Assert.False(string.IsNullOrWhiteSpace(audit.CorrelationId));
-        });
+        Assert.All(
+            audits,
+            audit =>
+            {
+                Assert.Equal("anna.nowak", audit.Actor);
+                Assert.Equal("FleetCar", audit.EntityType);
+                Assert.True(audit.Succeeded);
+                Assert.False(string.IsNullOrWhiteSpace(audit.CorrelationId));
+            }
+        );
 
         var seededCar = await dbContext.Cars.SingleAsync(car => car.Id == SeededCarId);
-        var assignedCard = await dbContext.Cards.SingleAsync(card => card.AssignedCarId == SeededCarId);
-        var transaction = await dbContext.Transactions.SingleAsync(row => row.VehicleId == SeededCarId);
+        var assignedCard = await dbContext.Cards.SingleAsync(card =>
+            card.AssignedCarId == SeededCarId
+        );
+        var transaction = await dbContext.Transactions.SingleAsync(row =>
+            row.VehicleId == SeededCarId
+        );
         var vehicleService = scope.ServiceProvider.GetRequiredService<IFleetVehicleService>();
         Assert.True(seededCar.IsArchived);
         Assert.Equal(SeededCarId, assignedCard.AssignedCarId);
@@ -179,10 +199,14 @@ public sealed class FleetVehicleApiTests : IClassFixture<WebApplicationFactory<P
         var databaseName = $"fleet-vehicles-{Guid.NewGuid()}";
         var host = factory.WithWebHostBuilder(builder =>
         {
-            builder.ConfigureAppConfiguration((_, configuration) =>
-                configuration.AddInMemoryCollection(
-                    new Dictionary<string, string?> { ["ConnectionStrings:fleetcards"] = string.Empty }
-                )
+            builder.ConfigureAppConfiguration(
+                (_, configuration) =>
+                    configuration.AddInMemoryCollection(
+                        new Dictionary<string, string?>
+                        {
+                            ["ConnectionStrings:fleetcards"] = string.Empty,
+                        }
+                    )
             );
             builder.ConfigureTestServices(services =>
             {
@@ -205,14 +229,19 @@ public sealed class FleetVehicleApiTests : IClassFixture<WebApplicationFactory<P
         string password
     )
     {
-        var client = host.CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = true });
+        var client = host.CreateClient(
+            new WebApplicationFactoryClientOptions { HandleCookies = true }
+        );
         using var csrfResponse = await client.GetAsync("/api/auth/csrf");
         var setCookie = csrfResponse.Headers.GetValues("Set-Cookie").Single();
         var token = setCookie[..setCookie.IndexOf(';')].Split('=', 2)[1];
         client.DefaultRequestHeaders.Add("Cookie", $"XSRF-TOKEN={token}");
         client.DefaultRequestHeaders.Add("X-XSRF-TOKEN", token);
 
-        using var login = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest(userName, password));
+        using var login = await client.PostAsJsonAsync(
+            "/api/auth/login",
+            new LoginRequest(userName, password)
+        );
         Assert.Equal(HttpStatusCode.OK, login.StatusCode);
         return client;
     }

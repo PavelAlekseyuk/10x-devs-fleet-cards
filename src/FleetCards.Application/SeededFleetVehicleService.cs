@@ -43,9 +43,12 @@ public sealed class SeededFleetVehicleService : IFleetVehicleService
             : FleetVehicleRules.NormalizeRegistrationPlate(search);
         lock (sync)
         {
-            IReadOnlyList<FleetCarResponse> result = cars
-                .Where(car => includeArchived || !car.IsArchived)
-                .Where(car => searchTerm.Length == 0 || car.NormalizedRegistrationPlate.Contains(searchTerm))
+            IReadOnlyList<FleetCarResponse> result = cars.Where(car =>
+                    includeArchived || !car.IsArchived
+                )
+                .Where(car =>
+                    searchTerm.Length == 0 || car.NormalizedRegistrationPlate.Contains(searchTerm)
+                )
                 .OrderBy(car => car.RegistrationPlate, StringComparer.OrdinalIgnoreCase)
                 .Select(ToResponse)
                 .ToArray();
