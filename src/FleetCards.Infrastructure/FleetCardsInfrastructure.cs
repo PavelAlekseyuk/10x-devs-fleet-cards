@@ -18,11 +18,13 @@ public static class FleetCardsInfrastructure
                 options.UseSqlServer(connectionString)
             );
             services.AddScoped<IFleetCardsReadService, EfFleetCardsReadService>();
+            services.AddScoped<IFleetVehicleService, EfFleetVehicleService>();
             services.AddScoped<IAuthenticationService, EfAuthenticationService>();
             return services;
         }
 
         services.AddSingleton<IFleetCardsReadService, SeededFleetCardsReadService>();
+        services.AddSingleton<IFleetVehicleService, SeededFleetVehicleService>();
         services.AddSingleton<IAuthenticationService, SeededAuthenticationService>();
         return services;
     }

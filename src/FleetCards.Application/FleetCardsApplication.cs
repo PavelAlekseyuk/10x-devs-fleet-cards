@@ -100,7 +100,6 @@ public interface IFleetCardsReadService
 {
     CurrentUserResponse GetCurrentUser();
     ClientResponse GetClient();
-    IReadOnlyList<FleetCarResponse> GetCars(string? search);
     IReadOnlyList<FleetCardResponse> GetCards();
     IReadOnlyList<FuelTransactionResponse> GetTransactions(
         DateTimeOffset? from,
@@ -123,32 +122,6 @@ public sealed class SeededFleetCardsReadService : IFleetCardsReadService
             "Poland",
             "ul. Prosta 12, 00-850 Warszawa"
         );
-
-    public IReadOnlyList<FleetCarResponse> GetCars(string? search)
-    {
-        var cars = new[]
-        {
-            new FleetCarResponse(carId, "WA 12345", "Diesel", "Volvo", "FH", false),
-            new FleetCarResponse(
-                Guid.Parse("33333333-3333-3333-3333-333333333333"),
-                "PO 98765",
-                "95",
-                "Toyota",
-                "Corolla",
-                false
-            ),
-        };
-
-        return string.IsNullOrWhiteSpace(search)
-            ? cars
-            : cars.Where(car =>
-                    car.RegistrationPlate.Contains(
-                        search.Trim(),
-                        StringComparison.OrdinalIgnoreCase
-                    )
-                )
-                .ToArray();
-    }
 
     public IReadOnlyList<FleetCardResponse> GetCards() =>
         [new(cardId, "**** **** **** 4242", "mock-card-4242", "Active", carId)];

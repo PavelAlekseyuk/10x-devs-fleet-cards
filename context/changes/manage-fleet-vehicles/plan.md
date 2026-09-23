@@ -271,13 +271,13 @@ Add a forward EF migration for the required vehicle fuel type and audit table, a
 
 #### Automated
 
-- [ ] 2.1 Application tests cover plate normalization (case and all whitespace), blank/length validation, optional descriptive fields, single fuel-type validation, duplicate active plates, and restore conflicts.
-- [ ] 2.2 API integration tests prove ReadWrite-only car mutations, 401 anonymous access, 403 ReadOnly/invalid-CSRF access, route response contracts, CRUD/archive/restore, normalized search, and 400/404/409 error responses.
-- [ ] 2.3 Tests verify each successful vehicle mutation writes one append-only audit event and archiving preserves an existing card link while making the vehicle ineligible for future assignment.
+- [x] 2.1 Application tests cover plate normalization (case and all whitespace), blank/length validation, optional descriptive fields, single fuel-type validation, duplicate active plates, and restore conflicts.
+- [x] 2.2 API integration tests prove ReadWrite-only car mutations, 401 anonymous access, 403 ReadOnly/invalid-CSRF access, route response contracts, CRUD/archive/restore, normalized search, and 400/404/409 error responses.
+- [x] 2.3 Tests verify each successful vehicle mutation writes one append-only audit event and archiving preserves an existing card link while making the vehicle ineligible for future assignment.
 
 #### Manual
 
-- [ ] 2.4 Exercise the API as ReadWrite and ReadOnly users; confirm mutation status codes, restore-conflict behavior, archived search/filter results, audit details, and unchanged transaction snapshots.
+- [x] 2.4 Exercise the API as ReadWrite and ReadOnly users; confirm mutation status codes, restore-conflict behavior, archived search/filter results, audit details, and unchanged transaction snapshots.
 
 ### Phase 3: Bilingual Vehicle Management UI
 

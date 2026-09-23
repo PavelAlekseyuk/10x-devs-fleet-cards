@@ -205,9 +205,132 @@ app.MapGet("/api/client", (IFleetCardsReadService service) => service.GetClient(
     .WithName("GetClient")
     .WithTags("Client");
 
-app.MapGet("/api/cars", (string? search, IFleetCardsReadService service) => service.GetCars(search))
+app.MapGet(
+        "/api/cars",
+        async (
+            string? search,
+            IFleetVehicleService service,
+            bool includeArchived = false,
+            CancellationToken cancellationToken = default
+        ) => await service.GetCarsAsync(search, includeArchived, cancellationToken)
+    )
     .RequireAuthorization()
     .WithName("GetCars")
+    .WithTags("Cars");
+
+app.MapPost(
+        "/api/cars",
+        async (
+            CreateFleetCarRequest request,
+            HttpContext context,
+            IFleetVehicleService service,
+            CancellationToken cancellationToken
+        ) =>
+        {
+            if (!CsrfProtection.IsValid(context))
+            {
+                return (IResult)Results.StatusCode(StatusCodes.Status403Forbidden);
+            }
+
+            var result = await service.CreateAsync(
+                request,
+                context.User.Identity?.Name ?? "unknown",
+                context.TraceIdentifier,
+                cancellationToken
+            );
+            if (!result.IsSuccess)
+            {
+                return MapVehicleCommandResult(result);
+            }
+
+            return (IResult)Results.Created($"/api/cars/{result.Vehicle!.Id}", result.Vehicle);
+        }
+    )
+    .RequireAuthorization("ReadWrite")
+    .WithName("CreateCar")
+    .WithTags("Cars");
+
+app.MapPut(
+        "/api/cars/{id:guid}",
+        async (
+            Guid id,
+            UpdateFleetCarRequest request,
+            HttpContext context,
+            IFleetVehicleService service,
+            CancellationToken cancellationToken
+        ) =>
+        {
+            if (!CsrfProtection.IsValid(context))
+            {
+                return (IResult)Results.StatusCode(StatusCodes.Status403Forbidden);
+            }
+
+            var result = await service.UpdateAsync(
+                id,
+                request,
+                context.User.Identity?.Name ?? "unknown",
+                context.TraceIdentifier,
+                cancellationToken
+            );
+            return MapVehicleCommandResult(result);
+        }
+    )
+    .RequireAuthorization("ReadWrite")
+    .WithName("UpdateCar")
+    .WithTags("Cars");
+
+app.MapPost(
+        "/api/cars/{id:guid}/archive",
+        async (
+            Guid id,
+            HttpContext context,
+            IFleetVehicleService service,
+            CancellationToken cancellationToken
+        ) =>
+        {
+            if (!CsrfProtection.IsValid(context))
+            {
+                return (IResult)Results.StatusCode(StatusCodes.Status403Forbidden);
+            }
+
+            var result = await service.ArchiveAsync(
+                id,
+                context.User.Identity?.Name ?? "unknown",
+                context.TraceIdentifier,
+                cancellationToken
+            );
+            return MapVehicleCommandResult(result);
+        }
+    )
+    .RequireAuthorization("ReadWrite")
+    .WithName("ArchiveCar")
+    .WithTags("Cars");
+
+app.MapPost(
+        "/api/cars/{id:guid}/restore",
+        async (
+            Guid id,
+            HttpContext context,
+            IFleetVehicleService service,
+            CancellationToken cancellationToken
+        ) =>
+        {
+            if (!CsrfProtection.IsValid(context))
+            {
+                return (IResult)Results.StatusCode(StatusCodes.Status403Forbidden);
+            }
+
+            var result = await service.RestoreAsync(
+                id,
+                context.User.Identity?.Name ?? "unknown",
+                context.TraceIdentifier,
+                cancellationToken
+            );
+            return MapVehicleCommandResult(result);
+        }
+    )
+    .RequireAuthorization("ReadWrite")
+    .WithName("RestoreCar")
     .WithTags("Cars");
 
 app.MapGet("/api/cards", (IFleetCardsReadService service) => service.GetCards())
@@ -248,6 +371,22 @@ app.MapFallback(async context =>
         .ExecuteAsync(context);
 });
 app.Run();
+
+static IResult MapVehicleCommandResult(VehicleCommandResult result) =>
+    result.Error switch
+    {
+        VehicleCommandError.None => Results.Ok(result.Vehicle),
+        VehicleCommandError.Validation => Results.ValidationProblem(
+            result.ValidationErrors!.ToDictionary(error => error.Key, error => error.Value)
+        ),
+        VehicleCommandError.NotFound => Results.NotFound(),
+        VehicleCommandError.Conflict => Results.Problem(
+            statusCode: StatusCodes.Status409Conflict,
+            title: "Vehicle registration plate conflict",
+            detail: "An active vehicle already uses this registration plate."
+        ),
+        _ => Results.Problem(statusCode: StatusCodes.Status500InternalServerError),
+    };
 
 public partial class Program;
 

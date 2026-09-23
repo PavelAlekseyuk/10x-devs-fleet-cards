@@ -24,28 +24,6 @@ public sealed class EfFleetCardsReadService(FleetCardsDbContext dbContext) : IFl
         );
     }
 
-    public IReadOnlyList<FleetCarResponse> GetCars(string? search)
-    {
-        IQueryable<FleetCar> query = dbContext.Cars.AsNoTracking();
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var searchTerm = search.Trim();
-            query = query.Where(car => car.RegistrationPlate.Contains(searchTerm));
-        }
-
-        return query
-            .OrderBy(car => car.RegistrationPlate)
-            .Select(car => new FleetCarResponse(
-                car.Id,
-                car.RegistrationPlate,
-                car.FuelType,
-                car.Make,
-                car.Model,
-                car.IsArchived
-            ))
-            .ToArray();
-    }
-
     public IReadOnlyList<FleetCardResponse> GetCards() =>
         dbContext
             .Cards.AsNoTracking()
