@@ -260,12 +260,12 @@ Add a forward EF migration for the required vehicle fuel type and audit table, a
 
 #### Automated
 
-- [x] 1.1 The SQL Server migration adds one required fuel type per car, append-only vehicle audit storage, and active-only normalized-plate uniqueness, and applies successfully to the seeded database.
-- [x] 1.2 Migration verification confirms the seeded Volvo FH is Diesel and Toyota Corolla is 95, and the existing Diesel transaction and card-to-vehicle reference remain unchanged.
+- [x] 1.1 The SQL Server migration adds one required fuel type per car, append-only vehicle audit storage, and active-only normalized-plate uniqueness, and applies successfully to the seeded database. — e6cb733
+- [x] 1.2 Migration verification confirms the seeded Volvo FH is Diesel and Toyota Corolla is 95, and the existing Diesel transaction and card-to-vehicle reference remain unchanged. — e6cb733
 
 #### Manual
 
-- [ ] 1.3 Inspect the migrated database to confirm both seeded cars remain active and the seeded card assignment and transaction plate snapshot are preserved.
+- [x] 1.3 Inspect the migrated database to confirm both seeded cars remain active and the seeded card assignment and transaction plate snapshot are preserved. — e6cb733
 
 ### Phase 2: Vehicle Commands and API Enforcement
 

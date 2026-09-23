@@ -13,14 +13,16 @@ namespace FleetCards.Infrastructure.Migrations
         {
             migrationBuilder.DropIndex(
                 name: "IX_Cars_ClientId_NormalizedRegistrationPlate",
-                table: "Cars");
+                table: "Cars"
+            );
 
             migrationBuilder.AddColumn<string>(
                 name: "FuelType",
                 table: "Cars",
                 type: "nvarchar(10)",
                 maxLength: 10,
-                nullable: true);
+                nullable: true
+            );
 
             migrationBuilder.Sql(
                 """
@@ -42,53 +44,74 @@ namespace FleetCards.Infrastructure.Migrations
                 oldClrType: typeof(string),
                 oldType: "nvarchar(10)",
                 oldMaxLength: 10,
-                oldNullable: true);
+                oldNullable: true
+            );
 
             migrationBuilder.CreateTable(
                 name: "AuditEvents",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Actor = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Action = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    EntityType = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Actor = table.Column<string>(
+                        type: "nvarchar(200)",
+                        maxLength: 200,
+                        nullable: false
+                    ),
+                    Action = table.Column<string>(
+                        type: "nvarchar(100)",
+                        maxLength: 100,
+                        nullable: false
+                    ),
+                    EntityType = table.Column<string>(
+                        type: "nvarchar(100)",
+                        maxLength: 100,
+                        nullable: false
+                    ),
                     EntityId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    OccurredAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false),
+                    OccurredAt = table.Column<DateTimeOffset>(
+                        type: "datetimeoffset",
+                        nullable: false
+                    ),
                     Succeeded = table.Column<bool>(type: "bit", nullable: false),
-                    CorrelationId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false)
+                    CorrelationId = table.Column<string>(
+                        type: "nvarchar(100)",
+                        maxLength: 100,
+                        nullable: false
+                    ),
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AuditEvents", x => x.Id);
-                });
+                }
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Cars_ClientId_NormalizedRegistrationPlate",
                 table: "Cars",
                 columns: new[] { "ClientId", "NormalizedRegistrationPlate" },
                 unique: true,
-                filter: "[IsArchived] = 0");
+                filter: "[IsArchived] = 0"
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "AuditEvents");
+            migrationBuilder.DropTable(name: "AuditEvents");
 
             migrationBuilder.DropIndex(
                 name: "IX_Cars_ClientId_NormalizedRegistrationPlate",
-                table: "Cars");
+                table: "Cars"
+            );
 
-            migrationBuilder.DropColumn(
-                name: "FuelType",
-                table: "Cars");
+            migrationBuilder.DropColumn(name: "FuelType", table: "Cars");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Cars_ClientId_NormalizedRegistrationPlate",
                 table: "Cars",
                 columns: new[] { "ClientId", "NormalizedRegistrationPlate" },
-                unique: true);
+                unique: true
+            );
         }
     }
 }
