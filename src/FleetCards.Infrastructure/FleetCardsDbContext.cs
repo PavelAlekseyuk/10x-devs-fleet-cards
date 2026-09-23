@@ -9,6 +9,7 @@ public sealed class FleetCardsDbContext(DbContextOptions<FleetCardsDbContext> op
     public DbSet<FleetUser> Users => Set<FleetUser>();
     public DbSet<FleetClient> Clients => Set<FleetClient>();
     public DbSet<FleetCar> Cars => Set<FleetCar>();
+    public DbSet<FleetAuditEvent> AuditEvents => Set<FleetAuditEvent>();
     public DbSet<FleetCard> Cards => Set<FleetCard>();
     public DbSet<FuelTransaction> Transactions => Set<FuelTransaction>();
     public DbSet<FleetCardProgram> Programs => Set<FleetCardProgram>();
@@ -39,16 +40,30 @@ public sealed class FleetCardsDbContext(DbContextOptions<FleetCardsDbContext> op
             entity.HasKey(car => car.Id);
             entity.Property(car => car.RegistrationPlate).HasMaxLength(20).IsRequired();
             entity.Property(car => car.NormalizedRegistrationPlate).HasMaxLength(20).IsRequired();
+            entity.Property(car => car.FuelType).HasMaxLength(10).IsRequired();
             entity.Property(car => car.Make).HasMaxLength(100);
             entity.Property(car => car.Model).HasMaxLength(100);
             entity
                 .HasIndex(car => new { car.ClientId, car.NormalizedRegistrationPlate })
-                .IsUnique();
+                .IsUnique()
+                .HasFilter("[IsArchived] = 0");
             entity
                 .HasOne<FleetClient>()
                 .WithMany()
                 .HasForeignKey(car => car.ClientId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<FleetAuditEvent>(entity =>
+        {
+            entity.HasKey(auditEvent => auditEvent.Id);
+            entity.Property(auditEvent => auditEvent.Actor).HasMaxLength(200).IsRequired();
+            entity.Property(auditEvent => auditEvent.Action).HasMaxLength(100).IsRequired();
+            entity.Property(auditEvent => auditEvent.EntityType).HasMaxLength(100).IsRequired();
+            entity.Property(auditEvent => auditEvent.CorrelationId).HasMaxLength(100).IsRequired();
+            entity.Property(auditEvent => auditEvent.Succeeded).IsRequired();
+            entity.Property(auditEvent => auditEvent.OccurredAt).IsRequired();
+            entity.ToTable("AuditEvents");
         });
 
         modelBuilder.Entity<FleetCard>(entity =>
@@ -161,6 +176,7 @@ public sealed class FleetCardsDbContext(DbContextOptions<FleetCardsDbContext> op
                     ClientId = clientId,
                     RegistrationPlate = "WA 12345",
                     NormalizedRegistrationPlate = "WA12345",
+                    FuelType = "Diesel",
                     Make = "Volvo",
                     Model = "FH",
                     IsArchived = false,
@@ -171,6 +187,7 @@ public sealed class FleetCardsDbContext(DbContextOptions<FleetCardsDbContext> op
                     ClientId = clientId,
                     RegistrationPlate = "PO 98765",
                     NormalizedRegistrationPlate = "PO98765",
+                    FuelType = "95",
                     Make = "Toyota",
                     Model = "Corolla",
                     IsArchived = false,

@@ -295,8 +295,8 @@ Add one forward EF migration for the required password-hash column and the secon
 
 #### Manual
 
-- [ ] 4.4 Follow the documented seeded sign-in flow from a clean local runtime and verify the role matrix end to end at the HTTP/UI boundary.
-- [ ] 4.5 Review logs during successful, failed, throttled, logout, and denied requests and confirm sensitive values are absent.
+- [x] 4.4 Follow the documented seeded sign-in flow from a clean local runtime and verify the role matrix end to end at the HTTP/UI boundary.
+- [x] 4.5 Review logs during successful, failed, throttled, logout, and denied requests and confirm sensitive values are absent.
 
 ### Phase 2: Protected API Access and Auth Observability
 
@@ -335,5 +335,5 @@ Add one forward EF migration for the required password-hash column and the secon
 
 #### Manual
 
-- [ ] 4.4 Follow the documented seeded sign-in flow from a clean local runtime and verify the role matrix end to end at the HTTP/UI boundary.
-- [ ] 4.5 Review logs during successful, failed, throttled, logout, and denied requests and confirm sensitive values are absent.
+- [x] 4.4 Follow the documented seeded sign-in flow from a clean local runtime and verify the role matrix end to end at the HTTP/UI boundary.
+- [x] 4.5 Review logs during successful, failed, throttled, logout, and denied requests and confirm sensitive values are absent.

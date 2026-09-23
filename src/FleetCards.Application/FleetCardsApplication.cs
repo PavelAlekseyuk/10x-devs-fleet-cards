@@ -128,10 +128,11 @@ public sealed class SeededFleetCardsReadService : IFleetCardsReadService
     {
         var cars = new[]
         {
-            new FleetCarResponse(carId, "WA 12345", "Volvo", "FH", false),
+            new FleetCarResponse(carId, "WA 12345", "Diesel", "Volvo", "FH", false),
             new FleetCarResponse(
                 Guid.Parse("33333333-3333-3333-3333-333333333333"),
                 "PO 98765",
+                "95",
                 "Toyota",
                 "Corolla",
                 false

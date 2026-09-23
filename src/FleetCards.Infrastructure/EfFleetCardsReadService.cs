@@ -38,6 +38,7 @@ public sealed class EfFleetCardsReadService(FleetCardsDbContext dbContext) : IFl
             .Select(car => new FleetCarResponse(
                 car.Id,
                 car.RegistrationPlate,
+                car.FuelType,
                 car.Make,
                 car.Model,
                 car.IsArchived

@@ -22,6 +22,46 @@ namespace FleetCards.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("FleetCards.Domain.FleetAuditEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Actor")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("CorrelationId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("EntityId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("Succeeded")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AuditEvents", (string)null);
+                });
+
             modelBuilder.Entity("FleetCards.Domain.FleetCar", b =>
                 {
                     b.Property<Guid>("Id")
@@ -30,6 +70,11 @@ namespace FleetCards.Infrastructure.Migrations
 
                     b.Property<Guid>("ClientId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("FuelType")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.Property<bool>("IsArchived")
                         .HasColumnType("bit");
@@ -55,7 +100,8 @@ namespace FleetCards.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ClientId", "NormalizedRegistrationPlate")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("[IsArchived] = 0");
 
                     b.ToTable("Cars");
 
@@ -64,6 +110,7 @@ namespace FleetCards.Infrastructure.Migrations
                         {
                             Id = new Guid("11111111-1111-1111-1111-111111111111"),
                             ClientId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                            FuelType = "Diesel",
                             IsArchived = false,
                             Make = "Volvo",
                             Model = "FH",
@@ -74,6 +121,7 @@ namespace FleetCards.Infrastructure.Migrations
                         {
                             Id = new Guid("33333333-3333-3333-3333-333333333333"),
                             ClientId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                            FuelType = "95",
                             IsArchived = false,
                             Make = "Toyota",
                             Model = "Corolla",

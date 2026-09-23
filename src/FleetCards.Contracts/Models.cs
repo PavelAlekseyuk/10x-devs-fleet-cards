@@ -14,9 +14,24 @@ public sealed record ClientResponse(
 public sealed record FleetCarResponse(
     Guid Id,
     string RegistrationPlate,
+    string FuelType,
     string? Make,
     string? Model,
     bool IsArchived
+);
+
+public sealed record CreateFleetCarRequest(
+    string RegistrationPlate,
+    string FuelType,
+    string? Make,
+    string? Model
+);
+
+public sealed record UpdateFleetCarRequest(
+    string RegistrationPlate,
+    string FuelType,
+    string? Make,
+    string? Model
 );
 
 public sealed record FleetCardResponse(

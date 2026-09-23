@@ -3,7 +3,7 @@ project: "Beznynowicz Fleet Cards Client Portal"
 version: 1
 status: draft
 created: 2026-09-22
-updated: 2026-09-22
+updated: 2026-09-23
 prd_version: 1
 main_goal: speed
 top_blocker: decisions
@@ -43,7 +43,7 @@ Company representatives need both access to several fuel networks and clear cost
 | --- | --- | --- | --- | --- | --- |
 | F-01 | repeatable-demo-runtime | (foundation) run a repeatable local demonstration with safe seeded data and a verified health path | - | US-01, FR-001 | ready |
 | S-01 | seeded-sign-in-and-access | sign in with a seeded account and access only the portal actions permitted to that account | F-01 | FR-001 | in-progress |
-| S-02 | manage-fleet-vehicles | create, view, change, archive, and restore fleet vehicles with allowed fuel types | S-01 | FR-002, US-01 | proposed |
+| S-02 | manage-fleet-vehicles | create, view, change, archive, and restore fleet vehicles with allowed fuel types | S-01 | FR-002, US-01 | in-progress |
 | S-03 | issue-and-assign-virtual-cards | issue, manage, return, and assign a virtual card without exposing full PAN data | S-02 | FR-003, FR-004, US-01 | proposed |
 | S-04 | review-generated-card-spending | review generated fuel transactions for a selected period and reconcile them to the landing-page total | S-03 | FR-005, FR-006, FR-007, US-01 | blocked |
 | S-05 | harden-operational-card-flow | verify the completed operational card flow through Aspire and document its local demonstration contract | S-04 | Acceptance criteria 1-6, 10; US-01 | proposed |
@@ -117,7 +117,7 @@ What is already in place in the codebase as of `2026-09-22` (auto-researched and
   - Add Angular fleet list and edit flow.
   - Add assignment-safe archive rules and audit events.
 - **Exit criteria:** car behavior and permission rules pass API and browser acceptance tests.
-- **Status:** proposed
+- **Status:** in-progress
 
 ### S-03: Issue and assign virtual cards
 

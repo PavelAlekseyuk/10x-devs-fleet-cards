@@ -39,9 +39,22 @@ public sealed class FleetCar
     public Guid ClientId { get; set; }
     public string RegistrationPlate { get; set; } = string.Empty;
     public string NormalizedRegistrationPlate { get; set; } = string.Empty;
+    public string FuelType { get; set; } = string.Empty;
     public string? Make { get; set; }
     public string? Model { get; set; }
     public bool IsArchived { get; set; }
+}
+
+public sealed class FleetAuditEvent
+{
+    public Guid Id { get; set; }
+    public string Actor { get; set; } = string.Empty;
+    public string Action { get; set; } = string.Empty;
+    public string EntityType { get; set; } = string.Empty;
+    public Guid EntityId { get; set; }
+    public DateTimeOffset OccurredAt { get; set; }
+    public bool Succeeded { get; set; }
+    public string CorrelationId { get; set; } = string.Empty;
 }
 
 public sealed class FleetCard
