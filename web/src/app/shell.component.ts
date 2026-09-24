@@ -3,13 +3,14 @@ import { Component, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from './auth.service';
+import { FleetVehiclesComponent } from './fleet-vehicles.component';
 import { LanguageService } from './language.service';
 
 type SectionKey = 'overview' | 'cars' | 'cards' | 'transactions' | 'programs';
 interface NavigationItem { key: SectionKey; icon: string; }
 interface Client { legalName: string; nip: string; jurisdiction: string; address: string; }
 
-@Component({ selector: 'app-shell', standalone: true, imports: [RouterLink], templateUrl: './shell.component.html', styleUrl: './app.scss' })
+@Component({ selector: 'app-shell', standalone: true, imports: [RouterLink, FleetVehiclesComponent], templateUrl: './shell.component.html', styleUrl: './app.scss' })
 export class ShellComponent {
   protected readonly auth = inject(AuthService);
   protected readonly language = inject(LanguageService);

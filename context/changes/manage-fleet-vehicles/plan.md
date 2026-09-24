@@ -283,12 +283,12 @@ Add a forward EF migration for the required vehicle fuel type and audit table, a
 
 #### Automated
 
-- [ ] 3.1 Angular tests cover active-first listing, archived filtering, normalized search, form validation, ReadOnly rendering, mutation flows, and EN/PL vehicle labels.
-- [ ] 3.2 `npm test` and `npm run build` pass from `web/`.
+- [x] 3.1 Angular tests cover active-first listing, archived filtering, normalized search, form validation, ReadOnly rendering, mutation flows, and EN/PL vehicle labels.
+- [x] 3.2 `npm test` and `npm run build` pass from `web/`.
 
 #### Manual
 
-- [ ] 3.3 In a browser, verify ReadWrite users can create, edit, archive, and restore vehicles, while ReadOnly users can search and view without mutation controls; repeat key states in English and Polish.
+- [x] 3.3 In a browser, verify ReadWrite users can create, edit, archive, and restore vehicles, while ReadOnly users can search and view without mutation controls; repeat key states in English and Polish.
 
 ### Phase 4: Browser Acceptance and Handoff
 

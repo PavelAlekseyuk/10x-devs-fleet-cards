@@ -1,0 +1,123 @@
+<section class="vehicle-management" aria-labelledby="vehicle-heading">
+  <div class="vehicle-heading">
+    <div>
+      <p class="eyebrow">{{ language.text('clientWorkspace') }}</p>
+      <h2 id="vehicle-heading">{{ language.text('vehicles') }}</h2>
+      <p class="muted">{{ language.text('vehicleManagementDescription') }}</p>
+    </div>
+    @if (canWrite) {
+      <button class="primary-button" type="button" (click)="startCreate()">
+        {{ language.text('vehicleAdd') }} <span aria-hidden="true">+</span>
+      </button>
+    }
+  </div>
+
+  <section class="vehicle-toolbar" [attr.aria-label]="language.text('vehicleControls')">
+    <form class="vehicle-search" (submit)="applySearch(); $event.preventDefault()">
+      <label for="vehicle-search">{{ language.text('vehicleSearch') }}</label>
+      <div class="search-entry">
+        <input id="vehicle-search" name="search" type="search" [value]="search" (input)="onSearchInput($event)" />
+        <button class="quiet-button" type="submit">{{ language.text('search') }}</button>
+      </div>
+    </form>
+    <div class="filter-control" role="group" [attr.aria-label]="language.text('vehicleFilter')">
+      <button type="button" [class.selected]="!showingArchived" [attr.aria-pressed]="!showingArchived" (click)="setArchiveFilter(false)">
+        {{ language.text('activeVehicles') }}
+      </button>
+      <button type="button" [class.selected]="showingArchived" [attr.aria-pressed]="showingArchived" (click)="setArchiveFilter(true)">
+        {{ language.text('archivedVehicles') }}
+      </button>
+    </div>
+  </section>
+
+  @if (error) {
+    <p class="message error-message" role="alert">{{ error }}</p>
+  }
+
+  @if (draft; as vehicleDraft) {
+    <form class="vehicle-form" novalidate (submit)="saveVehicle(); $event.preventDefault()">
+      <div class="form-heading">
+        <h3>{{ language.text(vehicleDraft.id ? 'vehicleEdit' : 'vehicleCreate') }}</h3>
+        <button class="icon-action" type="button" [attr.aria-label]="language.text('vehicleCloseForm')" (click)="cancelEdit()">×</button>
+      </div>
+      <div class="form-fields">
+        <label>
+          {{ language.text('registrationPlate') }}
+          <input name="registrationPlate" [value]="vehicleDraft.registrationPlate" (input)="updateDraft('registrationPlate', $event)" required maxlength="20" />
+        </label>
+        <label>
+          {{ language.text('fuelType') }}
+          <select name="fuelType" [value]="vehicleDraft.fuelType" (change)="updateDraft('fuelType', $event)" required>
+            <option value="" disabled>{{ language.text('fuelTypeChoose') }}</option>
+            @for (fuelType of fuelTypes; track fuelType) {
+              <option [value]="fuelType">{{ fuelLabel(fuelType) }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          {{ language.text('vehicleMake') }}
+          <input name="make" [value]="vehicleDraft.make" (input)="updateDraft('make', $event)" />
+        </label>
+        <label>
+          {{ language.text('vehicleModel') }}
+          <input name="model" [value]="vehicleDraft.model" (input)="updateDraft('model', $event)" />
+        </label>
+      </div>
+      @if (formError) {
+        <p class="message error-message" role="alert">{{ formError }}</p>
+      }
+      <div class="form-actions">
+        <button class="quiet-button" type="button" (click)="cancelEdit()">{{ language.text('cancel') }}</button>
+        <button class="primary-button" type="submit" [disabled]="saving">
+          {{ language.text(saving ? 'saving' : 'vehicleSave') }}
+        </button>
+      </div>
+    </form>
+  }
+
+  <section class="vehicle-list" [attr.aria-label]="language.text(showingArchived ? 'archivedVehicles' : 'activeVehicles')">
+    <div class="list-heading">
+      <h3>{{ language.text(showingArchived ? 'archivedVehicles' : 'activeVehicles') }}</h3>
+      <span class="record-count">{{ visibleVehicles.length }}</span>
+    </div>
+    @if (loading) {
+      <p class="message" role="status">{{ language.text('loading') }}</p>
+    } @else if (visibleVehicles.length === 0 && !error) {
+      <p class="message empty-message">{{ language.text(showingArchived ? 'vehicleEmptyArchived' : 'vehicleEmptyActive') }}</p>
+    } @else {
+      <div class="vehicle-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">{{ language.text('registrationPlate') }}</th>
+              <th scope="col">{{ language.text('fuelType') }}</th>
+              <th scope="col">{{ language.text('vehicleDescription') }}</th>
+              <th scope="col">{{ language.text('status') }}</th>
+              @if (canWrite) { <th scope="col"><span class="visually-hidden">{{ language.text('vehicleActions') }}</span></th> }
+            </tr>
+          </thead>
+          <tbody>
+            @for (vehicle of visibleVehicles; track vehicle.id) {
+              <tr>
+                <td><strong>{{ vehicle.registrationPlate }}</strong></td>
+                <td>{{ fuelLabel(vehicle.fuelType) }}</td>
+                <td>{{ vehicleDescription(vehicle) }}</td>
+                <td><span class="badge" [class.warning]="vehicle.isArchived">{{ language.text(vehicle.isArchived ? 'archived' : 'active') }}</span></td>
+                @if (canWrite) {
+                  <td class="row-actions">
+                    @if (vehicle.isArchived) {
+                      <button class="text-action" type="button" (click)="restoreVehicle(vehicle)">{{ language.text('vehicleRestore') }}</button>
+                    } @else {
+                      <button class="text-action" type="button" (click)="startEdit(vehicle)">{{ language.text('vehicleEdit') }}</button>
+                      <button class="text-action danger-action" type="button" (click)="archiveVehicle(vehicle)">{{ language.text('vehicleArchive') }}</button>
+                    }
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+</section>
