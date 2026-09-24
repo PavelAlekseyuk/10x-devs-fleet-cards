@@ -294,10 +294,10 @@ Add a forward EF migration for the required vehicle fuel type and audit table, a
 
 #### Automated
 
-- [x] 4.1 The Playwright acceptance suite passes against the Aspire-composed API, Angular app, and SQL Server for ReadWrite and ReadOnly vehicle workflows.
-- [x] 4.2 `dotnet test FleetCards.sln`, `npm test`, `npm run build`, and `npm run test:e2e` pass without regressions introduced by this change.
+- [x] 4.1 The Playwright acceptance suite passes against the Aspire-composed API, Angular app, and SQL Server for ReadWrite and ReadOnly vehicle workflows. — 057d74c
+- [x] 4.2 `dotnet test FleetCards.sln`, `npm test`, `npm run build`, and `npm run test:e2e` pass without regressions introduced by this change. — 057d74c
 
 #### Manual
 
-- [x] 4.3 Start Aspire from a clean seeded database and confirm created/edited vehicle data persists across API reads and the browser workflow completes in both languages.
-- [x] 4.4 Archive the seeded Volvo through the browser and confirm protected card and transaction reads still show its existing card link and unchanged Diesel transaction snapshot.
+- [x] 4.3 Start Aspire from a clean seeded database and confirm created/edited vehicle data persists across API reads and the browser workflow completes in both languages. — 057d74c
+- [x] 4.4 Archive the seeded Volvo through the browser and confirm protected card and transaction reads still show its existing card link and unchanged Diesel transaction snapshot. — 057d74c
