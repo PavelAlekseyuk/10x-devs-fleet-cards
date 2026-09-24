@@ -22,7 +22,7 @@ module.exports = defineConfig({
   webServer: {
     command: `aspire run --isolated --apphost "${appHostProject}" --non-interactive --nologo`,
     cwd: repositoryDirectory,
-    url: 'http://127.0.0.1:4200/login',
+    url: 'http://127.0.0.1:4200/api',
     timeout: 180_000,
     reuseExistingServer: false,
     env: {
