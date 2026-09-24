@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 using FleetCards.Api;
 using FleetCards.Application;
 using FleetCards.Contracts;
@@ -8,6 +9,20 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+var e2eDatabaseName = builder.Configuration["FLEETCARDS_E2E_DATABASE"];
+var isE2e = e2eDatabaseName is not null;
+if (
+    isE2e
+    && !Regex.IsMatch(
+        e2eDatabaseName!,
+        @"\Afleetcards_e2e_[0-9a-f]{32}\z",
+        RegexOptions.CultureInvariant
+    )
+)
+{
+    throw new InvalidOperationException("FLEETCARDS_E2E_DATABASE has an invalid value.");
+}
+
 builder.AddServiceDefaults();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
@@ -43,10 +58,34 @@ builder.Services.AddFleetCardsInfrastructure(builder.Configuration);
 
 var app = builder.Build();
 
-if (!string.IsNullOrWhiteSpace(builder.Configuration.GetConnectionString("fleetcards")))
+var connectionString = builder.Configuration.GetConnectionString("fleetcards");
+if (isE2e && string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException("E2E mode requires the fleetcards database connection.");
+}
+
+if (!string.IsNullOrWhiteSpace(connectionString))
 {
     await using var scope = app.Services.CreateAsyncScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<FleetCardsDbContext>();
+    if (isE2e)
+    {
+        var actualDatabaseName = dbContext.Database.GetDbConnection().Database;
+        if (
+            !Regex.IsMatch(
+                actualDatabaseName,
+                @"\Afleetcards_e2e_[0-9a-f]{32}\z",
+                RegexOptions.CultureInvariant
+            )
+            || !string.Equals(actualDatabaseName, e2eDatabaseName, StringComparison.Ordinal)
+        )
+        {
+            throw new InvalidOperationException(
+                "The configured database does not match FLEETCARDS_E2E_DATABASE."
+            );
+        }
+    }
+
     await dbContext.Database.MigrateAsync();
 }
 
@@ -81,6 +120,18 @@ if (app.Environment.IsDevelopment())
 app.MapGet("/api", () => new ApiInfo("Fleet Cards API", "0.1.0"))
     .WithName("GetApiInfo")
     .WithTags("Platform");
+
+if (isE2e)
+{
+    app.MapGet(
+            "/api/e2e/database",
+            (FleetCardsDbContext dbContext) =>
+                Results.Ok(new { databaseName = dbContext.Database.GetDbConnection().Database })
+        )
+        .RequireAuthorization()
+        .WithName("GetE2EDatabaseIdentity")
+        .WithTags("Platform");
+}
 
 app.MapGet(
         "/api/auth/csrf",

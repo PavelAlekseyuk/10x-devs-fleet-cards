@@ -3,7 +3,7 @@ change_id: manage-fleet-vehicles
 title: Manage fleet vehicles
 status: implementing
 created: 2026-09-23
-updated: 2026-09-23
+updated: 2026-09-24
 archived_at: null
 ---
 

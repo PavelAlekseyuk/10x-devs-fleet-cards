@@ -283,21 +283,21 @@ Add a forward EF migration for the required vehicle fuel type and audit table, a
 
 #### Automated
 
-- [x] 3.1 Angular tests cover active-first listing, archived filtering, normalized search, form validation, ReadOnly rendering, mutation flows, and EN/PL vehicle labels.
-- [x] 3.2 `npm test` and `npm run build` pass from `web/`.
+- [x] 3.1 Angular tests cover active-first listing, archived filtering, normalized search, form validation, ReadOnly rendering, mutation flows, and EN/PL vehicle labels. — 1a97cb0
+- [x] 3.2 `npm test` and `npm run build` pass from `web/`. — 1a97cb0
 
 #### Manual
 
-- [x] 3.3 In a browser, verify ReadWrite users can create, edit, archive, and restore vehicles, while ReadOnly users can search and view without mutation controls; repeat key states in English and Polish.
+- [x] 3.3 In a browser, verify ReadWrite users can create, edit, archive, and restore vehicles, while ReadOnly users can search and view without mutation controls; repeat key states in English and Polish. — 1a97cb0
 
 ### Phase 4: Browser Acceptance and Handoff
 
 #### Automated
 
-- [ ] 4.1 The Playwright acceptance suite passes against the Aspire-composed API, Angular app, and SQL Server for ReadWrite and ReadOnly vehicle workflows.
-- [ ] 4.2 `dotnet test FleetCards.sln`, `npm test`, `npm run build`, and `npm run test:e2e` pass without regressions introduced by this change.
+- [x] 4.1 The Playwright acceptance suite passes against the Aspire-composed API, Angular app, and SQL Server for ReadWrite and ReadOnly vehicle workflows.
+- [x] 4.2 `dotnet test FleetCards.sln`, `npm test`, `npm run build`, and `npm run test:e2e` pass without regressions introduced by this change.
 
 #### Manual
 
-- [ ] 4.3 Start Aspire from a clean seeded database and confirm created/edited vehicle data persists across API reads and the browser workflow completes in both languages.
-- [ ] 4.4 Archive the seeded Volvo through the browser and confirm protected card and transaction reads still show its existing card link and unchanged Diesel transaction snapshot.
+- [x] 4.3 Start Aspire from a clean seeded database and confirm created/edited vehicle data persists across API reads and the browser workflow completes in both languages.
+- [x] 4.4 Archive the seeded Volvo through the browser and confirm protected card and transaction reads still show its existing card link and unchanged Diesel transaction snapshot.

@@ -1,59 +1,28 @@
 # Web
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.37.
+FleetCards uses Angular CLI 20.3.37. Install dependencies from this directory with `npm ci`.
 
-## Development server
+## Local Development
 
-To start a local development server, run:
+Run the Angular development server with `npm start`, then open `http://localhost:4200/`.
+The normal composed development runtime is `dotnet run --project src/FleetCards.AppHost/FleetCards.AppHost.csproj` from the repository root.
 
-```bash
-ng serve
+Run the Angular production build with `npm run build` and unit tests with `npm test`. Unit tests use the Angular CLI's Vitest runner.
+
+## Fleet Vehicle Browser Acceptance
+
+Prerequisites are .NET SDK 10, the Aspire CLI, Node.js 22 or newer, Docker Desktop with its Linux container engine running, and the npm dependencies installed. Install the Playwright Chromium browser once per machine with:
+
+```powershell
+npx playwright install chromium
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+From this directory, run the focused suite with:
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
+```powershell
+npm run test:e2e
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+The Playwright runner starts its own AppHost with `aspire run --isolated`, disables reuse of any existing web server, and generates a fresh `fleetcards_e2e_<32 lowercase hex>` physical database name for that run. Aspire keeps the connection resource alias as `fleetcards`; the API verifies the effective physical database name before applying migrations. The SQL Server container uses session lifetime without a data volume, so stopping the runner removes its database storage. Migrations seed the same known Anna, Piotr, Volvo, Toyota, card, and transaction rows on every run. No reset, drop, or migration command targets the persistent default developer database.
 
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+This suite is limited to S-02 vehicle acceptance: seeded ReadWrite and ReadOnly access, normalized search, create/update/archive/restore, restore conflict, and preservation of the seeded Volvo's card assignment and Diesel transaction snapshot. It does not automate card issuance, transactions, or the complete operational journey; those remain in S-03/S-05.
