@@ -259,23 +259,23 @@ Add an EF migration and update the model snapshot for append-only assignment eve
 
 #### Automated
 
-- [x] 2.1 `dotnet test tests/FleetCards.Api.Tests/FleetCards.Api.Tests.csproj` passes with role, CSRF, status, history, audit, and redaction coverage.
-- [x] 2.2 Authenticated card reads return masked card data and effective assignment periods; card mutation routes reject read-only and anonymous callers.
+- [x] 2.1 `dotnet test tests/FleetCards.Api.Tests/FleetCards.Api.Tests.csproj` passes with role, CSRF, status, history, audit, and redaction coverage. — 261bed9
+- [x] 2.2 Authenticated card reads return masked card data and effective assignment periods; card mutation routes reject read-only and anonymous callers. — 261bed9
 
 #### Manual
 
-- [x] 2.3 Exercise issue, reassignment, each defined state, and history reads with both seeded accounts; confirm state changes do not erase the vehicle assignment.
+- [x] 2.3 Exercise issue, reassignment, each defined state, and history reads with both seeded accounts; confirm state changes do not erase the vehicle assignment. — 261bed9
 
 ### Phase 3: Angular Card Management
 
 #### Automated
 
-- [ ] 3.1 From `web/`, `npm test` passes with card service/component coverage for both roles and both languages.
-- [ ] 3.2 From `web/`, `npm run build` passes under strict TypeScript and Angular template checking.
+- [x] 3.1 From `web/`, `npm test` passes with card service/component coverage for both roles and both languages.
+- [x] 3.2 From `web/`, `npm run build` passes under strict TypeScript and Angular template checking.
 
 #### Manual
 
-- [ ] 3.3 Use the cards view in English and Polish to issue for an active vehicle, inspect the timeline, reassign, and select each state; confirm the provider token is not displayed and ReadOnly users see no mutation controls.
+- [x] 3.3 Use the cards view in English and Polish to issue for an active vehicle, inspect the timeline, reassign, and select each state; confirm the provider token is not displayed and ReadOnly users see no mutation controls.
 
 ### Phase 4: Aspire Acceptance and Security Alignment
 

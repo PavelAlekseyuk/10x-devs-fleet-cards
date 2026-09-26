@@ -1,0 +1,281 @@
+:host {
+  display: block;
+}
+
+.card-management {
+  color: #24372f;
+}
+
+.card-heading {
+  margin-bottom: 28px;
+}
+
+.card-heading h2 {
+  margin-bottom: 8px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 28px;
+}
+
+.card-heading .muted {
+  margin-bottom: 0;
+}
+
+.issue-form,
+.card-list {
+  background: #fff;
+}
+
+.issue-form {
+  margin-bottom: 24px;
+  padding: 20px;
+  border-top: 3px solid #e86c54;
+}
+
+.issue-copy h3,
+.list-heading h3,
+.history-panel h4 {
+  margin: 0;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px;
+}
+
+.issue-copy p {
+  margin: 6px 0 18px;
+  color: #718078;
+  font-size: 13px;
+}
+
+.issue-form label,
+.card-actions label {
+  display: grid;
+  gap: 7px;
+  color: #52645b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.issue-controls {
+  display: flex;
+  gap: 10px;
+  margin-top: 7px;
+}
+
+input,
+select {
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid #cbd4cc;
+  border-radius: 2px;
+  color: #24372f;
+  background: #fff;
+  font: inherit;
+}
+
+.issue-controls select {
+  flex: 1;
+}
+
+.primary-button,
+.quiet-button,
+.text-action {
+  min-height: 38px;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 2px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+
+.primary-button {
+  color: #fff;
+  background: #e86c54;
+  font-weight: 700;
+}
+
+.primary-button span {
+  margin-left: 9px;
+  font-size: 17px;
+}
+
+.quiet-button {
+  color: #344b40;
+  background: #f1f2ec;
+}
+
+.text-action {
+  color: #34755f;
+  background: transparent;
+  font-weight: 700;
+}
+
+button:disabled,
+select:disabled {
+  opacity: .65;
+  cursor: not-allowed;
+}
+
+.list-heading {
+  min-height: 64px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e6e7e1;
+}
+
+.record-count {
+  min-width: 28px;
+  padding: 5px 8px;
+  color: #52645b;
+  background: #edf1ec;
+  text-align: center;
+  font-size: 11px;
+}
+
+.card-item {
+  padding: 20px;
+  border-bottom: 1px solid #e6e7e1;
+}
+
+.card-summary {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) minmax(100px, .55fr);
+  align-items: center;
+  gap: 20px;
+}
+
+.card-summary > div {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #75827a;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.masked-pan,
+.card-summary strong {
+  font-size: 14px;
+}
+
+.badge {
+  width: max-content;
+  padding: 5px 8px;
+  color: #34755f;
+  background: #e2f2e8;
+  font-size: 10px;
+}
+
+.badge.warning {
+  color: #9b6632;
+  background: #f8ead4;
+}
+
+.card-actions {
+  margin-top: 18px;
+  padding-top: 16px;
+  display: flex;
+  align-items: end;
+  gap: 10px;
+  border-top: 1px solid #eef0eb;
+}
+
+.card-actions label {
+  min-width: 155px;
+}
+
+.card-actions select {
+  min-height: 36px;
+}
+
+.history-panel {
+  margin-top: 18px;
+  padding: 18px 20px;
+  border-left: 3px solid #5a9d89;
+  background: #f5f8f4;
+}
+
+.history-panel h4 {
+  margin-bottom: 14px;
+}
+
+.assignment-timeline {
+  margin: 0;
+  padding: 0 0 0 18px;
+  border-left: 1px solid #a8c7b6;
+  list-style: none;
+}
+
+.assignment-timeline li {
+  position: relative;
+  padding: 0 0 18px 12px;
+  display: grid;
+  gap: 5px;
+  color: #718078;
+  font-size: 12px;
+}
+
+.assignment-timeline li:last-child {
+  padding-bottom: 0;
+}
+
+.assignment-timeline li::before {
+  position: absolute;
+  top: 2px;
+  left: -23px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #5a9d89;
+  content: '';
+}
+
+.assignment-timeline strong {
+  color: #24372f;
+  font-size: 13px;
+}
+
+.message {
+  margin: 0;
+  padding: 20px;
+  color: #64736a;
+  font-size: 13px;
+}
+
+.error-message {
+  margin: 0 0 16px;
+  color: #9a3d32;
+  background: #fff0ed;
+}
+
+.empty-message {
+  border-top: 1px solid #eef0eb;
+}
+
+@media (max-width: 720px) {
+  .card-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .card-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .card-actions label {
+    min-width: 0;
+  }
+
+  .issue-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
