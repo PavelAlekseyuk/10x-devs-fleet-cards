@@ -25,7 +25,7 @@
 
 ## Input and abuse controls
 
-- Validate plates, date ranges, fuel types, decimal precision, VAT rates, percentages, and card state transitions server-side.
+- Validate plates, date ranges, fuel types, decimal precision, VAT rates, percentages, and card state values server-side. Card state changes require `ReadWrite` authorization and audit records, but the MVP has no additional transition matrix: any defined state may be selected, including reactivation from `Archived`.
 - Use parameterized EF Core queries and bounded pagination/filter inputs.
 - Rate-limit login attempts in the deployed version; a lightweight local implementation is sufficient for the MVP.
 - Do not place credentials, NIP, full card references, or transaction-sensitive data in URLs or analytics.
@@ -35,6 +35,6 @@
 - Read-only users cannot mutate through any API route.
 - Unauthenticated requests cannot read client, card, or transaction data.
 - Full PAN/CVV values cannot be found in database snapshots, logs, telemetry, or API responses.
-- Archived cards and cars cannot be used in new operations.
-- Card and program commands reject invalid transitions and overlapping intervals.
+- Archived cards may receive state changes, including reactivation, but cannot be reassigned or used for fuel operations until reactivated; archived vehicles are ineligible assignment targets.
+- Card state commands reject undefined state values; program commands reject invalid transitions and overlapping intervals.
 - Aspire acceptance tests verify the same authorization and redaction behavior against the composed services.

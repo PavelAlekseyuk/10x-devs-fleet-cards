@@ -270,20 +270,20 @@ Add an EF migration and update the model snapshot for append-only assignment eve
 
 #### Automated
 
-- [x] 3.1 From `web/`, `npm test` passes with card service/component coverage for both roles and both languages.
-- [x] 3.2 From `web/`, `npm run build` passes under strict TypeScript and Angular template checking.
+- [x] 3.1 From `web/`, `npm test` passes with card service/component coverage for both roles and both languages. — 03d6893
+- [x] 3.2 From `web/`, `npm run build` passes under strict TypeScript and Angular template checking. — 03d6893
 
 #### Manual
 
-- [x] 3.3 Use the cards view in English and Polish to issue for an active vehicle, inspect the timeline, reassign, and select each state; confirm the provider token is not displayed and ReadOnly users see no mutation controls.
+- [x] 3.3 Use the cards view in English and Polish to issue for an active vehicle, inspect the timeline, reassign, and select each state; confirm the provider token is not displayed and ReadOnly users see no mutation controls. — 03d6893
 
 ### Phase 4: Aspire Acceptance and Security Alignment
 
 #### Automated
 
-- [ ] 4.1 From `web/`, `npm run test:e2e` passes through Aspire with a fresh isolated SQL database.
-- [ ] 4.2 `dotnet test` passes for the solution; migration startup and card/assignment/transaction writes complete in the SQL-backed composed run.
+- [x] 4.1 From `web/`, `npm run test:e2e` passes through Aspire with a fresh isolated SQL database.
+- [x] 4.2 `dotnet test` passes for the solution; migration startup and card/assignment/transaction writes complete in the SQL-backed composed run.
 
 #### Manual
 
-- [ ] 4.3 Complete the issue-to-reassignment journey with the seeded ReadWrite user, then verify the ReadOnly user can inspect card and assignment history but cannot mutate; confirm older generated transaction vehicle snapshots remain unchanged.
+- [x] 4.3 Complete the issue-to-reassignment journey with the seeded ReadWrite user, then verify the ReadOnly user can inspect card and assignment history but cannot mutate; confirm older generated transaction vehicle snapshots remain unchanged.
