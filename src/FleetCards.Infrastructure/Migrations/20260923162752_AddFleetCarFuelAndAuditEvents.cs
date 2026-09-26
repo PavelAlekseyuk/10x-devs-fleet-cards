@@ -26,12 +26,14 @@ namespace FleetCards.Infrastructure.Migrations
 
             migrationBuilder.Sql(
                 """
+                EXEC(N'
                 UPDATE [Cars]
                 SET [FuelType] = CASE
-                    WHEN [Id] = '11111111-1111-1111-1111-111111111111' THEN N'Diesel'
-                    WHEN [Id] = '33333333-3333-3333-3333-333333333333' THEN N'95'
+                    WHEN [Id] = ''11111111-1111-1111-1111-111111111111'' THEN N''Diesel''
+                    WHEN [Id] = ''33333333-3333-3333-3333-333333333333'' THEN N''95''
                     ELSE NULL
                 END;
+                ');
                 """
             );
 
