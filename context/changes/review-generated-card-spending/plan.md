@@ -304,10 +304,10 @@ Add an EF migration for lineage/version and timestamp fields with deterministic 
 
 #### Automated
 
-- [x] 4.1 Aspire Playwright coverage passes the SQL-backed overview-to-transactions reconciliation and invalid-parameter flow
-- [x] 4.2 `dotnet test` and `npm run build` pass after migration and composed integration changes
-- [x] 4.3 A deliberate total mismatch is detected by the reconciliation assertion
+- [x] 4.1 Aspire Playwright coverage passes the SQL-backed overview-to-transactions reconciliation and invalid-parameter flow — 35c8e3c
+- [x] 4.2 `dotnet test` and `npm run build` pass after migration and composed integration changes — 35c8e3c
+- [x] 4.3 A deliberate total mismatch is detected by the reconciliation assertion — 35c8e3c
 
 #### Manual
 
-- [x] 4.4 Complete the seeded journey in English and Polish and confirm the displayed period, timezone, gross headline, net/VAT details, and POS timestamps
+- [x] 4.4 Complete the seeded journey in English and Polish and confirm the displayed period, timezone, gross headline, net/VAT details, and POS timestamps — 35c8e3c
