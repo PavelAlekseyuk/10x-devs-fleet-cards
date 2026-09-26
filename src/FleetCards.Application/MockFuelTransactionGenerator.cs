@@ -49,10 +49,7 @@ public sealed class MockFuelTransactionGenerator
         var random = CreateRandom(cardId, vehicle.Id, issuedAtUtc);
         var count = random.Next(1, 6);
         var transactions = new FuelTransaction[count];
-        var daysInMonth = DateTime.DaysInMonth(
-            previousMonthStart.Year,
-            previousMonthStart.Month
-        );
+        var daysInMonth = DateTime.DaysInMonth(previousMonthStart.Year, previousMonthStart.Month);
 
         for (var index = 0; index < count; index++)
         {
@@ -64,11 +61,7 @@ public sealed class MockFuelTransactionGenerator
                 2,
                 MidpointRounding.AwayFromZero
             );
-            var vatAmount = decimal.Round(
-                netTotal * vatRate,
-                2,
-                MidpointRounding.AwayFromZero
-            );
+            var vatAmount = decimal.Round(netTotal * vatRate, 2, MidpointRounding.AwayFromZero);
 
             transactions[index] = new FuelTransaction
             {
@@ -103,9 +96,7 @@ public sealed class MockFuelTransactionGenerator
     )
     {
         var seed = SHA256.HashData(
-            Encoding.UTF8.GetBytes(
-                $"{cardId:N}:{vehicleId:N}:{issuedAtUtc.UtcDateTime.Ticks}"
-            )
+            Encoding.UTF8.GetBytes($"{cardId:N}:{vehicleId:N}:{issuedAtUtc.UtcDateTime.Ticks}")
         );
         return new StableRandom(BinaryPrimitives.ReadUInt32LittleEndian(seed));
     }

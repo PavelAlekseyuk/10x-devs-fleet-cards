@@ -52,8 +52,7 @@ public sealed record CardAssignmentHistoryResult(
         IReadOnlyList<FleetCardAssignmentHistoryResponse> assignments
     ) => new(assignments, CardCommandError.None);
 
-    public static CardAssignmentHistoryResult NotFound() =>
-        new([], CardCommandError.NotFound);
+    public static CardAssignmentHistoryResult NotFound() => new([], CardCommandError.NotFound);
 }
 
 public interface IFleetCardService

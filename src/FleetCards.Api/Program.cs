@@ -76,8 +76,7 @@ if (!string.IsNullOrWhiteSpace(connectionString))
                 actualDatabaseName,
                 @"\Afleetcards_e2e_[0-9a-f]{32}\z",
                 RegexOptions.CultureInvariant
-            )
-            || !string.Equals(actualDatabaseName, e2eDatabaseName, StringComparison.Ordinal)
+            ) || !string.Equals(actualDatabaseName, e2eDatabaseName, StringComparison.Ordinal)
         )
         {
             throw new InvalidOperationException(

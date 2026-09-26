@@ -12,7 +12,9 @@ public sealed class SeededFleetCardService(
 {
     private static readonly Guid ClientId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
     private static readonly Guid SeededCardId = Guid.Parse("22222222-2222-2222-2222-222222222222");
-    private static readonly Guid SeededVehicleId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    private static readonly Guid SeededVehicleId = Guid.Parse(
+        "11111111-1111-1111-1111-111111111111"
+    );
     private static readonly DateTimeOffset SeededAssignmentTime = new(
         2026,
         9,
@@ -176,7 +178,9 @@ public sealed class SeededFleetCardService(
                     new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
                     {
                         [nameof(ChangeFleetCardStateRequest.State)] =
-                        ["State must be a defined card state name."],
+                        [
+                            "State must be a defined card state name.",
+                        ],
                     }
                 )
             );
@@ -308,12 +312,13 @@ public sealed class SeededFleetCardService(
         CancellationToken cancellationToken
     )
     {
-        var vehicle = (await vehicleService.GetCarsAsync(
+        var vehicle = (
+            await vehicleService.GetCarsAsync(
                 search: null,
                 includeArchived: true,
                 cancellationToken: cancellationToken
-            ))
-            .SingleOrDefault(candidate => candidate.Id == vehicleId);
+            )
+        ).SingleOrDefault(candidate => candidate.Id == vehicleId);
         return vehicle is null
             ? null
             : new FleetCar

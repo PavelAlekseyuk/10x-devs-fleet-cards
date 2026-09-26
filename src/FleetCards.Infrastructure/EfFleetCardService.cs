@@ -1,6 +1,8 @@
+using System.Data;
 using FleetCards.Application;
 using FleetCards.Contracts;
 using FleetCards.Domain;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace FleetCards.Infrastructure;
@@ -69,6 +71,24 @@ public sealed class EfFleetCardService(
         CancellationToken cancellationToken = default
     )
     {
+        var initialVehicle = await dbContext
+            .Cars.AsNoTracking()
+            .SingleOrDefaultAsync(car => car.Id == request.VehicleId, cancellationToken);
+        if (initialVehicle is null)
+        {
+            return CardCommandResult.NotFound();
+        }
+
+        if (initialVehicle.IsArchived)
+        {
+            return CardCommandResult.Conflict();
+        }
+
+        var providerResult = await cardProvider.IssueAsync(cancellationToken);
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(
+            IsolationLevel.Serializable,
+            cancellationToken
+        );
         var vehicle = await dbContext.Cars.SingleOrDefaultAsync(
             car => car.Id == request.VehicleId,
             cancellationToken
@@ -84,7 +104,6 @@ public sealed class EfFleetCardService(
         }
 
         var issuedAt = DateTimeOffset.UtcNow;
-        var providerResult = await cardProvider.IssueAsync(cancellationToken);
         var card = new FleetCard
         {
             Id = Guid.NewGuid(),
@@ -104,17 +123,22 @@ public sealed class EfFleetCardService(
         };
         var transactions = transactionGenerator.Generate(card.Id, vehicle, issuedAt);
 
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(
-            cancellationToken
-        );
         dbContext.Cards.Add(card);
         dbContext.CardAssignmentEvents.Add(assignment);
         dbContext.Transactions.AddRange(transactions);
         dbContext.AuditEvents.Add(
             CreateAudit(card.Id, "CardIssued", actor, correlationId, issuedAt)
         );
-        await dbContext.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch (Exception exception) when (IsAssignmentWriteConflict(exception))
+        {
+            dbContext.ChangeTracker.Clear();
+            return CardCommandResult.Conflict();
+        }
 
         return CardCommandResult.Success(ToResponse(card));
     }
@@ -133,7 +157,9 @@ public sealed class EfFleetCardService(
                 new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
                 {
                     [nameof(ChangeFleetCardStateRequest.State)] =
-                    ["State must be a defined card state name."],
+                    [
+                        "State must be a defined card state name.",
+                    ],
                 }
             );
         }
@@ -164,6 +190,10 @@ public sealed class EfFleetCardService(
         CancellationToken cancellationToken = default
     )
     {
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(
+            IsolationLevel.Serializable,
+            cancellationToken
+        );
         var card = await dbContext.Cards.SingleOrDefaultAsync(
             candidate => candidate.Id == cardId,
             cancellationToken
@@ -203,9 +233,6 @@ public sealed class EfFleetCardService(
             occurredAt = previous.EffectiveAt;
         }
 
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(
-            cancellationToken
-        );
         card.AssignedCarId = vehicle.Id;
         dbContext.CardAssignmentEvents.Add(
             new FleetCardAssignmentEvent
@@ -220,8 +247,17 @@ public sealed class EfFleetCardService(
         dbContext.AuditEvents.Add(
             CreateAudit(card.Id, "CardReassigned", actor, correlationId, occurredAt)
         );
-        await dbContext.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+        try
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch (Exception exception) when (IsAssignmentWriteConflict(exception))
+        {
+            dbContext.ChangeTracker.Clear();
+            return CardCommandResult.Conflict();
+        }
+
         return CardCommandResult.Success(ToResponse(card));
     }
 
@@ -237,8 +273,7 @@ public sealed class EfFleetCardService(
 
         var assignments = await (
             from assignment in dbContext.CardAssignmentEvents.AsNoTracking()
-            join vehicle in dbContext.Cars.AsNoTracking()
-                on assignment.VehicleId equals vehicle.Id
+            join vehicle in dbContext.Cars.AsNoTracking() on assignment.VehicleId equals vehicle.Id
             where assignment.CardId == cardId
             orderby assignment.EffectiveAt, assignment.OrderingKey
             select new
@@ -258,9 +293,7 @@ public sealed class EfFleetCardService(
                         assignment.VehicleId,
                         assignment.RegistrationPlate,
                         assignment.EffectiveAt,
-                        index + 1 < assignments.Length
-                            ? assignments[index + 1].EffectiveAt
-                            : null,
+                        index + 1 < assignments.Length ? assignments[index + 1].EffectiveAt : null,
                         assignment.OrderingKey
                     )
             )
@@ -270,6 +303,31 @@ public sealed class EfFleetCardService(
 
     private static FleetCardResponse ToResponse(FleetCard card) =>
         new(card.Id, card.MaskedPan, card.ProviderToken, card.State.ToString(), card.AssignedCarId);
+
+    private static bool IsAssignmentWriteConflict(Exception exception)
+    {
+        for (Exception? cause = exception; cause is not null; cause = cause.InnerException)
+        {
+            if (
+                cause is SqlException sqlException
+                && (
+                    sqlException.Number == 1205
+                    || (
+                        sqlException.Number is 2601 or 2627
+                        && sqlException.Message.Contains(
+                            "IX_CardAssignmentEvents_CardId_OrderingKey",
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                    )
+                )
+            )
+            {
+                return true;
+            }
+        }
+
+        return exception is DbUpdateConcurrencyException;
+    }
 
     private static FleetAuditEvent CreateAudit(
         Guid cardId,

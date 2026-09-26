@@ -128,7 +128,11 @@ export class CardManagementComponent implements OnInit {
     this.cardsService.reassignCard(card.id, vehicleId).subscribe({
       next: (updatedCard) => {
         this.assignmentSelections[card.id] = updatedCard.assignedCarId ?? '';
+        delete this.assignmentHistory[card.id];
         this.finishCardMutation(updatedCard);
+        if (this.openHistoryCardId === card.id) {
+          this.loadAssignmentHistory(card.id);
+        }
       },
       error: () => this.failCardMutation(),
     });
@@ -144,9 +148,13 @@ export class CardManagementComponent implements OnInit {
       return;
     }
 
+    this.loadAssignmentHistory(card.id);
+  }
+
+  private loadAssignmentHistory(cardId: string): void {
     this.error = null;
-    this.cardsService.getAssignmentHistory(card.id).subscribe({
-      next: (history) => (this.assignmentHistory[card.id] = history),
+    this.cardsService.getAssignmentHistory(cardId).subscribe({
+      next: (history) => (this.assignmentHistory[cardId] = history),
       error: () => {
         this.openHistoryCardId = null;
         this.error = this.language.text('cardHistoryError');

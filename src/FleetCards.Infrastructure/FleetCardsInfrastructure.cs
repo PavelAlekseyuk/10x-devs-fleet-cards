@@ -12,13 +12,16 @@ public static class FleetCardsInfrastructure
     )
     {
         var connectionString = configuration.GetConnectionString("fleetcards");
+        var vatRate =
+            configuration.GetValue<decimal?>("Transactions:VatRate")
+            ?? MockFuelTransactionGenerator.DefaultVatRate;
         if (!string.IsNullOrWhiteSpace(connectionString))
         {
             services.AddDbContext<FleetCardsDbContext>(options =>
                 options.UseSqlServer(connectionString)
             );
             services.AddSingleton<ICardProvider, MockCardProvider>();
-            services.AddSingleton<MockFuelTransactionGenerator>();
+            services.AddSingleton(new MockFuelTransactionGenerator(vatRate));
             services.AddScoped<IFleetCardService, EfFleetCardService>();
             services.AddScoped<IFleetCardsReadService, EfFleetCardsReadService>();
             services.AddScoped<IFleetVehicleService, EfFleetVehicleService>();
@@ -31,7 +34,7 @@ public static class FleetCardsInfrastructure
             serviceProvider.GetRequiredService<SeededFleetVehicleService>()
         );
         services.AddSingleton<ICardProvider, MockCardProvider>();
-        services.AddSingleton<MockFuelTransactionGenerator>();
+        services.AddSingleton(new MockFuelTransactionGenerator(vatRate));
         services.AddSingleton<IFleetCardService, SeededFleetCardService>();
         services.AddSingleton<IFleetCardsReadService, SeededFleetCardsReadService>();
         services.AddSingleton<IAuthenticationService, SeededAuthenticationService>();

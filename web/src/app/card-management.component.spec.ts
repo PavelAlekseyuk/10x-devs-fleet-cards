@@ -163,6 +163,12 @@ describe('CardManagementComponent', () => {
     const fixture = createFixture();
     await flushInitial(fixture);
     const element = fixture.nativeElement as HTMLElement;
+    element.querySelector<HTMLButtonElement>('.card-actions .text-action')!.click();
+    const initialHistoryRequest = http.expectOne('/api/cards/card-1/assignment-history');
+    initialHistoryRequest.flush(history);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
     const reassignSelect = element.querySelector<HTMLSelectElement>(
       '[aria-label="Reassign vehicle: •••• 4242"]',
     )!;
@@ -184,11 +190,27 @@ describe('CardManagementComponent', () => {
       assignedVehicleRegistrationPlate: secondVehicle.registrationPlate,
       providerToken: 'provider-secret',
     });
+    const refreshedHistoryRequest = http.expectOne('/api/cards/card-1/assignment-history');
+    expect(refreshedHistoryRequest.request.method).toBe('GET');
+    const thirdEffectiveFrom = '2026-10-01T09:00:00Z';
+    refreshedHistoryRequest.flush([
+      history[0],
+      { ...history[1], effectiveTo: thirdEffectiveFrom },
+      {
+        cardId: card.id,
+        vehicleId: secondVehicle.id,
+        vehicleRegistrationPlate: secondVehicle.registrationPlate,
+        effectiveFrom: thirdEffectiveFrom,
+        effectiveTo: null,
+        orderingKey: 3,
+      },
+    ]);
     await fixture.whenStable();
     fixture.detectChanges();
 
     expect(element.textContent).toContain(secondVehicle.registrationPlate);
     expect(element.textContent).not.toMatch(/unassign/i);
+    expect(element.querySelectorAll('.assignment-timeline li')).toHaveLength(3);
   });
 
   it('loads and renders assignment periods as a timeline', async () => {

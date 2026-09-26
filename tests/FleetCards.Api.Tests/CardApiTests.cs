@@ -21,8 +21,12 @@ namespace FleetCards.Api.Tests;
 public sealed class CardApiTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private static readonly Guid SeededCardId = Guid.Parse("22222222-2222-2222-2222-222222222222");
-    private static readonly Guid FirstVehicleId = Guid.Parse("11111111-1111-1111-1111-111111111111");
-    private static readonly Guid SecondVehicleId = Guid.Parse("33333333-3333-3333-3333-333333333333");
+    private static readonly Guid FirstVehicleId = Guid.Parse(
+        "11111111-1111-1111-1111-111111111111"
+    );
+    private static readonly Guid SecondVehicleId = Guid.Parse(
+        "33333333-3333-3333-3333-333333333333"
+    );
     private readonly WebApplicationFactory<Program> factory;
 
     public CardApiTests(WebApplicationFactory<Program> factory)
@@ -353,9 +357,7 @@ public sealed class CardApiTests : IClassFixture<WebApplicationFactory<Program>>
         using var cards = await client.GetAsync("/api/cards");
         body += await cards.Content.ReadAsStringAsync();
         var issued = (await issue.Content.ReadFromJsonAsync<FleetCardApiResponse>())!;
-        using var history = await client.GetAsync(
-            $"/api/cards/{issued.Id}/assignment-history"
-        );
+        using var history = await client.GetAsync($"/api/cards/{issued.Id}/assignment-history");
         body += await history.Content.ReadAsStringAsync();
 
         await using var scope = host.Services.CreateAsyncScope();
@@ -385,9 +387,7 @@ public sealed class CardApiTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.DoesNotContain(pin, logs, StringComparison.Ordinal);
     }
 
-    private WebApplicationFactory<Program> CreateCardHost(
-        ILoggerProvider? loggerProvider = null
-    )
+    private WebApplicationFactory<Program> CreateCardHost(ILoggerProvider? loggerProvider = null)
     {
         var databaseName = $"fleet-cards-{Guid.NewGuid()}";
         var host = factory.WithWebHostBuilder(builder =>

@@ -6,9 +6,7 @@ namespace FleetCards.Infrastructure;
 
 public sealed class MockCardProvider : ICardProvider
 {
-    public Task<CardProviderIssueResult> IssueAsync(
-        CancellationToken cancellationToken = default
-    )
+    public Task<CardProviderIssueResult> IssueAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -47,8 +45,6 @@ public sealed class MockCardProvider : ICardProvider
         }
 
         digits[^1] = (10 - sum % 10) % 10;
-        return string.Concat(
-            digits.Select(digit => digit.ToString(CultureInfo.InvariantCulture))
-        );
+        return string.Concat(digits.Select(digit => digit.ToString(CultureInfo.InvariantCulture)));
     }
 }

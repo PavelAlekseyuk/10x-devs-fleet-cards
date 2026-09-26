@@ -242,15 +242,7 @@ public sealed class FleetCardsDbContext(DbContextOptions<FleetCardsDbContext> op
                     Id = Guid.Parse("66666666-6666-6666-6666-666666666666"),
                     CardId = cardId,
                     VehicleId = primaryCarId,
-                    EffectiveAt = new DateTimeOffset(
-                        2026,
-                        9,
-                        9,
-                        12,
-                        0,
-                        0,
-                        TimeSpan.Zero
-                    ),
+                    EffectiveAt = new DateTimeOffset(2026, 9, 9, 12, 0, 0, TimeSpan.Zero),
                     OrderingKey = 1,
                 }
             );
