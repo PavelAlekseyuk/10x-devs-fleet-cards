@@ -56,7 +56,7 @@ export interface DashboardSummary {
 export class TransactionReportService {
   private readonly http = inject(HttpClient);
   private readonly settings = inject(UserSettingsService);
-  private readonly selectedMonthState = signal(getCurrentMonth(this.settings.timeZone()));
+  private readonly selectedMonthState = signal(getPreviousMonth(this.settings.timeZone()));
   readonly selectedMonth = this.selectedMonthState.asReadonly();
 
   getReport(): Observable<TransactionReport> {
@@ -107,13 +107,15 @@ export class TransactionReportService {
   }
 }
 
-function getCurrentMonth(timeZone: string): string {
+function getPreviousMonth(timeZone: string): string {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone,
     year: 'numeric',
     month: '2-digit',
   }).formatToParts(new Date());
-  const year = parts.find((part) => part.type === 'year')?.value ?? '0001';
-  const month = parts.find((part) => part.type === 'month')?.value ?? '01';
-  return `${year.padStart(4, '0')}-${month}`;
+  const currentYear = Number(parts.find((part) => part.type === 'year')?.value ?? '0001');
+  const currentMonth = Number(parts.find((part) => part.type === 'month')?.value ?? '01');
+  const previousYear = currentMonth === 1 ? Math.max(1, currentYear - 1) : currentYear;
+  const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+  return `${String(previousYear).padStart(4, '0')}-${String(previousMonth).padStart(2, '0')}`;
 }

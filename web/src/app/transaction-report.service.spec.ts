@@ -21,16 +21,18 @@ describe('TransactionReportService', () => {
 
   afterEach(() => http.verify());
 
-  it('starts with the current month in the default reporting timezone', () => {
-    const expected = new Intl.DateTimeFormat('en-US', {
+  it('starts with the previous month in the default reporting timezone', () => {
+    const currentParts = new Intl.DateTimeFormat('en-US', {
       timeZone: 'Europe/Warsaw',
       year: 'numeric',
       month: '2-digit',
     }).formatToParts(new Date());
-    const year = expected.find((part) => part.type === 'year')?.value;
-    const month = expected.find((part) => part.type === 'month')?.value;
+    const year = Number(currentParts.find((part) => part.type === 'year')?.value);
+    const month = Number(currentParts.find((part) => part.type === 'month')?.value);
+    const previousMonth = new Date(Date.UTC(year, month - 2, 1));
+    const expected = `${previousMonth.getUTCFullYear()}-${String(previousMonth.getUTCMonth() + 1).padStart(2, '0')}`;
 
-    expect(reports.selectedMonth()).toBe(`${year}-${month}`);
+    expect(reports.selectedMonth()).toBe(expected);
   });
 
   it('serializes the selected year, month, and timezone for the report endpoint', () => {

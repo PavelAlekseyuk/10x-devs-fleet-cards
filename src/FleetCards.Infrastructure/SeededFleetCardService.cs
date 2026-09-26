@@ -64,7 +64,7 @@ public sealed class SeededFleetCardService(
             PosTimeZoneId = "Europe/Warsaw",
             StationName = "angry storage",
             FuelType = "Diesel",
-            Quantity = 42.125m,
+            Quantity = 42.081m,
             UnitPrice = 6.49m,
             Discount = 0.18m,
             NetTotal = 265.53m,

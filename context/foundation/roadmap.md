@@ -144,9 +144,8 @@ What is already in place in the codebase as of `2026-09-22` (auto-researched and
 - **Prerequisites:** S-03
 - **Parallel with:** -
 - **Blockers:** -
-- **Unknowns:**
-  - What are the exact rules for VAT, refunds, cancellations, and recalculations? - Owner: product/client stakeholders. Block: yes.
-- **Risk:** The primary journey cannot claim reconciled transaction correctness until the calculation rules are explicit; resolving them makes the required totals verifiable.
+- **Unknowns:** -
+- **Risk:** The primary journey depends on applying the locked transaction and VAT rules consistently across EF and seeded modes so the required totals remain verifiable.
 - **Implementation scope:**
   - Generate and persist 1-5 previous-month transactions after issuance.
   - Implement decimal precision, VAT fields, transaction status/version metadata, filtering, totals, and UI views.
@@ -184,10 +183,9 @@ What is already in place in the codebase as of `2026-09-22` (auto-researched and
 
 ## Open Roadmap Questions
 
-1. **What are the exact rules for VAT, refunds, cancellations, and recalculations?** - Owner: product/client stakeholders. Block: S-04.
-2. **What is the exact program comparison formula for discounts or premiums by fuel type and active period?** - Owner: product/client stakeholders. Block: parked program-comparison work.
-3. **What are the final client-role boundaries beyond the seeded full-access and read-only users?** - Owner: product/client stakeholders. Block: no current milestone slice; required before replacing mocked authentication.
-4. **Which client-installation data must be isolated and what evidence is required for that boundary?** - Owner: product/client stakeholders. Block: public deployment work.
+1. **What is the exact program comparison formula for discounts or premiums by fuel type and active period?** - Owner: product/client stakeholders. Block: parked program-comparison work.
+2. **What are the final client-role boundaries beyond the seeded full-access and read-only users?** - Owner: product/client stakeholders. Block: no current milestone slice; required before replacing mocked authentication.
+3. **Which client-installation data must be isolated and what evidence is required for that boundary?** - Owner: product/client stakeholders. Block: public deployment work.
 
 ## Parked
 

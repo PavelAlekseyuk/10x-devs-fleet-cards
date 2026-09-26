@@ -319,10 +319,23 @@ public sealed class TransactionReportingTests
         Assert.Equal(PurchaseId, seeded.LineageId);
         Assert.Equal(1, seeded.Version);
         Assert.Null(seeded.CorrectsTransactionId);
-        Assert.Equal(42.125m, seeded.Quantity);
+        Assert.Equal(42.081m, seeded.Quantity);
         Assert.Equal(265.53m, seeded.NetTotal);
         Assert.Equal(61.07m, seeded.VatAmount);
         Assert.Equal(326.60m, seeded.GrossTotal);
+        Assert.Equal(
+            seeded.NetTotal,
+            TransactionReportingService.CalculateNetTotal(
+                seeded.Quantity,
+                seeded.UnitPrice,
+                seeded.Discount
+            )
+        );
+        Assert.Equal(
+            seeded.VatAmount,
+            TransactionReportingService.CalculateVatAmount(seeded.NetTotal, seeded.VatRate)
+        );
+        Assert.Equal(seeded.NetTotal + seeded.VatAmount, seeded.GrossTotal);
         Assert.Equal(VehicleId, seeded.VehicleId);
         Assert.Equal("WA 12345", seeded.VehiclePlate);
         Assert.Equal("Europe/Warsaw", seeded.PosTimeZoneId);

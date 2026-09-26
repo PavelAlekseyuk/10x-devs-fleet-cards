@@ -453,7 +453,7 @@ namespace FleetCards.Infrastructure.Migrations
                             OccurredAt = new DateTimeOffset(new DateTime(2026, 9, 9, 12, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             PosOccurredAtLocal = new DateTimeOffset(new DateTime(2026, 9, 9, 14, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 2, 0, 0, 0)),
                             PosTimeZoneId = "Europe/Warsaw",
-                            Quantity = 42.125m,
+                            Quantity = 42.081m,
                             StationName = "angry storage",
                             Status = "Completed",
                             UnitPrice = 6.49m,

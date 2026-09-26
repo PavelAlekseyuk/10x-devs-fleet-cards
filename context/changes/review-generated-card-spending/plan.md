@@ -7,7 +7,7 @@ Deliver the S-04 reporting slice that turns persisted fuel transactions into a t
 ## Current State Analysis
 
 S-03 already persists 1-5 deterministic `Completed` transactions when a card is issued. `FuelTransaction` contains the vehicle snapshot, quantity, unit price, discount, net total, VAT rate/amount, gross total, and status. Both EF and seeded card services expose inclusive `from`/`to` filtering through `GET /api/transactions`, but there is no reporting aggregate contract, correction lineage/version metadata, POS-local timestamp, or timezone-aware month selection.
-The exact economic treatment for refunds, cancellations, and recalculations remains a blocking stakeholder decision in the S-04 roadmap; the status rules below are proposals until that decision is recorded in `context/foundation/decisions.md`.
+The S-04 economic treatment is locked in `context/foundation/decisions.md` decision 15: recalculations replace the purchase in its original month, while refunds and cancellations are separate signed events in their own occurrence months.
 
 The Angular `/transactions` route still renders the generic shell placeholder, while the overview hardcodes vehicle count, card count, and spend. Existing standalone components, typed HTTP services, bilingual `LanguageService` resources, xUnit API tests, Vitest component tests, and Playwright/Aspire tests provide the local patterns to extend.
 
@@ -42,9 +42,9 @@ Persist the user's timezone as an Angular user preference in local storage, defa
 
 ## Critical Implementation Details
 
-Reporting semantics when a correction falls outside the original transaction's selected month are unresolved. Before implementing the report query, decide whether month filtering happens before lineage reduction or the latest lineage state is resolved first, define deterministic version ordering and a stable tie-breaker, and test the chosen behavior across a month boundary.
+Purchase versions use unique increasing version numbers. The latest `Completed` or `Recalculated` version supplies the purchase's full effective values while retaining the original occurrence time and reporting month. Refund and cancellation rows are separate immutable linked correction events selected in their own occurrence month. Their stored signed monetary values are additive; a cancellation contributes its explicit signed reversal, not an automatic zero.
 
-Transaction selection must use a half-open UTC interval derived from the user's local month start and the next local month start; this avoids inclusive end-of-day precision bugs and handles daylight-saving transitions. A lineage has one effective version: `Completed` and `Recalculated` contribute their positive effective amounts, `Refunded` contributes its explicit negative correction amount, and `Cancelled` contributes zero; the original row is not counted again once a later linked version exists. Existing generated records remain single-version Completed lineages.
+Transaction selection must use a half-open UTC interval derived from the user's local month start and the next local month start; this avoids inclusive end-of-day precision bugs and handles daylight-saving transitions. Existing generated records remain single-version `Completed` purchase lineages.
 
 POS-local time is a persisted fact, represented alongside UTC with the POS timezone information. User-local display is derived from UTC using the configured user timezone; the API must not overwrite the stored POS representation when a user changes preference.
 
@@ -254,7 +254,7 @@ Add an EF migration for lineage/version and timestamp fields with deterministic 
 
 ## References
 
-- `context/foundation/roadmap.md` — S-04 scope, dependency, and blocked VAT/status decision.
+- `context/foundation/roadmap.md` — S-04 scope and dependency.
 - `context/foundation/prd.md` — US-01, FR-005 through FR-007, transaction/VAT guardrails, and access control.
 - `context/foundation/requirements.md` — transaction fields, status model, VAT presentation, and persistence expectations.
 - `context/foundation/decisions.md` — 23% VAT default, away-from-zero rounding, immutable transaction facts, and UTC vehicle snapshots.

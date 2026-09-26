@@ -168,7 +168,7 @@ async function waitForReportResponse(
 test('Aspire transaction reporting reconciles seeded spending and timezone display', async ({
   page,
 }) => {
-  await page.clock.install({ time: new Date('2026-09-26T12:00:00.000Z') });
+  await page.clock.install({ time: new Date('2026-10-01T12:00:00.000Z') });
   await page.goto('/login');
 
   const anonymousRequests = await Promise.all([
