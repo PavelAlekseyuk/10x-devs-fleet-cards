@@ -54,10 +54,14 @@ public sealed class SeededFleetCardService(
         new FuelTransaction
         {
             Id = Guid.Parse("44444444-4444-4444-4444-444444444444"),
+            LineageId = Guid.Parse("44444444-4444-4444-4444-444444444444"),
+            Version = 1,
             CardId = SeededCardId,
             VehicleId = SeededVehicleId,
             VehiclePlate = "WA 12345",
             OccurredAt = SeededAssignmentTime,
+            PosOccurredAtLocal = new DateTimeOffset(2026, 9, 9, 14, 0, 0, TimeSpan.FromHours(2)),
+            PosTimeZoneId = "Europe/Warsaw",
             StationName = "angry storage",
             FuelType = "Diesel",
             Quantity = 42.125m,

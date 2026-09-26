@@ -271,8 +271,8 @@ Add an EF migration for lineage/version and timestamp fields with deterministic 
 
 #### Automated
 
-- [ ] 1.1 Application tests cover effective lineage selection, status handling, duplicate-prevention, decimal rounding, UTC month boundaries, timezone conversion, and net/VAT/gross reconciliation
-- [ ] 1.2 EF model and migration tests preserve existing seeded transactions and apply the new transaction fields cleanly
+- [x] 1.1 Application tests cover effective lineage selection, status handling, duplicate-prevention, decimal rounding, UTC month boundaries, timezone conversion, and net/VAT/gross reconciliation
+- [x] 1.2 EF model and migration tests preserve existing seeded transactions and apply the new transaction fields cleanly
 
 #### Manual
 

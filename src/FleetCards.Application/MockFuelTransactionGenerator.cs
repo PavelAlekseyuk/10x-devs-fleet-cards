@@ -8,6 +8,10 @@ namespace FleetCards.Application;
 public sealed class MockFuelTransactionGenerator
 {
     public const decimal DefaultVatRate = 0.23m;
+    private const string PointOfSaleTimeZoneId = "Europe/Warsaw";
+    private static readonly TimeZoneInfo PointOfSaleTimeZone = TimeZoneInfo.FindSystemTimeZoneById(
+        PointOfSaleTimeZoneId
+    );
 
     private static readonly string[] StationNames =
     [
@@ -56,23 +60,28 @@ public sealed class MockFuelTransactionGenerator
             var quantity = random.Next(15_000, 55_001) / 1_000m;
             var unitPrice = random.Next(450, 801) / 100m;
             var discount = random.Next(5, 31) / 100m;
-            var netTotal = decimal.Round(
-                quantity * (unitPrice - discount),
-                2,
-                MidpointRounding.AwayFromZero
+            var occurredAt = previousMonthStart
+                .AddDays(random.Next(0, daysInMonth))
+                .AddHours(random.Next(0, 24))
+                .AddMinutes(random.Next(0, 60));
+            var netTotal = TransactionReportingService.CalculateNetTotal(
+                quantity,
+                unitPrice,
+                discount
             );
-            var vatAmount = decimal.Round(netTotal * vatRate, 2, MidpointRounding.AwayFromZero);
+            var vatAmount = TransactionReportingService.CalculateVatAmount(netTotal, vatRate);
 
             transactions[index] = new FuelTransaction
             {
                 Id = CreateTransactionId(cardId, vehicle.Id, issuedAtUtc, index),
+                LineageId = CreateTransactionId(cardId, vehicle.Id, issuedAtUtc, index),
+                Version = 1,
                 CardId = cardId,
                 VehicleId = vehicle.Id,
                 VehiclePlate = vehicle.RegistrationPlate,
-                OccurredAt = previousMonthStart
-                    .AddDays(random.Next(0, daysInMonth))
-                    .AddHours(random.Next(0, 24))
-                    .AddMinutes(random.Next(0, 60)),
+                OccurredAt = occurredAt,
+                PosOccurredAtLocal = TimeZoneInfo.ConvertTime(occurredAt, PointOfSaleTimeZone),
+                PosTimeZoneId = PointOfSaleTimeZoneId,
                 StationName = StationNames[random.Next(0, StationNames.Length)],
                 FuelType = vehicle.FuelType,
                 Quantity = quantity,
