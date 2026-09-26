@@ -293,21 +293,21 @@ Add an EF migration for lineage/version and timestamp fields with deterministic 
 
 #### Automated
 
-- [x] 3.1 Angular tests cover timezone preference/default, month selection, dual timestamps, totals, errors, empty states, permissions, and EN/PL labels
-- [x] 3.2 `npm run build` passes strict TypeScript and Angular template checking
+- [x] 3.1 Angular tests cover timezone preference/default, month selection, dual timestamps, totals, errors, empty states, permissions, and EN/PL labels — 82d10d6
+- [x] 3.2 `npm run build` passes strict TypeScript and Angular template checking — 82d10d6
 
 #### Manual
 
-- [x] 3.3 Verify month/timezone changes, POS timestamp stability, overview/report reconciliation, and bilingual accessible UI behavior
+- [x] 3.3 Verify month/timezone changes, POS timestamp stability, overview/report reconciliation, and bilingual accessible UI behavior — 82d10d6
 
 ### Phase 4: Reconciliation and Aspire Verification
 
 #### Automated
 
-- [ ] 4.1 Aspire Playwright coverage passes the SQL-backed overview-to-transactions reconciliation and invalid-parameter flow
-- [ ] 4.2 `dotnet test` and `npm run build` pass after migration and composed integration changes
-- [ ] 4.3 A deliberate total mismatch is detected by the reconciliation assertion
+- [x] 4.1 Aspire Playwright coverage passes the SQL-backed overview-to-transactions reconciliation and invalid-parameter flow
+- [x] 4.2 `dotnet test` and `npm run build` pass after migration and composed integration changes
+- [x] 4.3 A deliberate total mismatch is detected by the reconciliation assertion
 
 #### Manual
 
-- [ ] 4.4 Complete the seeded journey in English and Polish and confirm the displayed period, timezone, gross headline, net/VAT details, and POS timestamps
+- [x] 4.4 Complete the seeded journey in English and Polish and confirm the displayed period, timezone, gross headline, net/VAT details, and POS timestamps

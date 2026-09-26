@@ -32,6 +32,10 @@ interface FuelTransaction {
   status: string;
 }
 
+interface TransactionReport {
+  transactions: FuelTransaction[];
+}
+
 interface AssignmentHistoryEntry {
   cardId: string;
   vehicleId: string;
@@ -100,6 +104,29 @@ async function requestApi<T>(
   return { status: response.status, body: response.body as T | null };
 }
 
+function utcMonthAtOffset(offset: number): string {
+  const current = new Date();
+  return new Date(Date.UTC(current.getUTCFullYear(), current.getUTCMonth() + offset, 1))
+    .toISOString()
+    .slice(0, 7);
+}
+
+function reportPath(month: string): string {
+  const [year, monthNumber] = month.split('-');
+  return `/api/transactions/report?year=${year}&month=${Number(monthNumber)}&timeZone=UTC`;
+}
+
+async function getTransactionsForCard(page: Page, cardId: string): Promise<FuelTransaction[]> {
+  const months = [...new Set([utcMonthAtOffset(-1), utcMonthAtOffset(0)])];
+  const reports = await Promise.all(
+    months.map(month => requestApi<TransactionReport>(page, reportPath(month))),
+  );
+  expect(reports.map(report => report.status)).toEqual(months.map(() => 200));
+  return reports
+    .flatMap(report => report.body?.transactions ?? [])
+    .filter(transaction => transaction.cardId === cardId);
+}
+
 function expectCardRedacted(card: FleetCard): void {
   expect(card.maskedPan).toMatch(/^\*{4} \*{4} \*{4} \d{4}$/);
   const fieldNames = Object.keys(card).map(field => field.toLowerCase());
@@ -117,7 +144,10 @@ test('composed card issue and reassignment persist history without rewriting tra
 }) => {
   await page.goto('/login');
   const unauthenticatedStatuses = await page.evaluate(async () => {
-    const responses = await Promise.all([fetch('/api/cards'), fetch('/api/transactions')]);
+    const responses = await Promise.all([
+      fetch('/api/cards'),
+      fetch('/api/transactions/report?year=2026&month=9&timeZone=UTC'),
+    ]);
     return responses.map(response => response.status);
   });
   expect(unauthenticatedStatuses).toEqual([401, 401]);
@@ -181,10 +211,7 @@ test('composed card issue and reassignment persist history without rewriting tra
   expect(persistedCard).toMatchObject(issuedCard);
   expectCardRedacted(persistedCard!);
 
-  const transactionsResponse = await requestApi<FuelTransaction[]>(page, '/api/transactions');
-  expect(transactionsResponse.status).toBe(200);
-  const issuedTransactions = (transactionsResponse.body ?? [])
-    .filter(transaction => transaction.cardId === issuedCard.id)
+  const issuedTransactions = (await getTransactionsForCard(page, issuedCard.id))
     .sort((left, right) => left.id.localeCompare(right.id));
   expect(issuedTransactions.length).toBeGreaterThan(0);
   for (const transaction of issuedTransactions) {
@@ -241,11 +268,9 @@ test('composed card issue and reassignment persist history without rewriting tra
   });
   expect(historyResponse.body?.[0].effectiveTo).toBe(historyResponse.body?.[1].effectiveFrom);
 
-  const transactionsAfterReassignment =
-    (await requestApi<FuelTransaction[]>(page, '/api/transactions')).body ?? [];
+  const transactionsAfterReassignment = await getTransactionsForCard(page, issuedCard.id);
   expect(
     transactionsAfterReassignment
-      .filter(transaction => transaction.cardId === issuedCard.id)
       .sort((left, right) => left.id.localeCompare(right.id)),
   ).toEqual(issuedTransactions);
 
