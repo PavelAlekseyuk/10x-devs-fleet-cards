@@ -7,6 +7,7 @@ Deliver the S-04 reporting slice that turns persisted fuel transactions into a t
 ## Current State Analysis
 
 S-03 already persists 1-5 deterministic `Completed` transactions when a card is issued. `FuelTransaction` contains the vehicle snapshot, quantity, unit price, discount, net total, VAT rate/amount, gross total, and status. Both EF and seeded card services expose inclusive `from`/`to` filtering through `GET /api/transactions`, but there is no reporting aggregate contract, correction lineage/version metadata, POS-local timestamp, or timezone-aware month selection.
+The exact economic treatment for refunds, cancellations, and recalculations remains a blocking stakeholder decision in the S-04 roadmap; the status rules below are proposals until that decision is recorded in `context/foundation/decisions.md`.
 
 The Angular `/transactions` route still renders the generic shell placeholder, while the overview hardcodes vehicle count, card count, and spend. Existing standalone components, typed HTTP services, bilingual `LanguageService` resources, xUnit API tests, Vitest component tests, and Playwright/Aspire tests provide the local patterns to extend.
 
@@ -40,6 +41,8 @@ Keep the Domain → Contracts → Application → Infrastructure → Minimal API
 Persist the user's timezone as an Angular user preference in local storage, defaulting to `Europe/Warsaw`/CET-compatible behavior, and send it with reporting requests. Validate timezone IDs and month values at the API boundary, return structured `400` responses for invalid input, and keep all report endpoints authenticated. Add localized Angular error/empty/loading states and replace only the transactions and overview preview surfaces.
 
 ## Critical Implementation Details
+
+Reporting semantics when a correction falls outside the original transaction's selected month are unresolved. Before implementing the report query, decide whether month filtering happens before lineage reduction or the latest lineage state is resolved first, define deterministic version ordering and a stable tie-breaker, and test the chosen behavior across a month boundary.
 
 Transaction selection must use a half-open UTC interval derived from the user's local month start and the next local month start; this avoids inclusive end-of-day precision bugs and handles daylight-saving transitions. A lineage has one effective version: `Completed` and `Recalculated` contribute their positive effective amounts, `Refunded` contributes its explicit negative correction amount, and `Cancelled` contributes zero; the original row is not counted again once a later linked version exists. Existing generated records remain single-version Completed lineages.
 
@@ -75,13 +78,13 @@ Extend the immutable transaction model and define the shared reporting/calculati
 
 **Intent**: Centralize status-aware selection and aggregation so the summary and row response cannot drift.
 
-**Contract**: Select the highest effective version within each explicit lineage, exclude superseded originals, apply the settled Completed/Recalculated/Refunded/Cancelled economic rules, and sum stored monetary values using decimal arithmetic with away-from-zero rounding where a derived amount is required. A month boundary is local midnight at the start of the selected month through local midnight at the start of the following month, converted to UTC. The default user timezone is CET-compatible and configurable; unknown timezone IDs and invalid periods are validation failures.
+**Contract**: Select the highest effective version within each explicit lineage, exclude superseded originals, apply the stakeholder-approved Completed/Recalculated/Refunded/Cancelled economic rules, and sum stored monetary values using decimal arithmetic with away-from-zero rounding where a derived amount is required. Do not implement status aggregation until the economic rules are confirmed and recorded in `context/foundation/decisions.md`. A month boundary is local midnight at the start of the selected month through local midnight at the start of the following month, converted to UTC. The default user timezone is CET-compatible and configurable; unknown timezone IDs and invalid periods are validation failures.
 
 ### Success Criteria:
 
 #### Automated Verification:
 
-- Application tests cover Completed-only generated data, effective lineage selection, refunded/cancelled/recalculated cases, duplicate-prevention, decimal rounding, UTC month boundaries, timezone/DST conversion, and net/VAT/gross reconciliation.
+- Application tests cover Completed-only generated data, effective lineage selection, refunded/cancelled/recalculated cases, duplicate-prevention, decimal rounding, UTC month boundaries, timezone/DST conversion, corrections crossing report-month boundaries with deterministic version tie-breaking, and net/VAT/gross reconciliation.
 - EF model and migration tests apply cleanly and preserve existing seeded transactions, vehicle snapshots, and card-issued data.
 
 #### Manual Verification:
@@ -98,7 +101,7 @@ Expose the selected-period transaction report and dedicated overview summary thr
 
 #### 1. Reporting service implementations
 
-**File**: `src/FleetCards.Infrastructure/EfFleetCardsReadService.cs`, `src/FleetCards.Infrastructure/SeededFleetCardsReadService.cs`, `src/FleetCards.Infrastructure/FleetCardsInfrastructure.cs`
+**File**: `src/FleetCards.Infrastructure/EfFleetCardsReadService.cs`, `src/FleetCards.Application/FleetCardsApplication.cs`, `src/FleetCards.Infrastructure/FleetCardsInfrastructure.cs`
 
 **Intent**: Move report filtering, effective-row selection, timestamp conversion, and aggregation behind one application-facing capability in both runtime modes.
 
@@ -149,11 +152,11 @@ Replace the transactions placeholder and hardcoded overview metrics with typed, 
 
 #### 2. Transactions component and template
 
-**File**: `web/src/app/transaction-report.component.ts`, `.html`, `.scss`, `web/src/app/transaction-report.component.spec.ts`, `web/src/app/app.routes.ts`
+**File**: `web/src/app/transaction-report.component.ts`, `.html`, `.scss`, `web/src/app/transaction-report.component.spec.ts`, `web/src/app/shell.component.ts`, `web/src/app/shell.component.html`
 
 **Intent**: Give users a real selected-month transaction view with enough detail to inspect and reconcile spending.
 
-**Contract**: The standalone feature provides month picker controls, timezone setting, loading/error/empty states, period totals, and full rows showing user-timezone time, POS-local time/timezone, vehicle plate, fuel type, quantity, discount, net, VAT, gross, and status. Preserve route authentication and add EN/PL resource keys; use responsive table/stacked-row behavior without hardcoded preview data.
+**Contract**: The standalone feature provides month picker controls, timezone setting, loading/error/empty states, period totals, and full rows showing user-timezone time, POS-local time/timezone, vehicle plate, fuel type, quantity, discount, net, VAT, gross, and status. Keep `/transactions` mapped to the existing `ShellComponent` route with `authGuard`; import and render the report component in the shell's transactions branch. Add EN/PL resource keys; use responsive table/stacked-row behavior without hardcoded preview data.
 
 #### 3. Overview summary integration
 
