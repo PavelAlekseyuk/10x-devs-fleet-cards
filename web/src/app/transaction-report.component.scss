@@ -1,0 +1,307 @@
+:host {
+  display: block;
+}
+
+.transaction-report {
+  color: #24372f;
+}
+
+.report-heading,
+.report-controls,
+.month-control,
+.timezone-entry,
+.totals-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.report-heading {
+  margin-bottom: 24px;
+}
+
+.report-heading h2 {
+  margin: 0;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 28px;
+}
+
+.report-controls {
+  align-items: end;
+}
+
+.month-control {
+  gap: 4px;
+}
+
+.period-button,
+.quiet-button,
+.text-action {
+  min-width: 40px;
+  min-height: 40px;
+  padding: 8px 11px;
+  border: 1px solid #d5ddd5;
+  border-radius: 2px;
+  color: #344b40;
+  background: #f1f2ec;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+
+.period-button {
+  font-size: 18px;
+}
+
+.month-picker,
+.timezone-control label {
+  display: grid;
+  gap: 6px;
+  color: #52645b;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.month-picker input,
+.timezone-entry input {
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid #cbd4cc;
+  border-radius: 2px;
+  color: #24372f;
+  background: #fff;
+  font: inherit;
+  font-weight: 400;
+}
+
+.timezone-control {
+  display: grid;
+  gap: 6px;
+}
+
+.timezone-entry input {
+  width: 190px;
+}
+
+.timezone-entry .quiet-button {
+  white-space: nowrap;
+}
+
+.totals-panel {
+  margin-bottom: 18px;
+  padding: 20px 22px;
+  border-top: 3px solid #5a9d89;
+  background: #fff;
+}
+
+.totals-heading {
+  margin-bottom: 16px;
+}
+
+.totals-heading h3 {
+  margin: 0;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 17px;
+  text-transform: capitalize;
+}
+
+.totals-heading > span,
+.totals-grid > div > span {
+  color: #718078;
+  font-size: 11px;
+}
+
+.totals-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.totals-grid > div {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.totals-grid strong {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 20px;
+  overflow-wrap: anywhere;
+}
+
+.gross-total strong {
+  color: #34755f;
+}
+
+.report-table-wrap {
+  overflow-x: auto;
+  background: #fff;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 12px;
+}
+
+th,
+td {
+  padding: 13px 12px;
+  border-bottom: 1px solid #eef0eb;
+  vertical-align: top;
+}
+
+th {
+  color: #75827a;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+td {
+  white-space: nowrap;
+}
+
+td > span,
+td small {
+  display: block;
+}
+
+td small {
+  margin-top: 4px;
+  color: #78877d;
+  font-size: 10px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 5px 8px;
+  color: #34755f;
+  background: #e2f2e8;
+  font-size: 10px;
+}
+
+.badge.warning {
+  color: #9b6632;
+  background: #f8ead4;
+}
+
+.message {
+  margin: 0;
+  padding: 20px;
+  color: #64736a;
+  background: #fff;
+  font-size: 13px;
+}
+
+.error-message {
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #9a3d32;
+  background: #fff0ed;
+}
+
+.empty-message {
+  border-top: 1px solid #eef0eb;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
+@media (max-width: 1000px) {
+  .report-heading,
+  .report-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .report-controls {
+    width: 100%;
+  }
+
+  .month-control {
+    justify-content: flex-start;
+  }
+
+  .timezone-entry input {
+    flex: 1;
+    width: auto;
+  }
+
+  .totals-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .totals-panel {
+    padding: 17px;
+  }
+
+  .report-table-wrap {
+    overflow: visible;
+    background: transparent;
+  }
+
+  table,
+  tbody,
+  tr,
+  td {
+    display: block;
+    width: 100%;
+  }
+
+  thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+  }
+
+  tbody {
+    display: grid;
+    gap: 10px;
+  }
+
+  tbody tr {
+    padding: 7px 14px;
+    background: #fff;
+  }
+
+  td {
+    min-height: 44px;
+    padding: 9px 0;
+    display: grid;
+    grid-template-columns: minmax(112px, 0.8fr) minmax(0, 1.2fr);
+    align-items: start;
+    gap: 12px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  td::before {
+    content: attr(data-label);
+    color: #75827a;
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  td small {
+    overflow-wrap: anywhere;
+  }
+}

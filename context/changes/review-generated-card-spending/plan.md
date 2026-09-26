@@ -282,23 +282,23 @@ Add an EF migration for lineage/version and timestamp fields with deterministic 
 
 #### Automated
 
-- [x] 2.1 Application and API tests pass report calculation, authenticated contract, validation, role, ordering, and reconciliation coverage
-- [x] 2.2 EF and seeded service modes return equivalent selected-period rows and summary totals
+- [x] 2.1 Application and API tests pass report calculation, authenticated contract, validation, role, ordering, and reconciliation coverage — 754a462
+- [x] 2.2 EF and seeded service modes return equivalent selected-period rows and summary totals — 754a462
 
 #### Manual
 
-- [ ] 2.3 Verify the seeded report returns 326.60 PLN gross for the baseline transaction with separate net and VAT values
+- [x] 2.3 Verify the seeded report returns 326.60 PLN gross for the baseline transaction with separate net and VAT values — 754a462
 
 ### Phase 3: Angular Reporting Experience
 
 #### Automated
 
-- [ ] 3.1 Angular tests cover timezone preference/default, month selection, dual timestamps, totals, errors, empty states, permissions, and EN/PL labels
-- [ ] 3.2 `npm run build` passes strict TypeScript and Angular template checking
+- [x] 3.1 Angular tests cover timezone preference/default, month selection, dual timestamps, totals, errors, empty states, permissions, and EN/PL labels
+- [x] 3.2 `npm run build` passes strict TypeScript and Angular template checking
 
 #### Manual
 
-- [ ] 3.3 Verify month/timezone changes, POS timestamp stability, overview/report reconciliation, and bilingual accessible UI behavior
+- [x] 3.3 Verify month/timezone changes, POS timestamp stability, overview/report reconciliation, and bilingual accessible UI behavior
 
 ### Phase 4: Reconciliation and Aspire Verification
 
