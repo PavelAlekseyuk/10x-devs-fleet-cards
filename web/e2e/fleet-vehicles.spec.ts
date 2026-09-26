@@ -129,7 +129,7 @@ test('ReadWrite can manage vehicles and preserve the seeded Volvo history', asyn
   await expect(page.getByRole('row').filter({ hasText: updatedPlate })).toBeVisible();
 
   const volvo = await page.evaluate(async () => {
-    const response = await fetch('/api/cars?search=wa12345');
+    const response = await fetch('/api/cars?search=wa12345&includeArchived=true');
     const vehicles = await response.json();
     return vehicles.find((vehicle: { registrationPlate: string }) =>
       vehicle.registrationPlate === 'WA 12345',
@@ -143,13 +143,14 @@ test('ReadWrite can manage vehicles and preserve the seeded Volvo history', asyn
   await expect(archivedVolvo).toBeVisible();
 
   const history = await page.evaluate(async () => {
-    const [cardsResponse, transactionsResponse] = await Promise.all([
+    const [cardsResponse, reportResponse] = await Promise.all([
       fetch('/api/cards'),
-      fetch('/api/transactions'),
+      fetch('/api/transactions/report?year=2026&month=9&timeZone=UTC'),
     ]);
+    const report = await reportResponse.json();
     return {
       cards: await cardsResponse.json(),
-      transactions: await transactionsResponse.json(),
+      transactions: report.transactions,
     };
   });
   expect(history.cards).toEqual(

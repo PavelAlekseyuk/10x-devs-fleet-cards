@@ -93,7 +93,17 @@ public sealed class FleetCardsDbContext(DbContextOptions<FleetCardsDbContext> op
         modelBuilder.Entity<FuelTransaction>(entity =>
         {
             entity.HasKey(transaction => transaction.Id);
+            entity.HasAlternateKey(transaction => new { transaction.Id, transaction.LineageId });
+            entity.Property(transaction => transaction.LineageId).IsRequired();
+            entity.Property(transaction => transaction.Version);
+            entity.Property(transaction => transaction.CorrectsTransactionId);
             entity.Property(transaction => transaction.VehiclePlate).HasMaxLength(20).IsRequired();
+            entity.Property(transaction => transaction.OccurredAt).IsRequired();
+            entity.Property(transaction => transaction.PosOccurredAtLocal).IsRequired();
+            entity
+                .Property(transaction => transaction.PosTimeZoneId)
+                .HasMaxLength(100)
+                .IsRequired();
             entity.Property(transaction => transaction.StationName).HasMaxLength(200).IsRequired();
             entity.Property(transaction => transaction.FuelType).HasMaxLength(20).IsRequired();
             entity.Property(transaction => transaction.Quantity).HasPrecision(18, 3);
@@ -110,6 +120,26 @@ public sealed class FleetCardsDbContext(DbContextOptions<FleetCardsDbContext> op
                 .IsRequired();
             entity.HasIndex(transaction => transaction.OccurredAt);
             entity
+                .HasIndex(transaction => new { transaction.LineageId, transaction.Version })
+                .IsUnique()
+                .HasFilter("[Version] IS NOT NULL");
+            entity.ToTable(
+                "Transactions",
+                table =>
+                {
+                    table.HasCheckConstraint(
+                        "CK_Transactions_OccurredAtUtc",
+                        "DATEPART(TZOFFSET, [OccurredAt]) = 0"
+                    );
+                    table.HasCheckConstraint(
+                        "CK_Transactions_LineageVersion",
+                        "([Status] = 'Completed' AND [Id] = [LineageId] AND [Version] = 1 AND [CorrectsTransactionId] IS NULL) OR "
+                            + "([Status] = 'Recalculated' AND [Id] <> [LineageId] AND [Version] > 1 AND [CorrectsTransactionId] = [LineageId]) OR "
+                            + "([Status] IN ('Refunded', 'Cancelled') AND [Id] <> [LineageId] AND [Version] IS NULL AND [CorrectsTransactionId] = [LineageId])"
+                    );
+                }
+            );
+            entity
                 .HasOne<FleetCard>()
                 .WithMany()
                 .HasForeignKey(transaction => transaction.CardId)
@@ -118,6 +148,16 @@ public sealed class FleetCardsDbContext(DbContextOptions<FleetCardsDbContext> op
                 .HasOne<FleetCar>()
                 .WithMany()
                 .HasForeignKey(transaction => transaction.VehicleId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity
+                .HasOne<FuelTransaction>()
+                .WithMany()
+                .HasForeignKey(transaction => new
+                {
+                    transaction.CorrectsTransactionId,
+                    transaction.LineageId,
+                })
+                .HasPrincipalKey(transaction => new { transaction.Id, transaction.LineageId })
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
@@ -252,13 +292,25 @@ public sealed class FleetCardsDbContext(DbContextOptions<FleetCardsDbContext> op
                 new FuelTransaction
                 {
                     Id = Guid.Parse("44444444-4444-4444-4444-444444444444"),
+                    LineageId = Guid.Parse("44444444-4444-4444-4444-444444444444"),
+                    Version = 1,
                     CardId = cardId,
                     VehicleId = primaryCarId,
                     VehiclePlate = "WA 12345",
                     OccurredAt = new DateTimeOffset(2026, 9, 9, 12, 0, 0, TimeSpan.Zero),
+                    PosOccurredAtLocal = new DateTimeOffset(
+                        2026,
+                        9,
+                        9,
+                        14,
+                        0,
+                        0,
+                        TimeSpan.FromHours(2)
+                    ),
+                    PosTimeZoneId = "Europe/Warsaw",
                     StationName = "angry storage",
                     FuelType = "Diesel",
-                    Quantity = 42.125m,
+                    Quantity = 42.081m,
                     UnitPrice = 6.49m,
                     Discount = 0.18m,
                     NetTotal = 265.53m,

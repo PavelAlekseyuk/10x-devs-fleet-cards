@@ -16,6 +16,7 @@
 12. Future program assignment start and end times can be edited before the assignment becomes effective; effective and past history remains immutable.
 13. English is the baseline UI language. Polish translations are maintained in Angular application resources, and users can switch freely between languages.
 14. Every generated transaction stores a vehicle reference/snapshot so reporting preserves the vehicle associated with the transaction after later card reassignment.
+15. Transaction recalculations replace the purchase's full effective amounts in the purchase's original reporting month and retain the original occurrence time. Refunds and cancellations are separate immutable financial events linked to the purchase for audit, reported in their own occurrence month with explicit signed net, VAT, and gross amounts; multiple partial refunds are additive. A cancellation contributes its signed reversal amounts, not an automatic zero.
 
 ## Deferred after MVP
 

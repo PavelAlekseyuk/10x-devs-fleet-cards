@@ -79,10 +79,15 @@ public sealed class FleetCardAssignmentEvent
 public sealed class FuelTransaction
 {
     public Guid Id { get; set; }
+    public Guid LineageId { get; set; }
+    public int? Version { get; set; }
+    public Guid? CorrectsTransactionId { get; set; }
     public Guid CardId { get; set; }
     public Guid? VehicleId { get; set; }
     public string VehiclePlate { get; set; } = string.Empty;
     public DateTimeOffset OccurredAt { get; set; }
+    public DateTimeOffset PosOccurredAtLocal { get; set; }
+    public string PosTimeZoneId { get; set; } = string.Empty;
     public string StationName { get; set; } = string.Empty;
     public string FuelType { get; set; } = string.Empty;
     public decimal Quantity { get; set; }

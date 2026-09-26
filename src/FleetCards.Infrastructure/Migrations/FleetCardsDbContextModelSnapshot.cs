@@ -62,46 +62,6 @@ namespace FleetCards.Infrastructure.Migrations
                     b.ToTable("AuditEvents", (string)null);
                 });
 
-            modelBuilder.Entity("FleetCards.Domain.FleetCardAssignmentEvent", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("CardId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTimeOffset>("EffectiveAt")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<long>("OrderingKey")
-                        .HasColumnType("bigint");
-
-                    b.Property<Guid>("VehicleId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CardId", "EffectiveAt", "OrderingKey");
-
-                    b.HasIndex("CardId", "OrderingKey")
-                        .IsUnique();
-
-                    b.HasIndex("VehicleId");
-
-                    b.ToTable("CardAssignmentEvents", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("66666666-6666-6666-6666-666666666666"),
-                            CardId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            EffectiveAt = new DateTimeOffset(new DateTime(2026, 9, 9, 12, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            OrderingKey = 1L,
-                            VehicleId = new Guid("11111111-1111-1111-1111-111111111111")
-                        });
-                });
-
             modelBuilder.Entity("FleetCards.Domain.FleetCar", b =>
                 {
                     b.Property<Guid>("Id")
@@ -217,6 +177,46 @@ namespace FleetCards.Infrastructure.Migrations
                             MaskedPan = "**** **** **** 4242",
                             ProviderToken = "mock-card-4242",
                             State = "Active"
+                        });
+                });
+
+            modelBuilder.Entity("FleetCards.Domain.FleetCardAssignmentEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CardId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("EffectiveAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<long>("OrderingKey")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("VehicleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VehicleId");
+
+                    b.HasIndex("CardId", "OrderingKey")
+                        .IsUnique();
+
+                    b.HasIndex("CardId", "EffectiveAt", "OrderingKey");
+
+                    b.ToTable("CardAssignmentEvents", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("66666666-6666-6666-6666-666666666666"),
+                            CardId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            EffectiveAt = new DateTimeOffset(new DateTime(2026, 9, 9, 12, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            OrderingKey = 1L,
+                            VehicleId = new Guid("11111111-1111-1111-1111-111111111111")
                         });
                 });
 
@@ -348,6 +348,9 @@ namespace FleetCards.Infrastructure.Migrations
                     b.Property<Guid>("CardId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid?>("CorrectsTransactionId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<decimal>("Discount")
                         .HasPrecision(18, 4)
                         .HasColumnType("decimal(18,4)");
@@ -361,12 +364,23 @@ namespace FleetCards.Infrastructure.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<Guid>("LineageId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<decimal>("NetTotal")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTimeOffset>("OccurredAt")
                         .HasColumnType("datetimeoffset");
+
+                    b.Property<DateTimeOffset>("PosOccurredAtLocal")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("PosTimeZoneId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<decimal>("Quantity")
                         .HasPrecision(18, 3)
@@ -402,6 +416,9 @@ namespace FleetCards.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<int?>("Version")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CardId");
@@ -410,7 +427,18 @@ namespace FleetCards.Infrastructure.Migrations
 
                     b.HasIndex("VehicleId");
 
-                    b.ToTable("Transactions");
+                    b.HasIndex("CorrectsTransactionId", "LineageId");
+
+                    b.HasIndex("LineageId", "Version")
+                        .IsUnique()
+                        .HasFilter("[Version] IS NOT NULL");
+
+                    b.ToTable("Transactions", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Transactions_LineageVersion", "([Status] = 'Completed' AND [Id] = [LineageId] AND [Version] = 1 AND [CorrectsTransactionId] IS NULL) OR ([Status] = 'Recalculated' AND [Id] <> [LineageId] AND [Version] > 1 AND [CorrectsTransactionId] = [LineageId]) OR ([Status] IN ('Refunded', 'Cancelled') AND [Id] <> [LineageId] AND [Version] IS NULL AND [CorrectsTransactionId] = [LineageId])");
+
+                            t.HasCheckConstraint("CK_Transactions_OccurredAtUtc", "DATEPART(TZOFFSET, [OccurredAt]) = 0");
+                        });
 
                     b.HasData(
                         new
@@ -420,16 +448,20 @@ namespace FleetCards.Infrastructure.Migrations
                             Discount = 0.18m,
                             FuelType = "Diesel",
                             GrossTotal = 326.60m,
+                            LineageId = new Guid("44444444-4444-4444-4444-444444444444"),
                             NetTotal = 265.53m,
                             OccurredAt = new DateTimeOffset(new DateTime(2026, 9, 9, 12, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            Quantity = 42.125m,
+                            PosOccurredAtLocal = new DateTimeOffset(new DateTime(2026, 9, 9, 14, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 2, 0, 0, 0)),
+                            PosTimeZoneId = "Europe/Warsaw",
+                            Quantity = 42.081m,
                             StationName = "angry storage",
                             Status = "Completed",
                             UnitPrice = 6.49m,
                             VatAmount = 61.07m,
                             VatRate = 0.23m,
                             VehicleId = new Guid("11111111-1111-1111-1111-111111111111"),
-                            VehiclePlate = "WA 12345"
+                            VehiclePlate = "WA 12345",
+                            Version = 1
                         });
                 });
 
@@ -482,6 +514,12 @@ namespace FleetCards.Infrastructure.Migrations
                     b.HasOne("FleetCards.Domain.FleetCar", null)
                         .WithMany()
                         .HasForeignKey("VehicleId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("FleetCards.Domain.FuelTransaction", null)
+                        .WithMany()
+                        .HasForeignKey("CorrectsTransactionId", "LineageId")
+                        .HasPrincipalKey("Id", "LineageId")
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 #pragma warning restore 612, 618

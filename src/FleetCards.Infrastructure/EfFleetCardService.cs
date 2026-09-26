@@ -26,6 +26,9 @@ public sealed class EfFleetCardService(
             ))
             .ToArray();
 
+    public IReadOnlyList<FuelTransaction> GetTransactionFacts() =>
+        dbContext.Transactions.AsNoTracking().ToArray();
+
     public IReadOnlyList<FuelTransactionResponse> GetTransactions(
         DateTimeOffset? from,
         DateTimeOffset? to

@@ -45,7 +45,7 @@ Company representatives need both access to several fuel networks and clear cost
 | S-01 | seeded-sign-in-and-access | sign in with a seeded account and access only the portal actions permitted to that account | F-01 | FR-001 | in-progress |
 | S-02 | manage-fleet-vehicles | create, view, change, archive, and restore fleet vehicles with allowed fuel types | S-01 | FR-002, US-01 | in-progress |
 | S-03 | issue-and-assign-virtual-cards | issue, manage, return, and assign a virtual card without exposing full PAN data | S-02 | FR-003, FR-004, US-01 | in-progress |
-| S-04 | review-generated-card-spending | review generated fuel transactions for a selected period and reconcile them to the landing-page total | S-03 | FR-005, FR-006, FR-007, US-01 | blocked |
+| S-04 | review-generated-card-spending | review generated fuel transactions for a selected period and reconcile them to the landing-page total | S-03 | FR-005, FR-006, FR-007, US-01 | in-progress |
 | S-05 | harden-operational-card-flow | verify the completed operational card flow through Aspire and document its local demonstration contract | S-04 | Acceptance criteria 1-6, 10; US-01 | proposed |
 
 ## Baseline
@@ -144,15 +144,14 @@ What is already in place in the codebase as of `2026-09-22` (auto-researched and
 - **Prerequisites:** S-03
 - **Parallel with:** -
 - **Blockers:** -
-- **Unknowns:**
-  - What are the exact rules for VAT, refunds, cancellations, and recalculations? - Owner: product/client stakeholders. Block: yes.
-- **Risk:** The primary journey cannot claim reconciled transaction correctness until the calculation rules are explicit; resolving them makes the required totals verifiable.
+- **Unknowns:** -
+- **Risk:** The primary journey depends on applying the locked transaction and VAT rules consistently across EF and seeded modes so the required totals remain verifiable.
 - **Implementation scope:**
   - Generate and persist 1-5 previous-month transactions after issuance.
   - Implement decimal precision, VAT fields, transaction status/version metadata, filtering, totals, and UI views.
   - Add deterministic calculation tests for discounted and non-discounted totals.
 - **Exit criteria:** users can inspect transactions and period totals with explicit net/gross/VAT presentation.
-- **Status:** blocked
+- **Status:** in-progress
 
 ### S-05: Harden operational card flow
 
@@ -184,10 +183,9 @@ What is already in place in the codebase as of `2026-09-22` (auto-researched and
 
 ## Open Roadmap Questions
 
-1. **What are the exact rules for VAT, refunds, cancellations, and recalculations?** - Owner: product/client stakeholders. Block: S-04.
-2. **What is the exact program comparison formula for discounts or premiums by fuel type and active period?** - Owner: product/client stakeholders. Block: parked program-comparison work.
-3. **What are the final client-role boundaries beyond the seeded full-access and read-only users?** - Owner: product/client stakeholders. Block: no current milestone slice; required before replacing mocked authentication.
-4. **Which client-installation data must be isolated and what evidence is required for that boundary?** - Owner: product/client stakeholders. Block: public deployment work.
+1. **What is the exact program comparison formula for discounts or premiums by fuel type and active period?** - Owner: product/client stakeholders. Block: parked program-comparison work.
+2. **What are the final client-role boundaries beyond the seeded full-access and read-only users?** - Owner: product/client stakeholders. Block: no current milestone slice; required before replacing mocked authentication.
+3. **Which client-installation data must be isolated and what evidence is required for that boundary?** - Owner: product/client stakeholders. Block: public deployment work.
 
 ## Parked
 

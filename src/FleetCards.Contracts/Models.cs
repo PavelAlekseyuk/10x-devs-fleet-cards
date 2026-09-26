@@ -84,6 +84,65 @@ public sealed record FuelTransactionResponse(
     string Status
 );
 
+public sealed record TransactionReportRequest(int Year, int Month, string? TimeZoneId = null);
+
+public sealed record TransactionReportPeriod(
+    int Year,
+    int Month,
+    string TimeZoneId,
+    DateTimeOffset StartUtc,
+    DateTimeOffset EndUtc
+);
+
+public sealed record TransactionReportTotals(
+    decimal NetTotal,
+    decimal VatTotal,
+    decimal GrossTotal,
+    int RowCount
+);
+
+public sealed record TransactionReportRowResponse(
+    Guid Id,
+    Guid LineageId,
+    int? Version,
+    Guid? CorrectsTransactionId,
+    Guid CardId,
+    Guid? VehicleId,
+    string VehiclePlate,
+    DateTimeOffset OccurredAtUtc,
+    DateTimeOffset UserOccurredAt,
+    DateTimeOffset PosOccurredAtLocal,
+    string PosTimeZoneId,
+    string StationName,
+    string FuelType,
+    decimal Quantity,
+    decimal UnitPrice,
+    decimal Discount,
+    decimal NetTotal,
+    decimal VatRate,
+    decimal VatAmount,
+    decimal GrossTotal,
+    string Status
+);
+
+public sealed record TransactionReportResponse(
+    int Year,
+    int Month,
+    string TimeZoneId,
+    DateTimeOffset PeriodStartUtc,
+    DateTimeOffset PeriodEndUtc,
+    IReadOnlyList<TransactionReportRowResponse> Transactions,
+    TransactionReportTotals Totals
+);
+
+public sealed record DashboardSummaryResponse(
+    int ActiveVehicleCount,
+    int ActiveCardCount,
+    TransactionReportTotals PeriodTotals,
+    DateTimeOffset PeriodStartUtc,
+    DateTimeOffset PeriodEndUtc
+);
+
 public sealed record FleetCardProgramResponse(
     Guid Id,
     string Name,

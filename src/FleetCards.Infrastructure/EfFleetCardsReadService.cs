@@ -7,7 +7,8 @@ namespace FleetCards.Infrastructure;
 
 public sealed class EfFleetCardsReadService(
     FleetCardsDbContext dbContext,
-    IFleetCardService cardService
+    IFleetCardService cardService,
+    ITransactionReportingService reportingService
 ) : IFleetCardsReadService
 {
     public CurrentUserResponse GetCurrentUser()
@@ -29,10 +30,72 @@ public sealed class EfFleetCardsReadService(
 
     public IReadOnlyList<FleetCardResponse> GetCards() => cardService.GetCards();
 
-    public IReadOnlyList<FuelTransactionResponse> GetTransactions(
-        DateTimeOffset? from,
-        DateTimeOffset? to
-    ) => cardService.GetTransactions(from, to);
+    public async Task<TransactionReportResponse> GetTransactionReportAsync(
+        TransactionReportPeriod period,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var transactions = await GetReportTransactionsAsync(period, cancellationToken);
+        return reportingService.CreateReport(period, transactions);
+    }
+
+    public async Task<DashboardSummaryResponse> GetDashboardSummaryAsync(
+        TransactionReportPeriod period,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var transactions = await GetReportTransactionsAsync(period, cancellationToken);
+        var activeVehicleCount = await dbContext
+            .Cars.AsNoTracking()
+            .CountAsync(car => !car.IsArchived, cancellationToken);
+        var activeCardCount = await dbContext
+            .Cards.AsNoTracking()
+            .CountAsync(card => card.State == CardState.Active, cancellationToken);
+        return reportingService.CreateSummary(
+            period,
+            transactions,
+            activeVehicleCount,
+            activeCardCount
+        );
+    }
+
+    private async Task<IReadOnlyList<FuelTransaction>> GetReportTransactionsAsync(
+        TransactionReportPeriod period,
+        CancellationToken cancellationToken
+    )
+    {
+        var lineageIds = await dbContext
+            .Transactions.AsNoTracking()
+            .Where(transaction =>
+                transaction.OccurredAt >= period.StartUtc && transaction.OccurredAt < period.EndUtc
+            )
+            .Select(transaction => transaction.LineageId)
+            .Distinct()
+            .ToArrayAsync(cancellationToken);
+
+        if (lineageIds.Length == 0)
+        {
+            return [];
+        }
+
+        return await dbContext
+            .Transactions.AsNoTracking()
+            .Where(transaction =>
+                lineageIds.Contains(transaction.LineageId)
+                && (
+                    transaction.Status == TransactionStatus.Completed
+                    || transaction.Status == TransactionStatus.Recalculated
+                    || (
+                        transaction.OccurredAt >= period.StartUtc
+                        && transaction.OccurredAt < period.EndUtc
+                    )
+                )
+            )
+            .OrderBy(transaction => transaction.LineageId)
+            .ThenByDescending(transaction => transaction.Version)
+            .ThenBy(transaction => transaction.Id)
+            .ToArrayAsync(cancellationToken);
+    }
 
     public IReadOnlyList<FleetCardProgramResponse> GetPrograms() =>
         dbContext
