@@ -67,6 +67,15 @@ public sealed class FleetCard
     public Guid? AssignedCarId { get; set; }
 }
 
+public sealed class FleetCardAssignmentEvent
+{
+    public Guid Id { get; set; }
+    public Guid CardId { get; set; }
+    public Guid VehicleId { get; set; }
+    public DateTimeOffset EffectiveAt { get; set; }
+    public long OrderingKey { get; set; }
+}
+
 public sealed class FuelTransaction
 {
     public Guid Id { get; set; }

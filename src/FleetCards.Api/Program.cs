@@ -76,8 +76,7 @@ if (!string.IsNullOrWhiteSpace(connectionString))
                 actualDatabaseName,
                 @"\Afleetcards_e2e_[0-9a-f]{32}\z",
                 RegexOptions.CultureInvariant
-            )
-            || !string.Equals(actualDatabaseName, e2eDatabaseName, StringComparison.Ordinal)
+            ) || !string.Equals(actualDatabaseName, e2eDatabaseName, StringComparison.Ordinal)
         )
         {
             throw new InvalidOperationException(
@@ -89,7 +88,15 @@ if (!string.IsNullOrWhiteSpace(connectionString))
     await dbContext.Database.MigrateAsync();
 }
 
-app.UseExceptionHandler();
+app.UseExceptionHandler(
+    new Microsoft.AspNetCore.Builder.ExceptionHandlerOptions
+    {
+        StatusCodeSelector = exception =>
+            exception is BadHttpRequestException
+                ? StatusCodes.Status400BadRequest
+                : StatusCodes.Status500InternalServerError,
+    }
+);
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseAuthentication();
@@ -384,9 +391,145 @@ app.MapPost(
     .WithName("RestoreCar")
     .WithTags("Cars");
 
-app.MapGet("/api/cards", (IFleetCardsReadService service) => service.GetCards())
+app.MapGet(
+        "/api/cards",
+        async (
+            IFleetCardService service,
+            IFleetVehicleService vehicleService,
+            CancellationToken cancellationToken
+        ) =>
+        {
+            var cards = service.GetCards();
+            var vehiclePlates = await GetVehiclePlatesAsync(vehicleService, cancellationToken);
+            return cards.Select(card => ToCardApiResponse(card, vehiclePlates)).ToArray();
+        }
+    )
     .RequireAuthorization()
     .WithName("GetCards")
+    .WithTags("Cards");
+
+app.MapPost(
+        "/api/cards",
+        async (
+            IssueFleetCardRequest request,
+            HttpContext context,
+            IFleetCardService service,
+            IFleetVehicleService vehicleService,
+            CancellationToken cancellationToken
+        ) =>
+        {
+            if (!CsrfProtection.IsValid(context))
+            {
+                return (IResult)Results.StatusCode(StatusCodes.Status403Forbidden);
+            }
+
+            var result = await service.IssueAsync(
+                request,
+                context.User.Identity?.Name ?? "unknown",
+                context.TraceIdentifier,
+                cancellationToken
+            );
+            if (!result.IsSuccess)
+            {
+                return MapCardCommandResult(result);
+            }
+
+            var vehiclePlates = await GetVehiclePlatesAsync(vehicleService, cancellationToken);
+            var card = ToCardApiResponse(result.Card!, vehiclePlates);
+            return (IResult)Results.Created($"/api/cards/{card.Id}", card);
+        }
+    )
+    .RequireAuthorization("ReadWrite")
+    .WithName("IssueCard")
+    .WithTags("Cards");
+
+app.MapPut(
+        "/api/cards/{id:guid}/state",
+        async (
+            Guid id,
+            ChangeFleetCardStateRequest request,
+            HttpContext context,
+            IFleetCardService service,
+            IFleetVehicleService vehicleService,
+            CancellationToken cancellationToken
+        ) =>
+        {
+            if (!CsrfProtection.IsValid(context))
+            {
+                return (IResult)Results.StatusCode(StatusCodes.Status403Forbidden);
+            }
+
+            var result = await service.ChangeStateAsync(
+                id,
+                request,
+                context.User.Identity?.Name ?? "unknown",
+                context.TraceIdentifier,
+                cancellationToken
+            );
+            if (!result.IsSuccess)
+            {
+                return MapCardCommandResult(result);
+            }
+
+            var vehiclePlates = await GetVehiclePlatesAsync(vehicleService, cancellationToken);
+            return (IResult)Results.Ok(ToCardApiResponse(result.Card!, vehiclePlates));
+        }
+    )
+    .RequireAuthorization("ReadWrite")
+    .WithName("ChangeCardState")
+    .WithTags("Cards");
+
+app.MapPut(
+        "/api/cards/{id:guid}/assignment",
+        async (
+            Guid id,
+            ReassignFleetCardRequest request,
+            HttpContext context,
+            IFleetCardService service,
+            IFleetVehicleService vehicleService,
+            CancellationToken cancellationToken
+        ) =>
+        {
+            if (!CsrfProtection.IsValid(context))
+            {
+                return (IResult)Results.StatusCode(StatusCodes.Status403Forbidden);
+            }
+
+            var result = await service.ReassignAsync(
+                id,
+                request,
+                context.User.Identity?.Name ?? "unknown",
+                context.TraceIdentifier,
+                cancellationToken
+            );
+            if (!result.IsSuccess)
+            {
+                return MapCardCommandResult(result);
+            }
+
+            var vehiclePlates = await GetVehiclePlatesAsync(vehicleService, cancellationToken);
+            return (IResult)Results.Ok(ToCardApiResponse(result.Card!, vehiclePlates));
+        }
+    )
+    .RequireAuthorization("ReadWrite")
+    .WithName("ReassignCard")
+    .WithTags("Cards");
+
+app.MapGet(
+        "/api/cards/{id:guid}/assignment-history",
+        async (Guid id, IFleetCardService service, CancellationToken cancellationToken) =>
+        {
+            var result = await service.GetAssignmentHistoryAsync(id, cancellationToken);
+            return result.Error switch
+            {
+                CardCommandError.None => Results.Ok(result.Assignments),
+                CardCommandError.NotFound => Results.NotFound(),
+                _ => Results.Problem(statusCode: StatusCodes.Status500InternalServerError),
+            };
+        }
+    )
+    .RequireAuthorization()
+    .WithName("GetCardAssignmentHistory")
     .WithTags("Cards");
 
 app.MapGet(
@@ -438,6 +581,49 @@ static IResult MapVehicleCommandResult(VehicleCommandResult result) =>
         ),
         _ => Results.Problem(statusCode: StatusCodes.Status500InternalServerError),
     };
+
+static IResult MapCardCommandResult(CardCommandResult result) =>
+    result.Error switch
+    {
+        CardCommandError.Validation => Results.ValidationProblem(
+            result.ValidationErrors!.ToDictionary(error => error.Key, error => error.Value)
+        ),
+        CardCommandError.NotFound => Results.NotFound(),
+        CardCommandError.Conflict => Results.Problem(
+            statusCode: StatusCodes.Status409Conflict,
+            title: "Card lifecycle conflict",
+            detail: "The requested operation is not valid for the card or vehicle state."
+        ),
+        _ => Results.Problem(statusCode: StatusCodes.Status500InternalServerError),
+    };
+
+static async Task<IReadOnlyDictionary<Guid, string>> GetVehiclePlatesAsync(
+    IFleetVehicleService vehicleService,
+    CancellationToken cancellationToken
+)
+{
+    var vehicles = await vehicleService.GetCarsAsync(
+        search: null,
+        includeArchived: true,
+        cancellationToken
+    );
+    return vehicles.ToDictionary(vehicle => vehicle.Id, vehicle => vehicle.RegistrationPlate);
+}
+
+static FleetCardApiResponse ToCardApiResponse(
+    FleetCardResponse card,
+    IReadOnlyDictionary<Guid, string> vehiclePlates
+) =>
+    new(
+        card.Id,
+        card.MaskedPan,
+        card.ProviderToken,
+        card.State,
+        card.AssignedCarId,
+        card.AssignedCarId is Guid vehicleId && vehiclePlates.TryGetValue(vehicleId, out var plate)
+            ? plate
+            : null
+    );
 
 public partial class Program;
 

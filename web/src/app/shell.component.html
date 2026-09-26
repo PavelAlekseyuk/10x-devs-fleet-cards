@@ -25,9 +25,11 @@
       } @else {
         @if (activeSection === 'cars') {
           <app-fleet-vehicles />
+        } @else if (activeSection === 'cards') {
+          <app-card-management />
         } @else {
         <section class="section-intro"><div><p class="eyebrow">{{ language.text('clientWorkspace') }}</p><h2>{{ activeTitle }}</h2><p class="muted">{{ language.text('authenticatedAccess') }} {{ displayName }}.</p></div>@if (canWrite()) {<button class="primary-button" type="button">{{ language.text('addNew') }} <span>+</span></button>}</section>
-        <section class="panel table-panel"><div class="panel-heading"><div><p class="eyebrow">{{ language.text('seededData') }}</p><h3>{{ activeTitle }}</h3></div><span class="record-count">{{ activeSection === 'cards' ? language.text('cardCount') : activeSection === 'transactions' ? language.text('transactionCount') : language.text('programCount') }}</span></div><div class="table-row table-header"><span>{{ language.text('name') }}</span><span>{{ language.text('status') }}</span><span>{{ language.text('updated') }}</span><span></span></div><div class="table-row"><span><strong>{{ activeTitle }}</strong><small>{{ client?.legalName }}</small></span><span class="badge">{{ language.text('active') }}</span><span class="muted">{{ language.text('today') }}</span><span class="row-arrow">→</span></div></section>
+        <section class="panel table-panel"><div class="panel-heading"><div><p class="eyebrow">{{ language.text('seededData') }}</p><h3>{{ activeTitle }}</h3></div><span class="record-count">{{ activeSection === 'transactions' ? language.text('transactionCount') : language.text('programCount') }}</span></div><div class="table-row table-header"><span>{{ language.text('name') }}</span><span>{{ language.text('status') }}</span><span>{{ language.text('updated') }}</span><span></span></div><div class="table-row"><span><strong>{{ activeTitle }}</strong><small>{{ client?.legalName }}</small></span><span class="badge">{{ language.text('active') }}</span><span class="muted">{{ language.text('today') }}</span><span class="row-arrow">→</span></div></section>
         }
       }
     </div>

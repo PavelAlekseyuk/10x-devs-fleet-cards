@@ -42,6 +42,30 @@ public sealed record FleetCardResponse(
     Guid? AssignedCarId
 );
 
+public sealed record FleetCardApiResponse(
+    Guid Id,
+    string MaskedPan,
+    string ProviderToken,
+    string State,
+    Guid? AssignedCarId,
+    string? AssignedVehicleRegistrationPlate
+);
+
+public sealed record IssueFleetCardRequest(Guid VehicleId);
+
+public sealed record ChangeFleetCardStateRequest(string State);
+
+public sealed record ReassignFleetCardRequest(Guid VehicleId);
+
+public sealed record FleetCardAssignmentHistoryResponse(
+    Guid CardId,
+    Guid VehicleId,
+    string VehicleRegistrationPlate,
+    DateTimeOffset EffectiveFrom,
+    DateTimeOffset? EffectiveTo,
+    long OrderingKey
+);
+
 public sealed record FuelTransactionResponse(
     Guid Id,
     Guid CardId,
