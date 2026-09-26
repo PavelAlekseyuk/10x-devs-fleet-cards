@@ -281,9 +281,9 @@ Add an EF migration and update the model snapshot for append-only assignment eve
 
 #### Automated
 
-- [x] 4.1 From `web/`, `npm run test:e2e` passes through Aspire with a fresh isolated SQL database.
-- [x] 4.2 `dotnet test` passes for the solution; migration startup and card/assignment/transaction writes complete in the SQL-backed composed run.
+- [x] 4.1 From `web/`, `npm run test:e2e` passes through Aspire with a fresh isolated SQL database. — ae9258c
+- [x] 4.2 `dotnet test` passes for the solution; migration startup and card/assignment/transaction writes complete in the SQL-backed composed run. — ae9258c
 
 #### Manual
 
-- [x] 4.3 Complete the issue-to-reassignment journey with the seeded ReadWrite user, then verify the ReadOnly user can inspect card and assignment history but cannot mutate; confirm older generated transaction vehicle snapshots remain unchanged.
+- [x] 4.3 Complete the issue-to-reassignment journey with the seeded ReadWrite user, then verify the ReadOnly user can inspect card and assignment history but cannot mutate; confirm older generated transaction vehicle snapshots remain unchanged. — ae9258c
