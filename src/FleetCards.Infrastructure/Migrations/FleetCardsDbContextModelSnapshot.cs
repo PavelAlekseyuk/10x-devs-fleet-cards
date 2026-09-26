@@ -62,6 +62,46 @@ namespace FleetCards.Infrastructure.Migrations
                     b.ToTable("AuditEvents", (string)null);
                 });
 
+            modelBuilder.Entity("FleetCards.Domain.FleetCardAssignmentEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CardId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("EffectiveAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<long>("OrderingKey")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("VehicleId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CardId", "EffectiveAt", "OrderingKey");
+
+                    b.HasIndex("CardId", "OrderingKey")
+                        .IsUnique();
+
+                    b.HasIndex("VehicleId");
+
+                    b.ToTable("CardAssignmentEvents", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("66666666-6666-6666-6666-666666666666"),
+                            CardId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            EffectiveAt = new DateTimeOffset(new DateTime(2026, 9, 9, 12, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            OrderingKey = 1L,
+                            VehicleId = new Guid("11111111-1111-1111-1111-111111111111")
+                        });
+                });
+
             modelBuilder.Entity("FleetCards.Domain.FleetCar", b =>
                 {
                     b.Property<Guid>("Id")
@@ -412,6 +452,21 @@ namespace FleetCards.Infrastructure.Migrations
                     b.HasOne("FleetCards.Domain.FleetClient", null)
                         .WithMany()
                         .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FleetCards.Domain.FleetCardAssignmentEvent", b =>
+                {
+                    b.HasOne("FleetCards.Domain.FleetCard", null)
+                        .WithMany()
+                        .HasForeignKey("CardId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FleetCards.Domain.FleetCar", null)
+                        .WithMany()
+                        .HasForeignKey("VehicleId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

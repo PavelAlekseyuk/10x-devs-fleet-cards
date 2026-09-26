@@ -44,7 +44,7 @@ Company representatives need both access to several fuel networks and clear cost
 | F-01 | repeatable-demo-runtime | (foundation) run a repeatable local demonstration with safe seeded data and a verified health path | - | US-01, FR-001 | ready |
 | S-01 | seeded-sign-in-and-access | sign in with a seeded account and access only the portal actions permitted to that account | F-01 | FR-001 | in-progress |
 | S-02 | manage-fleet-vehicles | create, view, change, archive, and restore fleet vehicles with allowed fuel types | S-01 | FR-002, US-01 | in-progress |
-| S-03 | issue-and-assign-virtual-cards | issue, manage, return, and assign a virtual card without exposing full PAN data | S-02 | FR-003, FR-004, US-01 | planning |
+| S-03 | issue-and-assign-virtual-cards | issue, manage, return, and assign a virtual card without exposing full PAN data | S-02 | FR-003, FR-004, US-01 | in-progress |
 | S-04 | review-generated-card-spending | review generated fuel transactions for a selected period and reconcile them to the landing-page total | S-03 | FR-005, FR-006, FR-007, US-01 | blocked |
 | S-05 | harden-operational-card-flow | verify the completed operational card flow through Aspire and document its local demonstration contract | S-04 | Acceptance criteria 1-6, 10; US-01 | proposed |
 
@@ -134,7 +134,7 @@ What is already in place in the codebase as of `2026-09-22` (auto-researched and
   - Implement issue, list, assign, block, stolen, and archive operations.
   - Add unrestricted card state selection, redaction tests, and card/car assignment history.
 - **Exit criteria:** issuing a card creates one local card without sensitive PAN data and every supported card state can be selected without losing history.
-- **Status:** planning
+- **Status:** in-progress
 
 ### S-04: Review generated card spending
 

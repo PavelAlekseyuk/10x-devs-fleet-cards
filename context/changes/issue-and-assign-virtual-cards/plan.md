@@ -248,12 +248,12 @@ Add an EF migration and update the model snapshot for append-only assignment eve
 
 #### Automated
 
-- [ ] 1.1 Application tests verify card issuance safety, assignment rules, unrestricted defined-state changes, deterministic completed transaction generation, and immutable vehicle snapshots.
-- [ ] 1.2 EF model/migration checks pass, and existing seeded card and transaction data remain readable after migration.
+- [x] 1.1 Application tests verify card issuance safety, assignment rules, unrestricted defined-state changes, deterministic completed transaction generation, and immutable vehicle snapshots.
+- [x] 1.2 EF model/migration checks pass, and existing seeded card and transaction data remain readable after migration.
 
 #### Manual
 
-- [ ] 1.3 Inspect the resulting card and assignment records to confirm the seed history is represented and no raw card credentials are persisted.
+- [x] 1.3 Inspect the resulting card and assignment records to confirm the seed history is represented and no raw card credentials are persisted.
 
 ### Phase 2: Protected Card API
 

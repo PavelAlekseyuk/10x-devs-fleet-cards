@@ -5,7 +5,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FleetCards.Infrastructure;
 
-public sealed class EfFleetCardsReadService(FleetCardsDbContext dbContext) : IFleetCardsReadService
+public sealed class EfFleetCardsReadService(
+    FleetCardsDbContext dbContext,
+    IFleetCardService cardService
+) : IFleetCardsReadService
 {
     public CurrentUserResponse GetCurrentUser()
     {
@@ -24,56 +27,12 @@ public sealed class EfFleetCardsReadService(FleetCardsDbContext dbContext) : IFl
         );
     }
 
-    public IReadOnlyList<FleetCardResponse> GetCards() =>
-        dbContext
-            .Cards.AsNoTracking()
-            .OrderBy(card => card.MaskedPan)
-            .Select(card => new FleetCardResponse(
-                card.Id,
-                card.MaskedPan,
-                card.ProviderToken,
-                card.State.ToString(),
-                card.AssignedCarId
-            ))
-            .ToArray();
+    public IReadOnlyList<FleetCardResponse> GetCards() => cardService.GetCards();
 
     public IReadOnlyList<FuelTransactionResponse> GetTransactions(
         DateTimeOffset? from,
         DateTimeOffset? to
-    )
-    {
-        var query = dbContext.Transactions.AsNoTracking().AsQueryable();
-        if (from is not null)
-        {
-            query = query.Where(transaction => transaction.OccurredAt >= from);
-        }
-
-        if (to is not null)
-        {
-            query = query.Where(transaction => transaction.OccurredAt <= to);
-        }
-
-        return query
-            .OrderByDescending(transaction => transaction.OccurredAt)
-            .Select(transaction => new FuelTransactionResponse(
-                transaction.Id,
-                transaction.CardId,
-                transaction.VehicleId,
-                transaction.VehiclePlate,
-                transaction.OccurredAt,
-                transaction.StationName,
-                transaction.FuelType,
-                transaction.Quantity,
-                transaction.UnitPrice,
-                transaction.Discount,
-                transaction.NetTotal,
-                transaction.VatRate,
-                transaction.VatAmount,
-                transaction.GrossTotal,
-                transaction.Status.ToString()
-            ))
-            .ToArray();
-    }
+    ) => cardService.GetTransactions(from, to);
 
     public IReadOnlyList<FleetCardProgramResponse> GetPrograms() =>
         dbContext

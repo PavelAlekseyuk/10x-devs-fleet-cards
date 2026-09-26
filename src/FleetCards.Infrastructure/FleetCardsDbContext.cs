@@ -11,6 +11,7 @@ public sealed class FleetCardsDbContext(DbContextOptions<FleetCardsDbContext> op
     public DbSet<FleetCar> Cars => Set<FleetCar>();
     public DbSet<FleetAuditEvent> AuditEvents => Set<FleetAuditEvent>();
     public DbSet<FleetCard> Cards => Set<FleetCard>();
+    public DbSet<FleetCardAssignmentEvent> CardAssignmentEvents => Set<FleetCardAssignmentEvent>();
     public DbSet<FuelTransaction> Transactions => Set<FuelTransaction>();
     public DbSet<FleetCardProgram> Programs => Set<FleetCardProgram>();
 
@@ -120,6 +121,33 @@ public sealed class FleetCardsDbContext(DbContextOptions<FleetCardsDbContext> op
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
+        modelBuilder.Entity<FleetCardAssignmentEvent>(entity =>
+        {
+            entity.HasKey(assignment => assignment.Id);
+            entity.Property(assignment => assignment.EffectiveAt).IsRequired();
+            entity.Property(assignment => assignment.OrderingKey).IsRequired();
+            entity
+                .HasIndex(assignment => new { assignment.CardId, assignment.OrderingKey })
+                .IsUnique();
+            entity.HasIndex(assignment => new
+            {
+                assignment.CardId,
+                assignment.EffectiveAt,
+                assignment.OrderingKey,
+            });
+            entity
+                .HasOne<FleetCard>()
+                .WithMany()
+                .HasForeignKey(assignment => assignment.CardId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity
+                .HasOne<FleetCar>()
+                .WithMany()
+                .HasForeignKey(assignment => assignment.VehicleId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.ToTable("CardAssignmentEvents");
+        });
+
         modelBuilder.Entity<FleetCardProgram>(entity =>
         {
             entity.HasKey(program => program.Id);
@@ -204,6 +232,26 @@ public sealed class FleetCardsDbContext(DbContextOptions<FleetCardsDbContext> op
                     ProviderToken = "mock-card-4242",
                     State = CardState.Active,
                     AssignedCarId = primaryCarId,
+                }
+            );
+        modelBuilder
+            .Entity<FleetCardAssignmentEvent>()
+            .HasData(
+                new FleetCardAssignmentEvent
+                {
+                    Id = Guid.Parse("66666666-6666-6666-6666-666666666666"),
+                    CardId = cardId,
+                    VehicleId = primaryCarId,
+                    EffectiveAt = new DateTimeOffset(
+                        2026,
+                        9,
+                        9,
+                        12,
+                        0,
+                        0,
+                        TimeSpan.Zero
+                    ),
+                    OrderingKey = 1,
                 }
             );
         modelBuilder
