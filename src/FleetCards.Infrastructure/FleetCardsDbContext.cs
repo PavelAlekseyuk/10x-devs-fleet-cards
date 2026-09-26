@@ -100,7 +100,10 @@ public sealed class FleetCardsDbContext(DbContextOptions<FleetCardsDbContext> op
             entity.Property(transaction => transaction.VehiclePlate).HasMaxLength(20).IsRequired();
             entity.Property(transaction => transaction.OccurredAt).IsRequired();
             entity.Property(transaction => transaction.PosOccurredAtLocal).IsRequired();
-            entity.Property(transaction => transaction.PosTimeZoneId).HasMaxLength(100).IsRequired();
+            entity
+                .Property(transaction => transaction.PosTimeZoneId)
+                .HasMaxLength(100)
+                .IsRequired();
             entity.Property(transaction => transaction.StationName).HasMaxLength(200).IsRequired();
             entity.Property(transaction => transaction.FuelType).HasMaxLength(20).IsRequired();
             entity.Property(transaction => transaction.Quantity).HasPrecision(18, 3);
@@ -295,7 +298,15 @@ public sealed class FleetCardsDbContext(DbContextOptions<FleetCardsDbContext> op
                     VehicleId = primaryCarId,
                     VehiclePlate = "WA 12345",
                     OccurredAt = new DateTimeOffset(2026, 9, 9, 12, 0, 0, TimeSpan.Zero),
-                    PosOccurredAtLocal = new DateTimeOffset(2026, 9, 9, 14, 0, 0, TimeSpan.FromHours(2)),
+                    PosOccurredAtLocal = new DateTimeOffset(
+                        2026,
+                        9,
+                        9,
+                        14,
+                        0,
+                        0,
+                        TimeSpan.FromHours(2)
+                    ),
                     PosTimeZoneId = "Europe/Warsaw",
                     StationName = "angry storage",
                     FuelType = "Diesel",

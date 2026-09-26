@@ -116,6 +116,14 @@ public sealed class SeededFleetCardService(
         }
     }
 
+    public IReadOnlyList<FuelTransaction> GetTransactionFacts()
+    {
+        lock (sync)
+        {
+            return transactions.ToArray();
+        }
+    }
+
     public async Task<CardCommandResult> IssueAsync(
         IssueFleetCardRequest request,
         string actor,

@@ -37,17 +37,31 @@ public sealed class TransactionReportingService : ITransactionReportingService
 
         if (request.Year is < 1 or > 9998)
         {
-            throw new ArgumentOutOfRangeException(nameof(request), "Year must be between 1 and 9998.");
+            throw new ArgumentOutOfRangeException(
+                nameof(request),
+                "Year must be between 1 and 9998."
+            );
         }
 
         if (request.Month is < 1 or > 12)
         {
-            throw new ArgumentOutOfRangeException(nameof(request), "Month must be between 1 and 12.");
+            throw new ArgumentOutOfRangeException(
+                nameof(request),
+                "Month must be between 1 and 12."
+            );
         }
 
         var timeZoneId = request.TimeZoneId ?? defaultTimeZoneId;
         var timeZone = ResolveTimeZone(timeZoneId);
-        var localStart = new DateTime(request.Year, request.Month, 1, 0, 0, 0, DateTimeKind.Unspecified);
+        var localStart = new DateTime(
+            request.Year,
+            request.Month,
+            1,
+            0,
+            0,
+            0,
+            DateTimeKind.Unspecified
+        );
         var nextMonth = localStart.AddMonths(1);
 
         return new TransactionReportPeriod(
@@ -129,8 +143,11 @@ public sealed class TransactionReportingService : ITransactionReportingService
         );
     }
 
-    public static decimal CalculateNetTotal(decimal quantity, decimal unitPrice, decimal discount) =>
-        decimal.Round(quantity * (unitPrice - discount), 2, MidpointRounding.AwayFromZero);
+    public static decimal CalculateNetTotal(
+        decimal quantity,
+        decimal unitPrice,
+        decimal discount
+    ) => decimal.Round(quantity * (unitPrice - discount), 2, MidpointRounding.AwayFromZero);
 
     public static decimal CalculateVatAmount(decimal netTotal, decimal vatRate) =>
         decimal.Round(netTotal * vatRate, 2, MidpointRounding.AwayFromZero);
@@ -188,16 +205,14 @@ public sealed class TransactionReportingService : ITransactionReportingService
         {
             var valid = transaction.Status switch
             {
-                TransactionStatus.Completed =>
-                    transaction.Id == transaction.LineageId
+                TransactionStatus.Completed => transaction.Id == transaction.LineageId
                     && transaction.Version == 1
                     && transaction.CorrectsTransactionId is null,
-                TransactionStatus.Recalculated =>
-                    transaction.Id != transaction.LineageId
+                TransactionStatus.Recalculated => transaction.Id != transaction.LineageId
                     && transaction.Version is > 1
                     && transaction.CorrectsTransactionId == transaction.LineageId,
-                TransactionStatus.Refunded or TransactionStatus.Cancelled =>
-                    transaction.Id != transaction.LineageId
+                TransactionStatus.Refunded or TransactionStatus.Cancelled => transaction.Id
+                    != transaction.LineageId
                     && transaction.Version is null
                     && transaction.CorrectsTransactionId == transaction.LineageId,
                 _ => false,
@@ -248,7 +263,10 @@ public sealed class TransactionReportingService : ITransactionReportingService
             .GroupBy(transaction => transaction.LineageId);
         if (
             purchaseTimes.Any(lineage =>
-                lineage.Select(transaction => transaction.OccurredAt.ToUniversalTime()).Distinct().Count() > 1
+                lineage
+                    .Select(transaction => transaction.OccurredAt.ToUniversalTime())
+                    .Distinct()
+                    .Count() > 1
             )
         )
         {
@@ -278,7 +296,10 @@ public sealed class TransactionReportingService : ITransactionReportingService
             || !TimeZoneInfo.TryConvertIanaIdToWindowsId(timeZoneId, out _)
         )
         {
-            throw new ArgumentException("A supported IANA timezone ID is required.", nameof(timeZoneId));
+            throw new ArgumentException(
+                "A supported IANA timezone ID is required.",
+                nameof(timeZoneId)
+            );
         }
 
         try
@@ -287,11 +308,19 @@ public sealed class TransactionReportingService : ITransactionReportingService
         }
         catch (TimeZoneNotFoundException exception)
         {
-            throw new ArgumentException("The timezone ID is not available on this system.", nameof(timeZoneId), exception);
+            throw new ArgumentException(
+                "The timezone ID is not available on this system.",
+                nameof(timeZoneId),
+                exception
+            );
         }
         catch (InvalidTimeZoneException exception)
         {
-            throw new ArgumentException("The timezone data is invalid on this system.", nameof(timeZoneId), exception);
+            throw new ArgumentException(
+                "The timezone data is invalid on this system.",
+                nameof(timeZoneId),
+                exception
+            );
         }
     }
 

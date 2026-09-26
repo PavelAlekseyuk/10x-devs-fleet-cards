@@ -225,9 +225,15 @@ public sealed class TransactionReportingTests
         var report = reportingService.CreateReport(period, [atEnd, boundaryTransaction, atStart]);
 
         Assert.Equal(2, report.Totals.RowCount);
-        Assert.Equal(new[] { atStart.Id, boundaryTransaction.Id }, report.Transactions.Select(row => row.Id));
+        Assert.Equal(
+            new[] { atStart.Id, boundaryTransaction.Id },
+            report.Transactions.Select(row => row.Id)
+        );
         var boundaryRow = report.Transactions.Single(row => row.Id == boundaryTransaction.Id);
-        Assert.Equal(new DateTimeOffset(2026, 3, 29, 1, 30, 0, TimeSpan.FromHours(1)), boundaryRow.UserOccurredAt);
+        Assert.Equal(
+            new DateTimeOffset(2026, 3, 29, 1, 30, 0, TimeSpan.FromHours(1)),
+            boundaryRow.UserOccurredAt
+        );
         Assert.Equal(boundaryTransaction.PosOccurredAtLocal, boundaryRow.PosOccurredAtLocal);
         Assert.Equal("Europe/Warsaw", boundaryRow.PosTimeZoneId);
     }
@@ -261,10 +267,7 @@ public sealed class TransactionReportingTests
         Assert.Equal(report.Transactions.Sum(row => row.NetTotal), report.Totals.NetTotal);
         Assert.Equal(report.Transactions.Sum(row => row.VatAmount), report.Totals.VatTotal);
         Assert.Equal(report.Transactions.Sum(row => row.GrossTotal), report.Totals.GrossTotal);
-        Assert.Equal(
-            report.Totals.NetTotal + report.Totals.VatTotal,
-            report.Totals.GrossTotal
-        );
+        Assert.Equal(report.Totals.NetTotal + report.Totals.VatTotal, report.Totals.GrossTotal);
     }
 
     [Theory]

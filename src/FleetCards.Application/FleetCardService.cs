@@ -58,6 +58,7 @@ public sealed record CardAssignmentHistoryResult(
 public interface IFleetCardService
 {
     IReadOnlyList<FleetCardResponse> GetCards();
+    IReadOnlyList<FuelTransaction> GetTransactionFacts();
     IReadOnlyList<FuelTransactionResponse> GetTransactions(
         DateTimeOffset? from,
         DateTimeOffset? to

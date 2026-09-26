@@ -271,19 +271,19 @@ Add an EF migration for lineage/version and timestamp fields with deterministic 
 
 #### Automated
 
-- [x] 1.1 Application tests cover effective lineage selection, status handling, duplicate-prevention, decimal rounding, UTC month boundaries, timezone conversion, and net/VAT/gross reconciliation
-- [x] 1.2 EF model and migration tests preserve existing seeded transactions and apply the new transaction fields cleanly
+- [x] 1.1 Application tests cover effective lineage selection, status handling, duplicate-prevention, decimal rounding, UTC month boundaries, timezone conversion, and net/VAT/gross reconciliation — 21fa7c5
+- [x] 1.2 EF model and migration tests preserve existing seeded transactions and apply the new transaction fields cleanly — 21fa7c5
 
 #### Manual
 
-- [ ] 1.3 Inspect generated and correction lineage records to confirm immutable originals and effective-only totals
+- [x] 1.3 Inspect generated and correction lineage records to confirm immutable originals and effective-only totals — 21fa7c5
 
 ### Phase 2: Persisted Reporting API
 
 #### Automated
 
-- [ ] 2.1 Application and API tests pass report calculation, authenticated contract, validation, role, ordering, and reconciliation coverage
-- [ ] 2.2 EF and seeded service modes return equivalent selected-period rows and summary totals
+- [x] 2.1 Application and API tests pass report calculation, authenticated contract, validation, role, ordering, and reconciliation coverage
+- [x] 2.2 EF and seeded service modes return equivalent selected-period rows and summary totals
 
 #### Manual
 

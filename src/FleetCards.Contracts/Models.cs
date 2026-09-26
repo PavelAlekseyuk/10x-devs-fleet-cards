@@ -84,11 +84,7 @@ public sealed record FuelTransactionResponse(
     string Status
 );
 
-public sealed record TransactionReportRequest(
-    int Year,
-    int Month,
-    string? TimeZoneId = null
-);
+public sealed record TransactionReportRequest(int Year, int Month, string? TimeZoneId = null);
 
 public sealed record TransactionReportPeriod(
     int Year,

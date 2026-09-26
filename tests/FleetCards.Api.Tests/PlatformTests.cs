@@ -59,7 +59,8 @@ public sealed class PlatformTests : IClassFixture<WebApplicationFactory<Program>
     [InlineData("/api/cars")]
     [InlineData("/api/cards")]
     [InlineData("/api/cards/22222222-2222-2222-2222-222222222222/assignment-history")]
-    [InlineData("/api/transactions")]
+    [InlineData("/api/transactions/report?year=2026&month=9&timeZone=Europe%2FWarsaw")]
+    [InlineData("/api/dashboard/summary?year=2026&month=9&timeZone=Europe%2FWarsaw")]
     [InlineData("/api/programs")]
     public async Task Anonymous_client_data_requests_are_rejected(string path)
     {

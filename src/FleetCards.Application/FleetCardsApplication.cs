@@ -101,15 +101,22 @@ public interface IFleetCardsReadService
     CurrentUserResponse GetCurrentUser();
     ClientResponse GetClient();
     IReadOnlyList<FleetCardResponse> GetCards();
-    IReadOnlyList<FuelTransactionResponse> GetTransactions(
-        DateTimeOffset? from,
-        DateTimeOffset? to
+    Task<TransactionReportResponse> GetTransactionReportAsync(
+        TransactionReportPeriod period,
+        CancellationToken cancellationToken = default
+    );
+    Task<DashboardSummaryResponse> GetDashboardSummaryAsync(
+        TransactionReportPeriod period,
+        CancellationToken cancellationToken = default
     );
     IReadOnlyList<FleetCardProgramResponse> GetPrograms();
 }
 
-public sealed class SeededFleetCardsReadService(IFleetCardService cardService)
-    : IFleetCardsReadService
+public sealed class SeededFleetCardsReadService(
+    IFleetCardService cardService,
+    IFleetVehicleService vehicleService,
+    ITransactionReportingService reportingService
+) : IFleetCardsReadService
 {
     public CurrentUserResponse GetCurrentUser() => new("anna.nowak", "ReadWrite");
 
@@ -123,10 +130,37 @@ public sealed class SeededFleetCardsReadService(IFleetCardService cardService)
 
     public IReadOnlyList<FleetCardResponse> GetCards() => cardService.GetCards();
 
-    public IReadOnlyList<FuelTransactionResponse> GetTransactions(
-        DateTimeOffset? from,
-        DateTimeOffset? to
-    ) => cardService.GetTransactions(from, to);
+    public Task<TransactionReportResponse> GetTransactionReportAsync(
+        TransactionReportPeriod period,
+        CancellationToken cancellationToken = default
+    )
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(
+            reportingService.CreateReport(period, cardService.GetTransactionFacts())
+        );
+    }
+
+    public async Task<DashboardSummaryResponse> GetDashboardSummaryAsync(
+        TransactionReportPeriod period,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var activeVehicles = await vehicleService.GetCarsAsync(
+            search: null,
+            includeArchived: false,
+            cancellationToken
+        );
+        var activeCards = cardService
+            .GetCards()
+            .Count(card => card.State == CardState.Active.ToString());
+        return reportingService.CreateSummary(
+            period,
+            cardService.GetTransactionFacts(),
+            activeVehicles.Count,
+            activeCards
+        );
+    }
 
     public IReadOnlyList<FleetCardProgramResponse> GetPrograms() =>
         [

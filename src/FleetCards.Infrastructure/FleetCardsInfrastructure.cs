@@ -15,6 +15,12 @@ public static class FleetCardsInfrastructure
         var vatRate =
             configuration.GetValue<decimal?>("Transactions:VatRate")
             ?? MockFuelTransactionGenerator.DefaultVatRate;
+        var timeZoneId =
+            configuration["Transactions:TimeZoneId"]
+            ?? TransactionReportingService.DefaultTimeZoneId;
+        services.AddSingleton<ITransactionReportingService>(
+            new TransactionReportingService(timeZoneId)
+        );
         if (!string.IsNullOrWhiteSpace(connectionString))
         {
             services.AddDbContext<FleetCardsDbContext>(options =>
@@ -36,7 +42,7 @@ public static class FleetCardsInfrastructure
         services.AddSingleton<ICardProvider, MockCardProvider>();
         services.AddSingleton(new MockFuelTransactionGenerator(vatRate));
         services.AddSingleton<IFleetCardService, SeededFleetCardService>();
-        services.AddSingleton<IFleetCardsReadService, SeededFleetCardsReadService>();
+        services.AddScoped<IFleetCardsReadService, SeededFleetCardsReadService>();
         services.AddSingleton<IAuthenticationService, SeededAuthenticationService>();
         return services;
     }

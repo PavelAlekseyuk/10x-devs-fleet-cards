@@ -533,13 +533,76 @@ app.MapGet(
     .WithTags("Cards");
 
 app.MapGet(
-        "/api/transactions",
-        (DateTimeOffset? from, DateTimeOffset? to, IFleetCardsReadService service) =>
-            service.GetTransactions(from, to)
+        "/api/transactions/report",
+        async (
+            HttpRequest request,
+            IFleetCardsReadService service,
+            ITransactionReportingService reportingService,
+            CancellationToken cancellationToken
+        ) =>
+        {
+            if (!TryGetTransactionReportRequest(request, out var reportRequest, out var errors))
+            {
+                return Results.ValidationProblem(errors);
+            }
+
+            TransactionReportPeriod period;
+            try
+            {
+                period = reportingService.ResolvePeriod(reportRequest!);
+            }
+            catch (ArgumentException exception)
+            {
+                return Results.ValidationProblem(
+                    new Dictionary<string, string[]>
+                    {
+                        [nameof(TransactionReportRequest.TimeZoneId)] = [exception.Message],
+                    }
+                );
+            }
+
+            return Results.Ok(await service.GetTransactionReportAsync(period, cancellationToken));
+        }
     )
     .RequireAuthorization()
-    .WithName("GetTransactions")
+    .WithName("GetTransactionReport")
     .WithTags("Transactions");
+
+app.MapGet(
+        "/api/dashboard/summary",
+        async (
+            HttpRequest request,
+            IFleetCardsReadService service,
+            ITransactionReportingService reportingService,
+            CancellationToken cancellationToken
+        ) =>
+        {
+            if (!TryGetTransactionReportRequest(request, out var reportRequest, out var errors))
+            {
+                return Results.ValidationProblem(errors);
+            }
+
+            TransactionReportPeriod period;
+            try
+            {
+                period = reportingService.ResolvePeriod(reportRequest!);
+            }
+            catch (ArgumentException exception)
+            {
+                return Results.ValidationProblem(
+                    new Dictionary<string, string[]>
+                    {
+                        [nameof(TransactionReportRequest.TimeZoneId)] = [exception.Message],
+                    }
+                );
+            }
+
+            return Results.Ok(await service.GetDashboardSummaryAsync(period, cancellationToken));
+        }
+    )
+    .RequireAuthorization()
+    .WithName("GetDashboardSummary")
+    .WithTags("Dashboard");
 
 app.MapGet("/api/programs", (IFleetCardsReadService service) => service.GetPrograms())
     .RequireAuthorization("ReadWrite")
@@ -624,6 +687,68 @@ static FleetCardApiResponse ToCardApiResponse(
             ? plate
             : null
     );
+
+static bool TryGetTransactionReportRequest(
+    HttpRequest request,
+    out TransactionReportRequest? reportRequest,
+    out Dictionary<string, string[]> errors
+)
+{
+    errors = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
+    var year = ParseRequiredInteger(request, "year", nameof(TransactionReportRequest.Year), errors);
+    var month = ParseRequiredInteger(
+        request,
+        "month",
+        nameof(TransactionReportRequest.Month),
+        errors
+    );
+    var timeZoneValues = request.Query["timeZone"];
+    if (timeZoneValues.Count != 1 || string.IsNullOrWhiteSpace(timeZoneValues[0]))
+    {
+        errors[nameof(TransactionReportRequest.TimeZoneId)] = ["A timezone is required."];
+    }
+
+    if (year is < 1 or > 9998)
+    {
+        errors[nameof(TransactionReportRequest.Year)] = ["Year must be between 1 and 9998."];
+    }
+
+    if (month is < 1 or > 12)
+    {
+        errors[nameof(TransactionReportRequest.Month)] = ["Month must be between 1 and 12."];
+    }
+
+    reportRequest =
+        errors.Count == 0
+            ? new TransactionReportRequest(year!.Value, month!.Value, timeZoneValues[0])
+            : null;
+    return errors.Count == 0;
+}
+
+static int? ParseRequiredInteger(
+    HttpRequest request,
+    string queryName,
+    string errorKey,
+    IDictionary<string, string[]> errors
+)
+{
+    var values = request.Query[queryName];
+    if (
+        values.Count == 1
+        && int.TryParse(
+            values[0],
+            System.Globalization.NumberStyles.None,
+            System.Globalization.CultureInfo.InvariantCulture,
+            out var value
+        )
+    )
+    {
+        return value;
+    }
+
+    errors[errorKey] = [$"A valid {queryName} is required."];
+    return null;
+}
 
 public partial class Program;
 
