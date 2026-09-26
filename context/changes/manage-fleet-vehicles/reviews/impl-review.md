@@ -4,9 +4,9 @@
 - **Plan**: context/changes/manage-fleet-vehicles/plan.md
 - **Scope**: Full plan
 - **Reviewed phases**: 1, 2, 3, 4
-- **Date**: 2026-09-24
+- **Date**: 2026-09-26
 - **Verdict**: APPROVED
-- **Findings**: 0 critical, 0 warnings, 1 observation (fixed)
+- **Findings**: 0 critical, 1 warning, 1 observation (1 fixed)
 
 ## Verdicts
 
@@ -21,19 +21,28 @@
 
 ## Review Notes
 
-- All Progress rows are complete and attributed to phase commits. The user confirmed the manual checks for each phase.
-- The committed implementation follows the Domain -> Application -> Infrastructure -> API layering, uses the existing authorization and CSRF boundary, and preserves the seeded card link and transaction snapshot.
-- The Angular instruction update was a user-approved Phase 3 adaptation to match the configured Angular CLI/Vitest runner.
-- Verification: .NET solution tests passed (48); Angular tests passed (16); Angular build succeeded with the existing `app.scss` component-style budget warning. The Playwright suite initially timed out once during login before receiving an API response, then passed unchanged on retry. After fixing the readiness probe, both Playwright tests passed. The earlier AppHost build passed with its existing ASPIRE010 warning.
+- All four plan phases are complete and attributed in Progress. The prior review records user confirmation of the manual checks; this review did not repeat live manual verification.
+- The implementation matches the planned layering, authorization/CSRF boundary, vehicle workflows, and history-preservation requirements. The previous Playwright readiness observation is fixed by probing `/api`.
+- Verification: `dotnet test FleetCards.sln` passed (48 tests); `npm test` passed (16 tests); `npm run build` succeeded with the existing `app.scss` budget warning. `dotnet ef migrations script --idempotent` built successfully and emitted the deferred `FuelType` backfill after the column addition. After Docker Desktop's Linux engine became available, `npm run test:e2e` passed (2 tests), applying the corrected migration against the isolated SQL Server database.
 
 ## Findings
 
-### F1 — Browser runner readiness checks only the SPA
+### F1 — SQL-backed migration verification is blocked
 
-- **Severity**: OBSERVATION
-- **Impact**: LOW — quick decision; the narrow fix is straightforward
+- **Severity**: ⚠️ WARNING
+- **Impact**: 🏃 LOW — quick decision; fix is obvious and narrowly scoped
 - **Dimension**: Success Criteria
-- **Location**: web/playwright.config.ts:23
-- **Detail**: Playwright's `webServer` readiness URL is `/login`, which proves Angular is serving but not that the proxied API has completed database startup. In the final review run, the page loaded but the login flow remained pending before `/api/auth/login` was issued; an unchanged retry passed. This is consistent with an API-readiness race and can cause intermittent E2E timeouts on slower startup.
-- **Fix**: Probe the proxied public `/api` endpoint (or a dedicated readiness endpoint) as the `webServer` URL so tests begin only after the API is serving requests. The public `/api` route is mapped after database migration completes.
-- **Decision**: FIXED — changed the Playwright readiness URL to `/api`; both browser tests passed afterward.
+- **Location**: src/FleetCards.Infrastructure/Migrations/20260923162752_AddFleetCarFuelAndAuditEvents.cs:29
+- **Detail**: The migration now defers the `FuelType` backfill through dynamic SQL, and generated-script verification confirms it follows the `ALTER TABLE`. The required SQL-backed browser check could not start because Docker Desktop's Linux engine is unavailable, so the corrected migration has not been applied to SQL Server after the fix.
+- **Fix**: Start Docker Desktop's Linux engine and rerun `npm run test:e2e` from `web/` to verify the migration and browser workflow against the disposable SQL database.
+- **Decision**: FIXED — started Docker Desktop's Linux engine and reran `npm run test:e2e`; both SQL-backed browser tests passed.
+
+### F2 — Toyota fuel backfill lacks a regression assertion
+
+- **Severity**: 🔎 OBSERVATION
+- **Impact**: 🏃 LOW — quick decision; fix is obvious and narrowly scoped
+- **Dimension**: Success Criteria
+- **Location**: tests/FleetCards.Api.Tests/FleetVehicleApiTests.cs:183
+- **Detail**: The migration maps the seeded Toyota Corolla to `95`, but the committed persistence/API assertions inspect the Volvo's archive, card assignment, and transaction snapshot without asserting Toyota's migrated fuel type. The backfill is present in the migration source; this is a regression-coverage gap, not evidence of incorrect data.
+- **Fix**: Add an assertion for the Toyota's `95` fuel type to SQL-backed migration verification.
+- **Decision**: PENDING — Fix now selected, but confirmation for the proposed test edit was skipped; no code change made.
