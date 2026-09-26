@@ -248,23 +248,23 @@ Add an EF migration and update the model snapshot for append-only assignment eve
 
 #### Automated
 
-- [x] 1.1 Application tests verify card issuance safety, assignment rules, unrestricted defined-state changes, deterministic completed transaction generation, and immutable vehicle snapshots.
-- [x] 1.2 EF model/migration checks pass, and existing seeded card and transaction data remain readable after migration.
+- [x] 1.1 Application tests verify card issuance safety, assignment rules, unrestricted defined-state changes, deterministic completed transaction generation, and immutable vehicle snapshots. — bcedaa2
+- [x] 1.2 EF model/migration checks pass, and existing seeded card and transaction data remain readable after migration. — bcedaa2
 
 #### Manual
 
-- [x] 1.3 Inspect the resulting card and assignment records to confirm the seed history is represented and no raw card credentials are persisted.
+- [x] 1.3 Inspect the resulting card and assignment records to confirm the seed history is represented and no raw card credentials are persisted. — bcedaa2
 
 ### Phase 2: Protected Card API
 
 #### Automated
 
-- [ ] 2.1 `dotnet test tests/FleetCards.Api.Tests/FleetCards.Api.Tests.csproj` passes with role, CSRF, status, history, audit, and redaction coverage.
-- [ ] 2.2 Authenticated card reads return masked card data and effective assignment periods; card mutation routes reject read-only and anonymous callers.
+- [x] 2.1 `dotnet test tests/FleetCards.Api.Tests/FleetCards.Api.Tests.csproj` passes with role, CSRF, status, history, audit, and redaction coverage.
+- [x] 2.2 Authenticated card reads return masked card data and effective assignment periods; card mutation routes reject read-only and anonymous callers.
 
 #### Manual
 
-- [ ] 2.3 Exercise issue, reassignment, each defined state, and history reads with both seeded accounts; confirm state changes do not erase the vehicle assignment.
+- [x] 2.3 Exercise issue, reassignment, each defined state, and history reads with both seeded accounts; confirm state changes do not erase the vehicle assignment.
 
 ### Phase 3: Angular Card Management
 

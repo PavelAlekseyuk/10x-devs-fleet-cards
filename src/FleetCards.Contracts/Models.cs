@@ -42,6 +42,15 @@ public sealed record FleetCardResponse(
     Guid? AssignedCarId
 );
 
+public sealed record FleetCardApiResponse(
+    Guid Id,
+    string MaskedPan,
+    string ProviderToken,
+    string State,
+    Guid? AssignedCarId,
+    string? AssignedVehicleRegistrationPlate
+);
+
 public sealed record IssueFleetCardRequest(Guid VehicleId);
 
 public sealed record ChangeFleetCardStateRequest(string State);
