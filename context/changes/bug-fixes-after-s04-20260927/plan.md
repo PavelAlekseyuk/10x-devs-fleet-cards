@@ -235,21 +235,21 @@ The cleanup is intentionally irreversible under normal migration rollback. Take 
 
 #### Automated
 
-- [x] 2.1 Reporting tests prove POS-based gross savings, signed correction handling, and report/summary reconciliation.
-- [x] 2.2 Angular tests prove refreshed state selection, state-history rendering, removal of reassignment controls, and shared-month summary reload.
-- [x] 2.3 `npm test` and `npm run build` pass with English and Polish overview labels.
+- [x] 2.1 Reporting tests prove POS-based gross savings, signed correction handling, and report/summary reconciliation. — d9869c3
+- [x] 2.2 Angular tests prove refreshed state selection, state-history rendering, removal of reassignment controls, and shared-month summary reload. — d9869c3
+- [x] 2.3 `npm test` and `npm run build` pass with English and Polish overview labels. — d9869c3
 
 #### Manual
 
-- [x] 2.4 Verify refreshed blocked state and reconcile savings and spend across two selected months in both languages.
+- [x] 2.4 Verify refreshed blocked state and reconcile savings and spend across two selected months in both languages. — d9869c3
 
 ### Phase 3: Composed Verification and Policy Alignment
 
 #### Automated
 
-- [ ] 3.1 SQL-backed migration tests remove null-assignment cards and dependent facts while preserving assigned cards and their history.
-- [ ] 3.2 `dotnet test` and `npm run test:e2e` pass through the composed card and selected-period reporting flow.
+- [x] 3.1 SQL-backed migration tests remove null-assignment cards and dependent facts while preserving assigned cards and their history.
+- [x] 3.2 `dotnet test` and `npm run test:e2e` pass through the composed card and selected-period reporting flow.
 
 #### Manual
 
-- [ ] 3.3 Verify the ReadWrite journey and ReadOnly visibility/permission boundary through the composed application.
+- [x] 3.3 Verify the ReadWrite journey and ReadOnly visibility/permission boundary through the composed application.

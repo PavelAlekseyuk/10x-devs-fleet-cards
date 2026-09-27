@@ -19,8 +19,8 @@ interface FleetCard {
   maskedPan: string;
   providerToken: string;
   state: string;
-  assignedCarId: string | null;
-  assignedVehicleRegistrationPlate: string | null;
+  assignedCarId: string;
+  assignedVehicleRegistrationPlate: string;
 }
 
 interface FuelTransaction {
@@ -36,13 +36,9 @@ interface TransactionReport {
   transactions: FuelTransaction[];
 }
 
-interface AssignmentHistoryEntry {
-  cardId: string;
-  vehicleId: string;
-  vehicleRegistrationPlate: string;
-  effectiveFrom: string;
-  effectiveTo: string | null;
-  orderingKey: number;
+interface StateHistoryEntry {
+  state: string;
+  occurredAt: string;
 }
 
 async function signIn(page: Page, userName: string, password: string): Promise<void> {
@@ -139,7 +135,7 @@ function expectCardRedacted(card: FleetCard): void {
   expect(exposedValues.join(' ')).not.toMatch(/\b\d{13,19}\b/);
 }
 
-test('composed card issue and reassignment persist history without rewriting transactions', async ({
+test('composed card issue keeps its assignment immutable and shows state history after reload', async ({
   page,
 }) => {
   await page.goto('/login');
@@ -159,11 +155,11 @@ test('composed card issue and reassignment persist history without rewriting tra
   expect(vehiclesResponse.status).toBe(200);
   const vehicles = vehiclesResponse.body ?? [];
   const issueVehicle = vehicles.find(vehicle => vehicle.registrationPlate === 'WA 12345');
-  const reassignmentVehicle = vehicles.find(vehicle => vehicle.registrationPlate === 'PO 98765');
+  const otherVehicle = vehicles.find(vehicle => vehicle.registrationPlate === 'PO 98765');
   expect(issueVehicle).toBeTruthy();
-  expect(reassignmentVehicle).toBeTruthy();
+  expect(otherVehicle).toBeTruthy();
   expect(issueVehicle?.isArchived).toBe(false);
-  expect(reassignmentVehicle?.isArchived).toBe(false);
+  expect(otherVehicle?.isArchived).toBe(false);
 
   const archivedVehicleResponse = await requestApi<FleetVehicle>(page, '/api/cars', 'POST', {
     registrationPlate: 'E2E P4 ARCHIVED',
@@ -224,62 +220,78 @@ test('composed card issue and reassignment persist history without rewriting tra
     });
   }
 
-  const initialHistoryResponse = await requestApi<AssignmentHistoryEntry[]>(
+  const initialHistoryResponse = await requestApi<StateHistoryEntry[]>(
     page,
-    `/api/cards/${issuedCard.id}/assignment-history`,
+    `/api/cards/${issuedCard.id}/state-history`,
   );
   expect(initialHistoryResponse.status).toBe(200);
   expect(initialHistoryResponse.body).toHaveLength(1);
-  expect(initialHistoryResponse.body?.[0]).toMatchObject({
-    vehicleId: issueVehicle!.id,
-    vehicleRegistrationPlate: issueVehicle!.registrationPlate,
-    orderingKey: 1,
-    effectiveTo: null,
-  });
+  expect(initialHistoryResponse.body?.[0].state).toBe('Active');
 
-  await cardItem
-    .getByLabel(`Reassign vehicle: ${issuedCard.maskedPan}`)
-    .selectOption(reassignmentVehicle!.id);
-  const reassignmentResponsePromise = page.waitForResponse(
+  const stateSelector = cardItem.getByRole('combobox', {
+    name: `State: ${issuedCard.maskedPan}`,
+  });
+  const stateResponsePromise = page.waitForResponse(
     response =>
-      new URL(response.url()).pathname === `/api/cards/${issuedCard.id}/assignment` &&
+      new URL(response.url()).pathname === `/api/cards/${issuedCard.id}/state` &&
       response.request().method() === 'PUT',
   );
-  await cardItem.getByRole('button', { name: 'Reassign vehicle', exact: true }).click();
-  const reassignmentResponse = await reassignmentResponsePromise;
-  expect(reassignmentResponse.status()).toBe(200);
+  await stateSelector.selectOption('Blocked');
+  expect((await stateResponsePromise).status()).toBe(200);
+  await expect(stateSelector).toHaveValue('Blocked');
+  await expect(cardItem.locator('.badge')).toHaveText('Blocked');
 
-  const historyResponse = await requestApi<AssignmentHistoryEntry[]>(
+  await page.reload();
+  await expect(page.getByRole('heading', { level: 2, name: 'Fleet cards' })).toBeVisible();
+  await expect(cardItem.getByRole('combobox', {
+    name: `State: ${issuedCard.maskedPan}`,
+  })).toHaveValue('Blocked');
+  await expect(cardItem.locator('.badge')).toHaveText('Blocked');
+
+  const historyResponse = await requestApi<StateHistoryEntry[]>(
     page,
-    `/api/cards/${issuedCard.id}/assignment-history`,
+    `/api/cards/${issuedCard.id}/state-history`,
   );
   expect(historyResponse.status).toBe(200);
-  expect(historyResponse.body).toHaveLength(2);
-  expect(historyResponse.body?.[0]).toMatchObject({
-    vehicleId: issueVehicle!.id,
-    vehicleRegistrationPlate: issueVehicle!.registrationPlate,
-    orderingKey: 1,
-  });
-  expect(historyResponse.body?.[1]).toMatchObject({
-    vehicleId: reassignmentVehicle!.id,
-    vehicleRegistrationPlate: reassignmentVehicle!.registrationPlate,
-    orderingKey: 2,
-    effectiveTo: null,
-  });
-  expect(historyResponse.body?.[0].effectiveTo).toBe(historyResponse.body?.[1].effectiveFrom);
+  expect(historyResponse.body?.map(entry => entry.state)).toEqual(['Blocked', 'Active']);
+  await cardItem.getByRole('button', { name: 'State history' }).click();
+  await expect(cardItem.getByRole('heading', { name: 'Card state history' })).toBeVisible();
+  await expect(cardItem.locator('.state-timeline li strong')).toHaveText(['Blocked', 'Active']);
 
-  const transactionsAfterReassignment = await getTransactionsForCard(page, issuedCard.id);
-  expect(
-    transactionsAfterReassignment
-      .sort((left, right) => left.id.localeCompare(right.id)),
-  ).toEqual(issuedTransactions);
+  await page.getByRole('button', { name: 'EN' }).click();
+  await expect(cardItem.getByRole('combobox', {
+    name: `Stan: ${issuedCard.maskedPan}`,
+  })).toHaveValue('Blocked');
+  await expect(cardItem.locator('.badge')).toHaveText('Zablokowana');
+  await expect(cardItem.getByRole('button', { name: 'Historia stanu' })).toBeVisible();
+  await expect(cardItem.getByRole('heading', { name: 'Historia stanu karty' })).toBeVisible();
+  await expect(cardItem.locator('.state-timeline li strong')).toHaveText([
+    'Zablokowana',
+    'Aktywna',
+  ]);
+  await page.getByRole('button', { name: 'PL' }).click();
 
-  await cardItem.getByRole('button', { name: 'Assignment history' }).click();
-  await expect(
-    cardItem.getByRole('heading', { name: 'Vehicle assignment timeline' }),
-  ).toBeVisible();
+  const removedAssignmentResponse = await requestApi<FleetCard>(
+    page,
+    `/api/cards/${issuedCard.id}/assignment`,
+    'PUT',
+    { vehicleId: otherVehicle!.id },
+  );
+  expect(removedAssignmentResponse.status).toBe(404);
   await expect(cardItem).toContainText(issueVehicle!.registrationPlate);
-  await expect(cardItem).toContainText(reassignmentVehicle!.registrationPlate);
+  await expect(cardItem.getByRole('button', { name: 'Reassign vehicle' })).toHaveCount(0);
+  const cardsAfterAssignmentAttempt = await requestApi<FleetCard[]>(page, '/api/cards');
+  expect(
+    cardsAfterAssignmentAttempt.body?.find(card => card.id === issuedCard.id),
+  ).toMatchObject({
+    assignedCarId: issueVehicle!.id,
+    assignedVehicleRegistrationPlate: issueVehicle!.registrationPlate,
+  });
+  expect(
+    (await getTransactionsForCard(page, issuedCard.id)).sort((left, right) =>
+      left.id.localeCompare(right.id),
+    ),
+  ).toEqual(issuedTransactions);
 
   await page.context().clearCookies();
   await signIn(page, 'piotr.wisniewski', 'Piotr123!');
@@ -289,15 +301,13 @@ test('composed card issue and reassignment persist history without rewriting tra
   await expect(readOnlyCard).toBeVisible();
   await expect(page.getByRole('button', { name: 'Issue card', exact: true })).toHaveCount(0);
   await expect(readOnlyCard.locator('select')).toHaveCount(0);
-  await expect(
-    readOnlyCard.getByRole('button', { name: 'Reassign vehicle', exact: true }),
-  ).toHaveCount(0);
-  await readOnlyCard.getByRole('button', { name: 'Assignment history' }).click();
-  await expect(
-    readOnlyCard.getByRole('heading', { name: 'Vehicle assignment timeline' }),
-  ).toBeVisible();
+  await readOnlyCard.getByRole('button', { name: 'State history' }).click();
+  await expect(readOnlyCard.getByRole('heading', { name: 'Card state history' })).toBeVisible();
+  await expect(readOnlyCard.locator('.state-timeline li strong')).toHaveText([
+    'Blocked',
+    'Active',
+  ]);
   await expect(readOnlyCard).toContainText(issueVehicle!.registrationPlate);
-  await expect(readOnlyCard).toContainText(reassignmentVehicle!.registrationPlate);
 
   const readOnlyMutations = await Promise.all([
     requestApi<FleetCard>(page, '/api/cards', 'POST', { vehicleId: issueVehicle!.id }),
@@ -305,8 +315,8 @@ test('composed card issue and reassignment persist history without rewriting tra
       state: 'Blocked',
     }),
     requestApi<FleetCard>(page, `/api/cards/${issuedCard.id}/assignment`, 'PUT', {
-      vehicleId: issueVehicle!.id,
+      vehicleId: otherVehicle!.id,
     }),
   ]);
-  expect(readOnlyMutations.map(response => response.status)).toEqual([403, 403, 403]);
+  expect(readOnlyMutations.map(response => response.status)).toEqual([403, 403, 404]);
 });
