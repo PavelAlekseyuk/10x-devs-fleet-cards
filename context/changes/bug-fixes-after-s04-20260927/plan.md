@@ -247,9 +247,9 @@ The cleanup is intentionally irreversible under normal migration rollback. Take 
 
 #### Automated
 
-- [x] 3.1 SQL-backed migration tests remove null-assignment cards and dependent facts while preserving assigned cards and their history.
-- [x] 3.2 `dotnet test` and `npm run test:e2e` pass through the composed card and selected-period reporting flow.
+- [x] 3.1 SQL-backed migration tests remove null-assignment cards and dependent facts while preserving assigned cards and their history. — 76812e5
+- [x] 3.2 `dotnet test` and `npm run test:e2e` pass through the composed card and selected-period reporting flow. — 76812e5
 
 #### Manual
 
-- [x] 3.3 Verify the ReadWrite journey and ReadOnly visibility/permission boundary through the composed application.
+- [x] 3.3 Verify the ReadWrite journey and ReadOnly visibility/permission boundary through the composed application. — 76812e5
