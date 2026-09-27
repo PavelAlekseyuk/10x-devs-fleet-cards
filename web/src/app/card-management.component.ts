@@ -3,7 +3,7 @@ import { AuthService } from './auth.service';
 import {
   CardManagementService,
   FleetCard,
-  FleetCardAssignment,
+  FleetCardStateHistory,
   FleetCardState,
 } from './card-management.service';
 import { FleetVehicle, FleetVehiclesService } from './fleet-vehicles.service';
@@ -31,8 +31,7 @@ export class CardManagementComponent implements OnInit {
   protected cards: FleetCard[] = [];
   protected vehicles: FleetVehicle[] = [];
   protected selectedIssueVehicleId = '';
-  protected readonly assignmentSelections: Record<string, string> = {};
-  protected readonly assignmentHistory: Record<string, FleetCardAssignment[]> = {};
+  protected readonly stateHistory: Record<string, FleetCardStateHistory[]> = {};
   protected loadingCards = true;
   protected loadingVehicles = true;
   protected savingIssue = false;
@@ -102,59 +101,23 @@ export class CardManagementComponent implements OnInit {
     });
   }
 
-  protected updateAssignmentSelection(card: FleetCard, event: Event): void {
-    this.assignmentSelections[card.id] = (event.target as HTMLSelectElement).value;
-  }
-
-  protected selectedAssignment(card: FleetCard): string {
-    return this.assignmentSelections[card.id] ?? card.assignedCarId ?? '';
-  }
-
-  protected reassignCard(card: FleetCard): void {
-    if (!this.canWrite || this.pendingCardId) {
-      return;
-    }
-    const vehicleId = this.selectedAssignment(card);
-    if (!this.vehicles.some((vehicle) => vehicle.id === vehicleId)) {
-      this.error = this.language.text('cardReassignVehicleRequired');
-      return;
-    }
-    if (vehicleId === card.assignedCarId) {
-      return;
-    }
-
-    this.pendingCardId = card.id;
-    this.error = null;
-    this.cardsService.reassignCard(card.id, vehicleId).subscribe({
-      next: (updatedCard) => {
-        this.assignmentSelections[card.id] = updatedCard.assignedCarId ?? '';
-        delete this.assignmentHistory[card.id];
-        this.finishCardMutation(updatedCard);
-        if (this.openHistoryCardId === card.id) {
-          this.loadAssignmentHistory(card.id);
-        }
-      },
-      error: () => this.failCardMutation(),
-    });
-  }
-
-  protected toggleAssignmentHistory(card: FleetCard): void {
+  protected toggleStateHistory(card: FleetCard): void {
     if (this.openHistoryCardId === card.id) {
       this.openHistoryCardId = null;
       return;
     }
     this.openHistoryCardId = card.id;
-    if (this.assignmentHistory[card.id]) {
+    if (this.stateHistory[card.id]) {
       return;
     }
 
-    this.loadAssignmentHistory(card.id);
+    this.loadStateHistory(card.id);
   }
 
-  private loadAssignmentHistory(cardId: string): void {
+  private loadStateHistory(cardId: string): void {
     this.error = null;
-    this.cardsService.getAssignmentHistory(cardId).subscribe({
-      next: (history) => (this.assignmentHistory[cardId] = history),
+    this.cardsService.getStateHistory(cardId).subscribe({
+      next: (history) => (this.stateHistory[cardId] = history),
       error: () => {
         this.openHistoryCardId = null;
         this.error = this.language.text('cardHistoryError');

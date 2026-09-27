@@ -43,16 +43,50 @@ public interface ICardProvider
     Task<CardProviderIssueResult> IssueAsync(CancellationToken cancellationToken = default);
 }
 
-public sealed record CardAssignmentHistoryResult(
-    IReadOnlyList<FleetCardAssignmentHistoryResponse> Assignments,
+public sealed record CardStateHistoryResult(
+    IReadOnlyList<FleetCardStateHistoryResponse> History,
     CardCommandError Error
 )
 {
-    public static CardAssignmentHistoryResult Success(
-        IReadOnlyList<FleetCardAssignmentHistoryResponse> assignments
-    ) => new(assignments, CardCommandError.None);
+    public static CardStateHistoryResult Success(
+        IReadOnlyList<FleetCardStateHistoryResponse> history
+    ) => new(history, CardCommandError.None);
 
-    public static CardAssignmentHistoryResult NotFound() => new([], CardCommandError.NotFound);
+    public static CardStateHistoryResult NotFound() => new([], CardCommandError.NotFound);
+}
+
+public static class CardStateHistoryProjection
+{
+    private const string StateChangePrefix = "CardStateChangedTo";
+
+    public static IReadOnlyList<FleetCardStateHistoryResponse> Project(
+        IEnumerable<FleetAuditEvent> auditEvents
+    ) =>
+        auditEvents
+            .Where(auditEvent => auditEvent.EntityType == "FleetCard" && auditEvent.Succeeded)
+            .Select(auditEvent => (AuditEvent: auditEvent, State: GetState(auditEvent.Action)))
+            .Where(entry => entry.State is not null)
+            .OrderByDescending(entry => entry.AuditEvent.OccurredAt)
+            .ThenByDescending(entry => entry.AuditEvent.Id)
+            .Select(entry => new FleetCardStateHistoryResponse(
+                entry.State!,
+                entry.AuditEvent.OccurredAt
+            ))
+            .ToArray();
+
+    private static string? GetState(string action)
+    {
+        if (action == "CardIssued")
+        {
+            return nameof(CardState.Active);
+        }
+
+        return
+            action.StartsWith(StateChangePrefix, StringComparison.Ordinal)
+            && CardStateRules.TryParse(action[StateChangePrefix.Length..], out var state)
+            ? state.ToString()
+            : null;
+    }
 }
 
 public interface IFleetCardService
@@ -79,15 +113,7 @@ public interface IFleetCardService
         CancellationToken cancellationToken = default
     );
 
-    Task<CardCommandResult> ReassignAsync(
-        Guid cardId,
-        ReassignFleetCardRequest request,
-        string actor,
-        string correlationId,
-        CancellationToken cancellationToken = default
-    );
-
-    Task<CardAssignmentHistoryResult> GetAssignmentHistoryAsync(
+    Task<CardStateHistoryResult> GetStateHistoryAsync(
         Guid cardId,
         CancellationToken cancellationToken = default
     );

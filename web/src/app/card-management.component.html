@@ -79,55 +79,33 @@
                   (change)="changeCardState(card, $event)"
                 >
                   @for (state of states; track state) {
-                    <option [value]="state">{{ stateLabel(state) }}</option>
+                    <option [value]="state" [selected]="state === card.state">
+                      {{ stateLabel(state) }}
+                    </option>
                   }
                 </select>
               </label>
-              <label>
-                {{ language.text('cardReassign') }}
-                <select
-                  [value]="selectedAssignment(card)"
-                  [disabled]="pendingCardId !== null || vehicles.length === 0"
-                  [attr.aria-label]="language.text('cardReassign') + ': ' + card.maskedPan"
-                  (change)="updateAssignmentSelection(card, $event)"
-                >
-                  <option value="">{{ language.text('cardChooseVehicle') }}</option>
-                  @for (vehicle of vehicles; track vehicle.id) {
-                    <option [value]="vehicle.id">{{ vehicle.registrationPlate }}</option>
-                  }
-                </select>
-              </label>
-              <button
-                class="quiet-button"
-                type="button"
-                [disabled]="pendingCardId !== null || !selectedAssignment(card) || selectedAssignment(card) === card.assignedCarId"
-                (click)="reassignCard(card)"
-              >{{ language.text('cardReassign') }}</button>
             }
             <button
               class="text-action"
               type="button"
               [attr.aria-expanded]="openHistoryCardId === card.id"
-              (click)="toggleAssignmentHistory(card)"
+              (click)="toggleStateHistory(card)"
             >{{ language.text('cardHistory') }}</button>
           </div>
 
           @if (openHistoryCardId === card.id) {
             <section class="history-panel" [attr.aria-label]="language.text('cardHistoryHeading')">
               <h4>{{ language.text('cardHistoryHeading') }}</h4>
-              @if (assignmentHistory[card.id]; as history) {
+              @if (stateHistory[card.id]; as history) {
                 @if (history.length === 0) {
                   <p class="message">{{ language.text('cardHistoryEmpty') }}</p>
                 } @else {
-                  <ol class="assignment-timeline">
-                    @for (assignment of history; track assignment.orderingKey) {
+                  <ol class="state-timeline">
+                    @for (entry of history; track $index) {
                       <li>
-                        <strong>{{ assignment.vehicleRegistrationPlate }}</strong>
-                        <span>{{ language.text('cardAssignedAt') }} {{ formatDate(assignment.effectiveFrom) }}</span>
-                        <span>
-                          {{ language.text('cardEndedAt') }}
-                          {{ assignment.effectiveTo ? formatDate(assignment.effectiveTo) : language.text('cardHistoryCurrent') }}
-                        </span>
+                        <strong>{{ stateLabel(entry.state) }}</strong>
+                        <span>{{ formatDate(entry.occurredAt) }}</span>
                       </li>
                     }
                   </ol>

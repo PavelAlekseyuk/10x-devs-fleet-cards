@@ -15,6 +15,9 @@ public sealed class SeededFleetCardService(
     private static readonly Guid SeededVehicleId = Guid.Parse(
         "11111111-1111-1111-1111-111111111111"
     );
+    private static readonly Guid SeededIssueAuditEventId = Guid.Parse(
+        "77777777-7777-7777-7777-777777777777"
+    );
     private static readonly DateTimeOffset SeededAssignmentTime = new(
         2026,
         9,
@@ -74,7 +77,20 @@ public sealed class SeededFleetCardService(
             Status = TransactionStatus.Completed,
         },
     ];
-    private readonly List<FleetAuditEvent> auditEvents = [];
+    private readonly List<FleetAuditEvent> auditEvents =
+    [
+        new FleetAuditEvent
+        {
+            Id = SeededIssueAuditEventId,
+            Actor = "system",
+            Action = "CardIssued",
+            EntityType = "FleetCard",
+            EntityId = SeededCardId,
+            OccurredAt = SeededAssignmentTime,
+            Succeeded = true,
+            CorrelationId = "seeded-card-issue",
+        },
+    ];
 
     public IReadOnlyList<FleetCardResponse> GetCards()
     {
@@ -218,105 +234,24 @@ public sealed class SeededFleetCardService(
         }
     }
 
-    public async Task<CardCommandResult> ReassignAsync(
-        Guid cardId,
-        ReassignFleetCardRequest request,
-        string actor,
-        string correlationId,
-        CancellationToken cancellationToken = default
-    )
-    {
-        var vehicle = await FindVehicleAsync(request.VehicleId, cancellationToken);
-        if (vehicle is null)
-        {
-            return CardCommandResult.NotFound();
-        }
-
-        if (vehicle.IsArchived)
-        {
-            return CardCommandResult.Conflict();
-        }
-
-        lock (sync)
-        {
-            var card = cards.SingleOrDefault(candidate => candidate.Id == cardId);
-            if (card is null)
-            {
-                return CardCommandResult.NotFound();
-            }
-
-            if (card.State == CardState.Archived || card.AssignedCarId == vehicle.Id)
-            {
-                return CardCommandResult.Conflict();
-            }
-
-            var previous = assignmentEvents
-                .Where(assignment => assignment.CardId == card.Id)
-                .OrderByDescending(assignment => assignment.EffectiveAt)
-                .ThenByDescending(assignment => assignment.OrderingKey)
-                .First();
-            var occurredAt = DateTimeOffset.UtcNow;
-            if (previous.EffectiveAt > occurredAt)
-            {
-                occurredAt = previous.EffectiveAt;
-            }
-
-            card.AssignedCarId = vehicle.Id;
-            assignmentEvents.Add(
-                new FleetCardAssignmentEvent
-                {
-                    Id = Guid.NewGuid(),
-                    CardId = card.Id,
-                    VehicleId = vehicle.Id,
-                    EffectiveAt = occurredAt,
-                    OrderingKey = previous.OrderingKey + 1,
-                }
-            );
-            AddAudit(card.Id, "CardReassigned", actor, correlationId, occurredAt);
-            return CardCommandResult.Success(ToResponse(card));
-        }
-    }
-
-    public async Task<CardAssignmentHistoryResult> GetAssignmentHistoryAsync(
+    public Task<CardStateHistoryResult> GetStateHistoryAsync(
         Guid cardId,
         CancellationToken cancellationToken = default
     )
     {
-        var vehicles = await vehicleService.GetCarsAsync(
-            search: null,
-            includeArchived: true,
-            cancellationToken: cancellationToken
-        );
-        var vehiclesById = vehicles.ToDictionary(vehicle => vehicle.Id);
-        FleetCardAssignmentEvent[] assignments;
+        cancellationToken.ThrowIfCancellationRequested();
         lock (sync)
         {
             if (!cards.Any(card => card.Id == cardId))
             {
-                return CardAssignmentHistoryResult.NotFound();
+                return Task.FromResult(CardStateHistoryResult.NotFound());
             }
 
-            assignments = assignmentEvents
-                .Where(assignment => assignment.CardId == cardId)
-                .OrderBy(assignment => assignment.EffectiveAt)
-                .ThenBy(assignment => assignment.OrderingKey)
-                .ToArray();
+            var events = auditEvents.Where(auditEvent => auditEvent.EntityId == cardId).ToArray();
+            return Task.FromResult(
+                CardStateHistoryResult.Success(CardStateHistoryProjection.Project(events))
+            );
         }
-
-        var history = assignments
-            .Select(
-                (assignment, index) =>
-                    new FleetCardAssignmentHistoryResponse(
-                        assignment.CardId,
-                        assignment.VehicleId,
-                        vehiclesById[assignment.VehicleId].RegistrationPlate,
-                        assignment.EffectiveAt,
-                        index + 1 < assignments.Length ? assignments[index + 1].EffectiveAt : null,
-                        assignment.OrderingKey
-                    )
-            )
-            .ToArray();
-        return CardAssignmentHistoryResult.Success(history);
     }
 
     private async Task<FleetCar?> FindVehicleAsync(

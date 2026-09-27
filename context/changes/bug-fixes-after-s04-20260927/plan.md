@@ -224,12 +224,12 @@ The cleanup is intentionally irreversible under normal migration rollback. Take 
 
 #### Automated
 
-- [ ] 1.1 Application tests prove immutable issue-time assignment and newest-first state history in EF-backed and seeded modes.
-- [ ] 1.2 API tests prove reassignment is unavailable and authenticated state history includes issuance and subsequent state changes.
+- [x] 1.1 Application tests prove immutable issue-time assignment and newest-first state history in EF-backed and seeded modes.
+- [x] 1.2 API tests prove reassignment is unavailable and authenticated state history includes issuance and subsequent state changes.
 
 #### Manual
 
-- [ ] 1.3 Verify through the UI that a card remains assigned to its issue-time vehicle and its history starts at Active and lists the latest change first.
+- [x] 1.3 Verify through the UI that a card remains assigned to its issue-time vehicle and its history starts at Active and lists the latest change first.
 
 ### Phase 2: Gross Savings and Angular Workflows
 

@@ -207,14 +207,14 @@ select:disabled {
   margin-bottom: 14px;
 }
 
-.assignment-timeline {
+.state-timeline {
   margin: 0;
   padding: 0 0 0 18px;
   border-left: 1px solid #a8c7b6;
   list-style: none;
 }
 
-.assignment-timeline li {
+.state-timeline li {
   position: relative;
   padding: 0 0 18px 12px;
   display: grid;
@@ -223,11 +223,11 @@ select:disabled {
   font-size: 12px;
 }
 
-.assignment-timeline li:last-child {
+.state-timeline li:last-child {
   padding-bottom: 0;
 }
 
-.assignment-timeline li::before {
+.state-timeline li::before {
   position: absolute;
   top: 2px;
   left: -23px;
@@ -238,7 +238,7 @@ select:disabled {
   content: '';
 }
 
-.assignment-timeline strong {
+.state-timeline strong {
   color: #24372f;
   font-size: 13px;
 }
