@@ -49,12 +49,14 @@ namespace FleetCards.Infrastructure.Migrations
 
             migrationBuilder.Sql(
                 """
+                EXEC(N'
                 UPDATE [Transactions]
                 SET [LineageId] = [Id],
                     [Version] = 1,
-                    [PosTimeZoneId] = 'Europe/Warsaw',
-                    [PosOccurredAtLocal] = SWITCHOFFSET([OccurredAt], '+00:00') AT TIME ZONE 'Central European Standard Time',
-                    [OccurredAt] = SWITCHOFFSET([OccurredAt], '+00:00');
+                    [PosTimeZoneId] = N''Europe/Warsaw'',
+                    [PosOccurredAtLocal] = SWITCHOFFSET([OccurredAt], ''+00:00'') AT TIME ZONE N''Central European Standard Time'',
+                    [OccurredAt] = SWITCHOFFSET([OccurredAt], ''+00:00'');
+                ');
                 """
             );
 
