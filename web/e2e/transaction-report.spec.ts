@@ -21,7 +21,10 @@ interface TransactionReportRow {
   posTimeZoneId: string;
   vehiclePlate: string;
   stationName: string;
+  quantity: number;
+  unitPrice: number;
   netTotal: number;
+  vatRate: number;
   vatAmount: number;
   grossTotal: number;
 }
@@ -30,6 +33,7 @@ interface TransactionReportTotals {
   netTotal: number;
   vatTotal: number;
   grossTotal: number;
+  grossSavingsTotal: number;
   rowCount: number;
 }
 
@@ -107,7 +111,11 @@ function reportPath(endpoint: string, month: string, timeZone: string): string {
 }
 
 function cents(value: number): number {
-  return Math.round(value * 100);
+  return Math.sign(value) * Math.round(Math.abs(value) * 100);
+}
+
+function roundMoney(value: number): number {
+  return cents(value) / 100;
 }
 
 function expectSummaryToReconcile(summary: DashboardSummary, report: TransactionReport): void {
@@ -120,6 +128,13 @@ function expectSummaryToReconcile(summary: DashboardSummary, report: Transaction
   );
   expect(cents(summary.periodTotals.grossTotal)).toBe(
     report.transactions.reduce((total, row) => total + cents(row.grossTotal), 0),
+  );
+  expect(cents(summary.periodTotals.grossSavingsTotal)).toBe(
+    report.transactions.reduce((total, row) => {
+      const posNet = roundMoney(row.quantity * row.unitPrice);
+      const posVat = roundMoney(posNet * row.vatRate);
+      return total + cents(posNet + posVat - row.grossTotal);
+    }, 0),
   );
 }
 
@@ -163,6 +178,25 @@ async function waitForReportResponse(
   });
   expect(response.status()).toBe(200);
   return (await response.json()) as TransactionReport;
+}
+
+async function waitForSummaryResponse(
+  page: Page,
+  month: string,
+  timeZone: string,
+): Promise<DashboardSummary> {
+  const [year, monthNumber] = month.split('-');
+  const response = await page.waitForResponse(candidate => {
+    const url = new URL(candidate.url());
+    return (
+      url.pathname === '/api/dashboard/summary' &&
+      url.searchParams.get('year') === year &&
+      Number(url.searchParams.get('month')) === Number(monthNumber) &&
+      url.searchParams.get('timeZone') === timeZone
+    );
+  });
+  expect(response.status()).toBe(200);
+  return (await response.json()) as DashboardSummary;
 }
 
 test('Aspire transaction reporting reconciles seeded spending and timezone display', async ({
@@ -227,11 +261,38 @@ test('Aspire transaction reporting reconciles seeded spending and timezone displ
       defaultSummary.periodTotals.grossTotal,
     ),
   );
+  await expect(
+    page.locator('.metric-card').filter({ hasText: 'Gross savings' }).locator('strong'),
+  ).toHaveText(
+    new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'PLN' }).format(
+      defaultSummary.periodTotals.grossSavingsTotal,
+    ),
+  );
 
-  const defaultUiReportResponse = waitForReportResponse(page, reportingMonth, defaultTimeZone);
+  const nextMonth = '2026-10';
+  const nextSummaryResponse = waitForSummaryResponse(page, nextMonth, defaultTimeZone);
+  await page.getByRole('button', { name: 'Next month' }).click();
+  const nextSummary = await nextSummaryResponse;
+  await expect(
+    page.locator('.metric-card').filter({ hasText: 'Gross savings' }).locator('strong'),
+  ).toHaveText(
+    new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'PLN' }).format(
+      nextSummary.periodTotals.grossSavingsTotal,
+    ),
+  );
+  await expect(page.locator('.period-link')).toContainText('October 2026');
+
+  const nextUiReportResponse = waitForReportResponse(page, nextMonth, defaultTimeZone);
   await page.getByRole('link', { name: /View transactions for this period/ }).click();
   await expect(page).toHaveURL(/\/transactions$/);
+  const nextUiReport = await nextUiReportResponse;
+  await expect(page.locator('input[type="month"]')).toHaveValue(nextMonth);
+  expectSummaryToReconcile(nextSummary, nextUiReport);
+
+  const defaultUiReportResponse = waitForReportResponse(page, reportingMonth, defaultTimeZone);
+  await page.getByRole('button', { name: 'Previous month' }).click();
   const defaultUiReport = await defaultUiReportResponse;
+  await expect(page.locator('input[type="month"]')).toHaveValue(reportingMonth);
   expectSummaryToReconcile(defaultSummary, defaultUiReport);
   await expect(page.locator('.report-table-wrap tbody tr')).toHaveCount(
     defaultUiReport.transactions.length,

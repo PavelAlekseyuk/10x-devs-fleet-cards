@@ -17,6 +17,7 @@ public sealed class FleetCardServiceTests
     private static readonly Guid SecondVehicleId = Guid.Parse(
         "33333333-3333-3333-3333-333333333333"
     );
+    private static readonly Guid SeededCardId = Guid.Parse("22222222-2222-2222-2222-222222222222");
 
     [Fact]
     public async Task Issue_creates_safe_card_assignment_audit_and_completed_transactions()
@@ -41,7 +42,7 @@ public sealed class FleetCardServiceTests
         var transactions = await context
             .Transactions.Where(transaction => transaction.CardId == card.Id)
             .ToArrayAsync();
-        Assert.InRange(transactions.Length, 1, 5);
+        Assert.InRange(transactions.Length, 5, 15);
         var previousMonthStart = new DateTimeOffset(
             issuedAt.Year,
             issuedAt.Month,
@@ -219,7 +220,7 @@ public sealed class FleetCardServiceTests
     }
 
     [Fact]
-    public async Task Reassignment_appends_periods_and_keeps_transaction_vehicle_snapshots()
+    public async Task Issue_time_assignment_is_immutable_and_state_changes_preserve_transaction_vehicle_snapshots()
     {
         await using var context = await CreateContextAsync();
         var service = CreateService(context);
@@ -231,6 +232,7 @@ public sealed class FleetCardServiceTests
         var cardId = issue.Card!.Id;
         var before = await context
             .Transactions.Where(transaction => transaction.CardId == cardId)
+            .OrderBy(transaction => transaction.Id)
             .Select(transaction => new
             {
                 transaction.Id,
@@ -239,15 +241,22 @@ public sealed class FleetCardServiceTests
             })
             .ToArrayAsync();
 
-        var reassignment = await service.ReassignAsync(
+        await service.ChangeStateAsync(
             cardId,
-            new ReassignFleetCardRequest(SecondVehicleId),
+            new ChangeFleetCardStateRequest(nameof(CardState.Blocked)),
             "anna.nowak",
-            "reassign-card"
+            "block-card"
         );
-        var history = await service.GetAssignmentHistoryAsync(cardId);
+        await service.ChangeStateAsync(
+            cardId,
+            new ChangeFleetCardStateRequest(nameof(CardState.Stolen)),
+            "anna.nowak",
+            "mark-card-stolen"
+        );
+        var history = await service.GetStateHistoryAsync(cardId);
         var after = await context
             .Transactions.Where(transaction => transaction.CardId == cardId)
+            .OrderBy(transaction => transaction.Id)
             .Select(transaction => new
             {
                 transaction.Id,
@@ -255,108 +264,40 @@ public sealed class FleetCardServiceTests
                 transaction.VehiclePlate,
             })
             .ToArrayAsync();
+        var card = await context.Cards.SingleAsync(candidate => candidate.Id == cardId);
 
-        Assert.True(reassignment.IsSuccess);
-        Assert.Equal(SecondVehicleId, reassignment.Card!.AssignedCarId);
+        Assert.Equal(PrimaryVehicleId, card.AssignedCarId);
         Assert.Equal(before, after);
-        Assert.True(history.Assignments.Count >= 2);
-        var current = history.Assignments[^1];
-        Assert.Equal(SecondVehicleId, current.VehicleId);
-        Assert.Equal("PO 98765", current.VehicleRegistrationPlate);
-        Assert.Null(current.EffectiveTo);
-        Assert.Equal(2, current.OrderingKey);
-        Assert.Equal(current.EffectiveFrom, history.Assignments[^2].EffectiveTo);
-        Assert.Equal(1, history.Assignments[^2].OrderingKey);
-
-        var archived = await context.Cars.SingleAsync(vehicle => vehicle.Id == SecondVehicleId);
-        archived.IsArchived = true;
-        await context.SaveChangesAsync();
-        var archivedTarget = await service.ReassignAsync(
-            cardId,
-            new ReassignFleetCardRequest(SecondVehicleId),
-            "anna.nowak",
-            "reassign-archived"
-        );
-        Assert.Equal(CardCommandError.Conflict, archivedTarget.Error);
-    }
-
-    [Fact]
-    public async Task Archived_card_cannot_be_reassigned_until_reactivated()
-    {
-        await using var context = await CreateContextAsync();
-        var service = CreateService(context);
-        var issue = await service.IssueAsync(
-            new IssueFleetCardRequest(PrimaryVehicleId),
-            "anna.nowak",
-            "issue-archived-card"
-        );
-        var cardId = issue.Card!.Id;
-        await service.ChangeStateAsync(
-            cardId,
-            new ChangeFleetCardStateRequest(nameof(CardState.Archived)),
-            "anna.nowak",
-            "archive-card"
-        );
-
-        var rejected = await service.ReassignAsync(
-            cardId,
-            new ReassignFleetCardRequest(SecondVehicleId),
-            "anna.nowak",
-            "reassign-archived-card"
-        );
-        await service.ChangeStateAsync(
-            cardId,
-            new ChangeFleetCardStateRequest(nameof(CardState.Active)),
-            "anna.nowak",
-            "reactivate-card"
-        );
-        var accepted = await service.ReassignAsync(
-            cardId,
-            new ReassignFleetCardRequest(SecondVehicleId),
-            "anna.nowak",
-            "reassign-reactivated-card"
-        );
-
-        Assert.Equal(CardCommandError.Conflict, rejected.Error);
-        Assert.True(accepted.IsSuccess);
-    }
-
-    [Fact]
-    public async Task Assignment_history_uses_ordering_key_when_effective_timestamps_match()
-    {
-        await using var context = await CreateContextAsync();
-        var service = CreateService(context);
-        var issue = await service.IssueAsync(
-            new IssueFleetCardRequest(PrimaryVehicleId),
-            "anna.nowak",
-            "issue-equal-time-card"
-        );
-        var cardId = issue.Card!.Id;
-        var firstAssignment = await context.CardAssignmentEvents.SingleAsync(assignment =>
-            assignment.CardId == cardId
-        );
-        var effectiveAt = firstAssignment.EffectiveAt;
-        context.Cards.Single(card => card.Id == cardId).AssignedCarId = SecondVehicleId;
-        context.CardAssignmentEvents.Add(
-            new FleetCardAssignmentEvent
-            {
-                Id = Guid.NewGuid(),
-                CardId = cardId,
-                VehicleId = SecondVehicleId,
-                EffectiveAt = effectiveAt,
-                OrderingKey = 2,
-            }
-        );
-        await context.SaveChangesAsync();
-
-        var history = await service.GetAssignmentHistoryAsync(cardId);
-
         Assert.Equal(
-            new long[] { 1, 2 },
-            history.Assignments.Select(assignment => assignment.OrderingKey)
+            new[] { "Stolen", "Blocked", "Active" },
+            history.History.Select(entry => entry.State)
         );
-        Assert.Equal(effectiveAt, history.Assignments[0].EffectiveTo);
-        Assert.Null(history.Assignments[1].EffectiveTo);
+        Assert.All(after, transaction => Assert.Equal(PrimaryVehicleId, transaction.VehicleId));
+    }
+
+    [Fact]
+    public void State_history_maps_issuance_and_uses_event_id_for_equal_timestamps()
+    {
+        var occurredAt = new DateTimeOffset(2026, 9, 27, 12, 0, 0, TimeSpan.Zero);
+        var history = CardStateHistoryProjection.Project([
+            CreateAuditEvent(
+                "00000000-0000-0000-0000-000000000001",
+                "CardStateChangedToBlocked",
+                occurredAt
+            ),
+            CreateAuditEvent(
+                "00000000-0000-0000-0000-000000000002",
+                "CardStateChangedToStolen",
+                occurredAt
+            ),
+            CreateAuditEvent(
+                "00000000-0000-0000-0000-000000000003",
+                "CardIssued",
+                occurredAt.AddMinutes(-1)
+            ),
+        ]);
+
+        Assert.Equal(new[] { "Stolen", "Blocked", "Active" }, history.Select(entry => entry.State));
     }
 
     [Fact]
@@ -391,7 +332,7 @@ public sealed class FleetCardServiceTests
         var previousMonthStart = new DateTimeOffset(2026, 8, 1, 0, 0, 0, TimeSpan.Zero);
         var currentMonthStart = previousMonthStart.AddMonths(1);
 
-        Assert.InRange(first.Count, 1, 5);
+        Assert.InRange(first.Count, 5, 15);
         Assert.Equal(first.Select(ToStableValues), second.Select(ToStableValues));
         Assert.All(
             first,
@@ -487,6 +428,11 @@ public sealed class FleetCardServiceTests
         Assert.Equal("WA 12345", seededTransaction.VehiclePlate);
         Assert.True(seededEvent.EffectiveAt <= earliestSeededTransaction);
         Assert.Equal(TimeSpan.Zero, seededEvent.EffectiveAt.Offset);
+
+        var seededHistory = await CreateService(context).GetStateHistoryAsync(seededCardId);
+        var issuance = Assert.Single(seededHistory.History);
+        Assert.Equal("Active", issuance.State);
+        Assert.Equal(seededEvent.EffectiveAt, issuance.OccurredAt);
     }
 
     [Fact]
@@ -497,21 +443,68 @@ public sealed class FleetCardServiceTests
             new TestCardProvider(),
             new MockFuelTransactionGenerator()
         );
+        var baselineHistory = await service.GetStateHistoryAsync(SeededCardId);
 
         var issue = await service.IssueAsync(
             new IssueFleetCardRequest(SecondVehicleId),
             "anna.nowak",
             "seeded-issue"
         );
+        var issuedCardId = issue.Card!.Id;
+        var beforeStateChanges = service
+            .GetTransactionFacts()
+            .Where(transaction => transaction.CardId == issuedCardId)
+            .Select(transaction => new
+            {
+                transaction.Id,
+                transaction.VehicleId,
+                transaction.VehiclePlate,
+            })
+            .OrderBy(transaction => transaction.Id)
+            .ToArray();
+        await service.ChangeStateAsync(
+            issuedCardId,
+            new ChangeFleetCardStateRequest(nameof(CardState.Blocked)),
+            "anna.nowak",
+            "seeded-block"
+        );
+        await service.ChangeStateAsync(
+            issuedCardId,
+            new ChangeFleetCardStateRequest(nameof(CardState.Stolen)),
+            "anna.nowak",
+            "seeded-stolen"
+        );
         var cards = service.GetCards();
         var transactions = service
             .GetTransactions(from: null, to: null)
-            .Where(transaction => transaction.CardId == issue.Card!.Id)
+            .Where(transaction => transaction.CardId == issuedCardId)
             .ToArray();
+        var afterStateChanges = service
+            .GetTransactionFacts()
+            .Where(transaction => transaction.CardId == issuedCardId)
+            .Select(transaction => new
+            {
+                transaction.Id,
+                transaction.VehicleId,
+                transaction.VehiclePlate,
+            })
+            .OrderBy(transaction => transaction.Id)
+            .ToArray();
+        var stateHistory = await service.GetStateHistoryAsync(issuedCardId);
 
         Assert.True(issue.IsSuccess);
-        Assert.Contains(cards, card => card.Id == issue.Card!.Id);
-        Assert.InRange(transactions.Length, 1, 5);
+        Assert.Equal("Active", Assert.Single(baselineHistory.History).State);
+        Assert.Contains(cards, card => card.Id == issuedCardId);
+        Assert.Equal(
+            SecondVehicleId,
+            Assert.Single(cards, card => card.Id == issuedCardId).AssignedCarId
+        );
+        Assert.Equal(beforeStateChanges, afterStateChanges);
+        Assert.Equal(
+            new[] { "Stolen", "Blocked", "Active" },
+            stateHistory.History.Select(entry => entry.State)
+        );
+        Assert.InRange(transactions.Length, 5, 15);
         Assert.All(
             transactions,
             transaction =>
@@ -555,6 +548,23 @@ public sealed class FleetCardServiceTests
             transaction.VatRate,
             transaction.VatAmount,
             transaction.GrossTotal,
+        };
+
+    private static FleetAuditEvent CreateAuditEvent(
+        string id,
+        string action,
+        DateTimeOffset occurredAt
+    ) =>
+        new()
+        {
+            Id = Guid.Parse(id),
+            Actor = "anna.nowak",
+            Action = action,
+            EntityType = "FleetCard",
+            EntityId = Guid.NewGuid(),
+            OccurredAt = occurredAt,
+            Succeeded = true,
+            CorrelationId = "state-history-test",
         };
 
     private sealed class TestCardProvider(Func<Task>? afterIssue = null) : ICardProvider

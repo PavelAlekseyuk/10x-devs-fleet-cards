@@ -64,7 +64,7 @@ public sealed class FleetCard
     public string MaskedPan { get; set; } = string.Empty;
     public string ProviderToken { get; set; } = string.Empty;
     public CardState State { get; set; }
-    public Guid? AssignedCarId { get; set; }
+    public Guid AssignedCarId { get; set; }
 }
 
 public sealed class FleetCardAssignmentEvent

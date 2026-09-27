@@ -60,7 +60,11 @@ public sealed class FleetVehicleApiTests : IClassFixture<WebApplicationFactory<P
 
         await using var scope = host.Services.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<FleetCardsDbContext>();
-        Assert.Empty(await dbContext.AuditEvents.ToArrayAsync());
+        Assert.Empty(
+            await dbContext
+                .AuditEvents.Where(auditEvent => auditEvent.EntityType == "FleetCar")
+                .ToArrayAsync()
+        );
     }
 
     [Fact]
@@ -162,6 +166,7 @@ public sealed class FleetVehicleApiTests : IClassFixture<WebApplicationFactory<P
         var dbContext = scope.ServiceProvider.GetRequiredService<FleetCardsDbContext>();
         var audits = await dbContext
             .AuditEvents.AsNoTracking()
+            .Where(eventRow => eventRow.EntityType == "FleetCar")
             .OrderBy(eventRow => eventRow.OccurredAt)
             .ToArrayAsync();
         Assert.Equal(8, audits.Length);

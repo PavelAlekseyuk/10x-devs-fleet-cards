@@ -185,123 +185,25 @@ public sealed class EfFleetCardService(
         return CardCommandResult.Success(ToResponse(card));
     }
 
-    public async Task<CardCommandResult> ReassignAsync(
-        Guid cardId,
-        ReassignFleetCardRequest request,
-        string actor,
-        string correlationId,
-        CancellationToken cancellationToken = default
-    )
-    {
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(
-            IsolationLevel.Serializable,
-            cancellationToken
-        );
-        var card = await dbContext.Cards.SingleOrDefaultAsync(
-            candidate => candidate.Id == cardId,
-            cancellationToken
-        );
-        if (card is null)
-        {
-            return CardCommandResult.NotFound();
-        }
-
-        if (card.State == CardState.Archived)
-        {
-            return CardCommandResult.Conflict();
-        }
-
-        var vehicle = await dbContext.Cars.SingleOrDefaultAsync(
-            candidate => candidate.Id == request.VehicleId,
-            cancellationToken
-        );
-        if (vehicle is null || vehicle.ClientId != card.ClientId)
-        {
-            return CardCommandResult.NotFound();
-        }
-
-        if (vehicle.IsArchived || vehicle.Id == card.AssignedCarId)
-        {
-            return CardCommandResult.Conflict();
-        }
-
-        var previous = await dbContext
-            .CardAssignmentEvents.Where(assignment => assignment.CardId == card.Id)
-            .OrderByDescending(assignment => assignment.EffectiveAt)
-            .ThenByDescending(assignment => assignment.OrderingKey)
-            .FirstOrDefaultAsync(cancellationToken);
-        var occurredAt = DateTimeOffset.UtcNow;
-        if (previous is not null && previous.EffectiveAt > occurredAt)
-        {
-            occurredAt = previous.EffectiveAt;
-        }
-
-        card.AssignedCarId = vehicle.Id;
-        dbContext.CardAssignmentEvents.Add(
-            new FleetCardAssignmentEvent
-            {
-                Id = Guid.NewGuid(),
-                CardId = card.Id,
-                VehicleId = vehicle.Id,
-                EffectiveAt = occurredAt,
-                OrderingKey = (previous?.OrderingKey ?? 0) + 1,
-            }
-        );
-        dbContext.AuditEvents.Add(
-            CreateAudit(card.Id, "CardReassigned", actor, correlationId, occurredAt)
-        );
-        try
-        {
-            await dbContext.SaveChangesAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-        }
-        catch (Exception exception) when (IsAssignmentWriteConflict(exception))
-        {
-            dbContext.ChangeTracker.Clear();
-            return CardCommandResult.Conflict();
-        }
-
-        return CardCommandResult.Success(ToResponse(card));
-    }
-
-    public async Task<CardAssignmentHistoryResult> GetAssignmentHistoryAsync(
+    public async Task<CardStateHistoryResult> GetStateHistoryAsync(
         Guid cardId,
         CancellationToken cancellationToken = default
     )
     {
         if (!await dbContext.Cards.AnyAsync(card => card.Id == cardId, cancellationToken))
         {
-            return CardAssignmentHistoryResult.NotFound();
+            return CardStateHistoryResult.NotFound();
         }
 
-        var assignments = await (
-            from assignment in dbContext.CardAssignmentEvents.AsNoTracking()
-            join vehicle in dbContext.Cars.AsNoTracking() on assignment.VehicleId equals vehicle.Id
-            where assignment.CardId == cardId
-            orderby assignment.EffectiveAt, assignment.OrderingKey
-            select new
-            {
-                assignment.VehicleId,
-                vehicle.RegistrationPlate,
-                assignment.EffectiveAt,
-                assignment.OrderingKey,
-            }
-        ).ToArrayAsync(cancellationToken);
-
-        var history = assignments
-            .Select(
-                (assignment, index) =>
-                    new FleetCardAssignmentHistoryResponse(
-                        cardId,
-                        assignment.VehicleId,
-                        assignment.RegistrationPlate,
-                        assignment.EffectiveAt,
-                        index + 1 < assignments.Length ? assignments[index + 1].EffectiveAt : null,
-                        assignment.OrderingKey
-                    )
+        var auditEvents = await dbContext
+            .AuditEvents.AsNoTracking()
+            .Where(auditEvent =>
+                auditEvent.EntityType == "FleetCard"
+                && auditEvent.EntityId == cardId
+                && auditEvent.Succeeded
             )
-            .ToArray();
-        return CardAssignmentHistoryResult.Success(history);
+            .ToArrayAsync(cancellationToken);
+        return CardStateHistoryResult.Success(CardStateHistoryProjection.Project(auditEvents));
     }
 
     private static FleetCardResponse ToResponse(FleetCard card) =>

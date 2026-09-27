@@ -30,7 +30,7 @@ public sealed class TransactionReportingTests
             new DateTimeOffset(2026, 9, 26, 10, 30, 0, TimeSpan.Zero)
         );
 
-        Assert.NotEmpty(generated);
+        Assert.InRange(generated.Count, 5, 15);
         Assert.All(
             generated,
             transaction =>
@@ -48,6 +48,35 @@ public sealed class TransactionReportingTests
                     ),
                     transaction.PosOccurredAtLocal
                 );
+            }
+        );
+    }
+
+    [Fact]
+    public void Generated_transactions_use_the_previous_pos_month_at_a_utc_month_boundary()
+    {
+        var generator = new MockFuelTransactionGenerator();
+        var issuedAt = new DateTimeOffset(2026, 9, 30, 22, 30, 0, TimeSpan.Zero);
+        var generated = generator.Generate(
+            CardId,
+            new FleetCar
+            {
+                Id = VehicleId,
+                RegistrationPlate = "WA 12345",
+                FuelType = "Diesel",
+            },
+            issuedAt
+        );
+        var previousPosMonthStartUtc = new DateTimeOffset(2026, 8, 31, 22, 0, 0, TimeSpan.Zero);
+        var currentPosMonthStartUtc = new DateTimeOffset(2026, 9, 30, 22, 0, 0, TimeSpan.Zero);
+
+        Assert.All(
+            generated,
+            transaction =>
+            {
+                Assert.True(transaction.OccurredAt >= previousPosMonthStartUtc);
+                Assert.True(transaction.OccurredAt < currentPosMonthStartUtc);
+                Assert.Equal(9, transaction.PosOccurredAtLocal.Month);
             }
         );
     }
@@ -82,7 +111,9 @@ public sealed class TransactionReportingTests
             TransactionStatus.Refunded,
             -25m,
             -5.75m,
-            -30.75m
+            -30.75m,
+            quantity: -25m,
+            unitPrice: 1m
         );
         var secondRefund = CreateCorrection(
             Guid.Parse("88888888-8888-8888-8888-888888888888"),
@@ -91,7 +122,9 @@ public sealed class TransactionReportingTests
             TransactionStatus.Refunded,
             -15m,
             -3.45m,
-            -18.45m
+            -18.45m,
+            quantity: -15m,
+            unitPrice: 1m
         );
         var cancellation = CreateCorrection(
             Guid.Parse("99999999-9999-9999-9999-999999999999"),
@@ -100,7 +133,9 @@ public sealed class TransactionReportingTests
             TransactionStatus.Cancelled,
             -10m,
             -2.30m,
-            -12.30m
+            -12.30m,
+            quantity: -10m,
+            unitPrice: 1m
         );
         var allFacts = new[]
         {
@@ -126,10 +161,159 @@ public sealed class TransactionReportingTests
         var septemberRow = Assert.Single(september.Transactions);
         Assert.Equal(laterRecalculation.Id, septemberRow.Id);
         Assert.Equal(3, septemberRow.Version);
-        Assert.Equal(new TransactionReportTotals(300m, 69m, 369m, 1), september.Totals);
+        Assert.Equal(new TransactionReportTotals(300m, 69m, 369m, 0m, 1), september.Totals);
         Assert.Equal(2, october.ActiveVehicleCount);
         Assert.Equal(3, october.ActiveCardCount);
-        Assert.Equal(new TransactionReportTotals(-50m, -11.50m, -61.50m, 3), october.PeriodTotals);
+        Assert.Equal(
+            new TransactionReportTotals(-50m, -11.50m, -61.50m, 0m, 3),
+            october.PeriodTotals
+        );
+    }
+
+    [Fact]
+    public void Gross_savings_use_effective_pos_rows_and_signed_corrections_for_the_selected_period()
+    {
+        var occurredAt = new DateTimeOffset(2026, 9, 9, 12, 0, 0, TimeSpan.Zero);
+        var original = CreateTransaction(
+            PurchaseId,
+            occurredAt,
+            10.03m,
+            2.31m,
+            12.34m,
+            quantity: 2.005m,
+            unitPrice: 6.005m,
+            discount: 1.005m
+        );
+        var recalculation = CreateRecalculation(
+            Guid.Parse("55555555-5555-5555-5555-555555555555"),
+            PurchaseId,
+            occurredAt,
+            10.03m,
+            2.31m,
+            12.34m,
+            version: 2,
+            quantity: 2.005m,
+            unitPrice: 6.005m,
+            discount: 1.005m
+        );
+        var latestRecalculation = CreateRecalculation(
+            Guid.Parse("66666666-6666-6666-6666-666666666666"),
+            PurchaseId,
+            occurredAt,
+            10.05m,
+            2.31m,
+            12.36m,
+            version: 3,
+            quantity: 2.005m,
+            unitPrice: 6.005m,
+            discount: 0.995m
+        );
+        var partialRefund = CreateCorrection(
+            Guid.Parse("77777777-7777-7777-7777-777777777777"),
+            PurchaseId,
+            new DateTimeOffset(2026, 10, 2, 8, 0, 0, TimeSpan.Zero),
+            TransactionStatus.Refunded,
+            -2.51m,
+            -0.58m,
+            -3.09m,
+            quantity: -0.5m,
+            unitPrice: 6.005m,
+            discount: 0.995m
+        );
+        var cancellation = CreateCorrection(
+            Guid.Parse("88888888-8888-8888-8888-888888888888"),
+            PurchaseId,
+            new DateTimeOffset(2026, 10, 3, 8, 0, 0, TimeSpan.Zero),
+            TransactionStatus.Cancelled,
+            -7.54m,
+            -1.73m,
+            -9.27m,
+            quantity: -1.505m,
+            unitPrice: 6.005m,
+            discount: 0.995m
+        );
+        var facts = new[]
+        {
+            original,
+            recalculation,
+            latestRecalculation,
+            partialRefund,
+            cancellation,
+        };
+        var septemberPeriod = reportingService.ResolvePeriod(new TransactionReportRequest(2026, 9));
+        var octoberPeriod = reportingService.ResolvePeriod(new TransactionReportRequest(2026, 10));
+
+        var septemberReport = reportingService.CreateReport(septemberPeriod, facts);
+        var septemberSummary = reportingService.CreateSummary(septemberPeriod, facts, 2, 1);
+        var octoberReport = reportingService.CreateReport(octoberPeriod, facts);
+        var octoberSummary = reportingService.CreateSummary(octoberPeriod, facts, 2, 1);
+        var emptyPeriod = reportingService.ResolvePeriod(new TransactionReportRequest(2026, 11));
+        var emptyReport = reportingService.CreateReport(emptyPeriod, facts);
+        var emptySummary = reportingService.CreateSummary(emptyPeriod, facts, 2, 1);
+
+        var effectiveRow = Assert.Single(septemberReport.Transactions);
+        Assert.Equal(latestRecalculation.Id, effectiveRow.Id);
+        Assert.Equal(2.005m, effectiveRow.Quantity);
+        Assert.Equal(6.005m, effectiveRow.UnitPrice);
+        Assert.Equal(
+            new TransactionReportTotals(10.05m, 2.31m, 12.36m, 2.45m, 1),
+            septemberReport.Totals
+        );
+        Assert.Equal(septemberReport.Totals, septemberSummary.PeriodTotals);
+
+        Assert.Equal(
+            new[] { -0.5m, -1.505m },
+            octoberReport.Transactions.Select(row => row.Quantity)
+        );
+        Assert.All(octoberReport.Transactions, row => Assert.Equal(6.005m, row.UnitPrice));
+        Assert.Equal(
+            new TransactionReportTotals(-10.05m, -2.31m, -12.36m, -2.45m, 2),
+            octoberReport.Totals
+        );
+        Assert.Equal(octoberReport.Totals, octoberSummary.PeriodTotals);
+
+        Assert.Empty(emptyReport.Transactions);
+        Assert.Equal(new TransactionReportTotals(0m, 0m, 0m, 0m, 0), emptyReport.Totals);
+        Assert.Equal(emptyReport.Totals, emptySummary.PeriodTotals);
+    }
+
+    [Fact]
+    public async Task Seeded_read_service_reports_signed_correction_savings_in_report_and_summary()
+    {
+        var purchase = CreateTransaction(
+            PurchaseId,
+            new DateTimeOffset(2026, 9, 9, 12, 0, 0, TimeSpan.Zero),
+            180m,
+            41.40m,
+            221.40m,
+            quantity: 10m,
+            unitPrice: 20m,
+            discount: 2m
+        );
+        var refund = CreateCorrection(
+            Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaab"),
+            PurchaseId,
+            new DateTimeOffset(2026, 10, 2, 8, 0, 0, TimeSpan.Zero),
+            TransactionStatus.Refunded,
+            -18m,
+            -4.14m,
+            -22.14m,
+            quantity: -1m,
+            unitPrice: 20m,
+            discount: 2m
+        );
+        var seededReadService = new SeededFleetCardsReadService(
+            new TransactionFactsFleetCardService([purchase, refund]),
+            new SeededFleetVehicleService(),
+            reportingService
+        );
+        var october = reportingService.ResolvePeriod(new TransactionReportRequest(2026, 10));
+
+        var report = await seededReadService.GetTransactionReportAsync(october);
+        var summary = await seededReadService.GetDashboardSummaryAsync(october);
+
+        Assert.Equal(-2.46m, report.Totals.GrossSavingsTotal);
+        Assert.Equal(report.Totals, summary.PeriodTotals);
     }
 
     [Fact]
@@ -258,16 +442,37 @@ public sealed class TransactionReportingTests
             4.60m,
             24.62m
         );
+        var posNetRounding = CreateTransaction(
+            Guid.Parse("66666666-6666-6666-6666-666666666666"),
+            new DateTimeOffset(2026, 9, 11, 12, 0, 0, TimeSpan.Zero),
+            1m,
+            0.23m,
+            1.23m,
+            quantity: 1m,
+            unitPrice: 1.005m,
+            discount: 0.005m
+        );
+        var posVatRounding = CreateTransaction(
+            Guid.Parse("77777777-7777-7777-7777-777777777777"),
+            new DateTimeOffset(2026, 9, 12, 12, 0, 0, TimeSpan.Zero),
+            0.40m,
+            0.09m,
+            0.49m,
+            quantity: 1m,
+            unitPrice: 0.504m,
+            discount: 0.104m
+        );
 
         var report = reportingService.CreateReport(
             reportingService.ResolvePeriod(new TransactionReportRequest(2026, 9)),
-            [first, second]
+            [first, second, posNetRounding, posVatRounding]
         );
 
         Assert.Equal(report.Transactions.Sum(row => row.NetTotal), report.Totals.NetTotal);
         Assert.Equal(report.Transactions.Sum(row => row.VatAmount), report.Totals.VatTotal);
         Assert.Equal(report.Transactions.Sum(row => row.GrossTotal), report.Totals.GrossTotal);
         Assert.Equal(report.Totals.NetTotal + report.Totals.VatTotal, report.Totals.GrossTotal);
+        Assert.Equal(0.14m, report.Totals.GrossSavingsTotal);
     }
 
     [Theory]
@@ -336,6 +541,11 @@ public sealed class TransactionReportingTests
             TransactionReportingService.CalculateVatAmount(seeded.NetTotal, seeded.VatRate)
         );
         Assert.Equal(seeded.NetTotal + seeded.VatAmount, seeded.GrossTotal);
+        var seededReport = reportingService.CreateReport(
+            reportingService.ResolvePeriod(new TransactionReportRequest(2026, 9)),
+            [seeded]
+        );
+        Assert.Equal(9.33m, seededReport.Totals.GrossSavingsTotal);
         Assert.Equal(VehicleId, seeded.VehicleId);
         Assert.Equal("WA 12345", seeded.VehiclePlate);
         Assert.Equal("Europe/Warsaw", seeded.PosTimeZoneId);
@@ -347,7 +557,10 @@ public sealed class TransactionReportingTests
         DateTimeOffset occurredAt,
         decimal net,
         decimal vat,
-        decimal gross
+        decimal gross,
+        decimal quantity = 1m,
+        decimal? unitPrice = null,
+        decimal discount = 0m
     ) =>
         new()
         {
@@ -365,9 +578,9 @@ public sealed class TransactionReportingTests
             PosTimeZoneId = "Europe/Warsaw",
             StationName = "Test Station",
             FuelType = "Diesel",
-            Quantity = 1m,
-            UnitPrice = net,
-            Discount = 0m,
+            Quantity = quantity,
+            UnitPrice = unitPrice ?? net,
+            Discount = discount,
             NetTotal = net,
             VatRate = 0.23m,
             VatAmount = vat,
@@ -382,7 +595,10 @@ public sealed class TransactionReportingTests
         decimal net,
         decimal vat,
         decimal gross,
-        int version
+        int version,
+        decimal quantity = 1m,
+        decimal? unitPrice = null,
+        decimal discount = 0m
     ) =>
         new()
         {
@@ -401,8 +617,9 @@ public sealed class TransactionReportingTests
             PosTimeZoneId = "Europe/Warsaw",
             StationName = "Test Station",
             FuelType = "Diesel",
-            Quantity = 1m,
-            UnitPrice = net,
+            Quantity = quantity,
+            UnitPrice = unitPrice ?? net,
+            Discount = discount,
             NetTotal = net,
             VatRate = 0.23m,
             VatAmount = vat,
@@ -417,7 +634,10 @@ public sealed class TransactionReportingTests
         TransactionStatus status,
         decimal net,
         decimal vat,
-        decimal gross
+        decimal gross,
+        decimal quantity,
+        decimal unitPrice,
+        decimal discount = 0m
     ) =>
         new()
         {
@@ -435,12 +655,46 @@ public sealed class TransactionReportingTests
             PosTimeZoneId = "Europe/Warsaw",
             StationName = "Test Station",
             FuelType = "Diesel",
-            Quantity = 0m,
-            UnitPrice = 0m,
+            Quantity = quantity,
+            UnitPrice = unitPrice,
+            Discount = discount,
             NetTotal = net,
             VatRate = 0.23m,
             VatAmount = vat,
             GrossTotal = gross,
             Status = status,
         };
+
+    private sealed class TransactionFactsFleetCardService(IReadOnlyList<FuelTransaction> facts)
+        : IFleetCardService
+    {
+        public IReadOnlyList<FleetCardResponse> GetCards() => [];
+
+        public IReadOnlyList<FuelTransaction> GetTransactionFacts() => facts;
+
+        public IReadOnlyList<FuelTransactionResponse> GetTransactions(
+            DateTimeOffset? from,
+            DateTimeOffset? to
+        ) => [];
+
+        public Task<CardCommandResult> IssueAsync(
+            IssueFleetCardRequest request,
+            string actor,
+            string correlationId,
+            CancellationToken cancellationToken = default
+        ) => throw new NotSupportedException();
+
+        public Task<CardCommandResult> ChangeStateAsync(
+            Guid cardId,
+            ChangeFleetCardStateRequest request,
+            string actor,
+            string correlationId,
+            CancellationToken cancellationToken = default
+        ) => throw new NotSupportedException();
+
+        public Task<CardStateHistoryResult> GetStateHistoryAsync(
+            Guid cardId,
+            CancellationToken cancellationToken = default
+        ) => throw new NotSupportedException();
+    }
 }

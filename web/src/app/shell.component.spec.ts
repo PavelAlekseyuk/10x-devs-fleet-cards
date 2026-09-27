@@ -3,8 +3,9 @@ import { provideHttpClientTesting, HttpTestingController } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { AuthService } from './auth.service';
+import { LanguageService } from './language.service';
 import { ShellComponent } from './shell.component';
-import { TransactionReportService } from './transaction-report.service';
+import { TransactionReport, TransactionReportService } from './transaction-report.service';
 
 const clientResponse = {
   legalName: 'Baltic Logistics Sp. z o.o.',
@@ -16,7 +17,7 @@ const clientResponse = {
 const summaryResponse = {
   activeVehicleCount: 4,
   activeCardCount: 3,
-  periodTotals: { netTotal: 100, vatTotal: 23, grossTotal: 123, rowCount: 2 },
+  periodTotals: { netTotal: 100, vatTotal: 23, grossTotal: 123, grossSavingsTotal: 12, rowCount: 2 },
   periodStartUtc: '2026-08-31T22:00:00Z',
   periodEndUtc: '2026-09-30T22:00:00Z',
 };
@@ -57,11 +58,23 @@ describe('ShellComponent', () => {
     summary.flush(summaryResponse);
     await fixture.whenStable();
 
-    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    const element = fixture.nativeElement as HTMLElement;
+    const text = element.textContent ?? '';
     expect(text).toContain('Piotr Wisniewski');
     expect(text).toContain('Baltic Logistics Sp. z o.o.');
     expect(text).toContain('123.00');
     expect(text).toContain('4');
+    const savingsMetric = element.querySelector('.metric-card.accent-gold')!;
+    expect(savingsMetric.querySelector('span')?.textContent).toBe('Gross savings');
+    expect(savingsMetric.querySelector('strong')?.textContent).toContain('12.00');
+    const selectedMonth = TestBed.inject(TransactionReportService).selectedMonth();
+    const expectedMonth = new Intl.DateTimeFormat('en-GB', {
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'UTC',
+    }).format(new Date(`${selectedMonth}-01T00:00:00Z`));
+    expect(savingsMetric.querySelector('small')?.textContent).toContain(expectedMonth);
+
     expect(text).not.toContain('Programs');
     expect(text).not.toContain('Issue virtual card');
     expect((fixture.nativeElement as HTMLElement).querySelector('.period-link')?.getAttribute('href'))
@@ -83,6 +96,94 @@ describe('ShellComponent', () => {
     expect(element.textContent).toContain('Summary unavailable');
     expect(element.textContent).not.toContain('326,60 zł');
     expect(element.querySelector('.spend-total')).toBeNull();
+    http.verify();
+  });
+
+  it('reloads the overview for both month controls and shares the selected report month', async () => {
+    const { fixture, http } = createFixture();
+    flushClient(http);
+    const reports = TestBed.inject(TransactionReportService);
+    reports.setSelectedMonth('2026-09');
+    http.expectOne((request) => request.url === '/api/dashboard/summary').flush(summaryResponse);
+    await fixture.whenStable();
+
+    const element = fixture.nativeElement as HTMLElement;
+    element.querySelector<HTMLButtonElement>('[aria-label="Next month"]')!.click();
+    expect(reports.selectedMonth()).toBe('2026-10');
+    const octoberSummary = http.expectOne((request) => request.url === '/api/dashboard/summary');
+    expect(octoberSummary.request.params.get('year')).toBe('2026');
+    expect(octoberSummary.request.params.get('month')).toBe('10');
+    octoberSummary.flush(summaryResponse);
+    await fixture.whenStable();
+
+    reports.getReport().subscribe();
+    const octoberReport = http.expectOne((request) => request.url === '/api/transactions/report');
+    expect(octoberReport.request.params.get('year')).toBe('2026');
+    expect(octoberReport.request.params.get('month')).toBe('10');
+    octoberReport.flush({
+      year: 2026,
+      month: 10,
+      timeZoneId: 'Europe/Warsaw',
+      periodStartUtc: '2026-09-30T22:00:00Z',
+      periodEndUtc: '2026-10-31T23:00:00Z',
+      transactions: [],
+      totals: summaryResponse.periodTotals,
+    } satisfies TransactionReport);
+
+    element.querySelector<HTMLButtonElement>('[aria-label="Previous month"]')!.click();
+    expect(reports.selectedMonth()).toBe('2026-09');
+    const septemberSummary = http.expectOne((request) => request.url === '/api/dashboard/summary');
+    expect(septemberSummary.request.params.get('year')).toBe('2026');
+    expect(septemberSummary.request.params.get('month')).toBe('09');
+    septemberSummary.flush(summaryResponse);
+    await fixture.whenStable();
+    http.verify();
+  });
+
+  it('cancels the previous summary request when the selected month changes', async () => {
+    const { fixture, http } = createFixture();
+    flushClient(http);
+    const reports = TestBed.inject(TransactionReportService);
+    const previousSummary = http.expectOne((request) => request.url === '/api/dashboard/summary');
+
+    const element = fixture.nativeElement as HTMLElement;
+    element.querySelector<HTMLButtonElement>('[aria-label="Next month"]')!.click();
+    expect(previousSummary.cancelled).toBe(true);
+
+    const [year, month] = reports.selectedMonth().split('-');
+    const selectedSummary = http.expectOne((request) => request.url === '/api/dashboard/summary');
+    expect(selectedSummary.request.params.get('year')).toBe(year);
+    expect(selectedSummary.request.params.get('month')).toBe(month);
+    selectedSummary.flush({
+      ...summaryResponse,
+      periodTotals: { ...summaryResponse.periodTotals, grossSavingsTotal: 34 },
+    });
+    await fixture.whenStable();
+
+    expect(
+      element.querySelector('.metric-card.accent-gold strong')?.textContent,
+    ).toContain('34.00');
+    http.verify();
+  });
+
+  it('shows explicit net, gross, and savings labels in English and Polish', async () => {
+    const { fixture, http } = createFixture();
+    flushClient(http);
+    http.expectOne((request) => request.url === '/api/dashboard/summary').flush(summaryResponse);
+    await fixture.whenStable();
+
+    const language = TestBed.inject(LanguageService);
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.textContent).toContain('Gross spend');
+    expect(element.textContent).toContain('Gross savings');
+    expect(element.textContent).toContain('Net spend');
+    expect(element.textContent).toContain('12.00');
+
+    language.language.set('PL');
+    await fixture.whenStable();
+    expect(element.textContent).toContain('Wydatki brutto');
+    expect(element.textContent).toContain('Oszczędności brutto');
+    expect(element.textContent).toContain('Wydatki netto');
     http.verify();
   });
 });

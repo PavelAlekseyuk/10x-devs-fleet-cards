@@ -65,6 +65,19 @@ public sealed class FleetCardsDbContext(DbContextOptions<FleetCardsDbContext> op
             entity.Property(auditEvent => auditEvent.Succeeded).IsRequired();
             entity.Property(auditEvent => auditEvent.OccurredAt).IsRequired();
             entity.ToTable("AuditEvents");
+            entity.HasData(
+                new FleetAuditEvent
+                {
+                    Id = Guid.Parse("77777777-7777-7777-7777-777777777777"),
+                    Actor = "system",
+                    Action = "CardIssued",
+                    EntityType = "FleetCard",
+                    EntityId = Guid.Parse("22222222-2222-2222-2222-222222222222"),
+                    OccurredAt = new DateTimeOffset(2026, 9, 9, 12, 0, 0, TimeSpan.Zero),
+                    Succeeded = true,
+                    CorrelationId = "seeded-card-issue",
+                }
+            );
         });
 
         modelBuilder.Entity<FleetCard>(entity =>

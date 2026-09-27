@@ -8,17 +8,13 @@ export interface FleetCard {
   id: string;
   maskedPan: string;
   state: FleetCardState;
-  assignedCarId: string | null;
+  assignedCarId: string;
   assignedVehicleRegistrationPlate: string | null;
 }
 
-export interface FleetCardAssignment {
-  cardId: string;
-  vehicleId: string;
-  vehicleRegistrationPlate: string;
-  effectiveFrom: string;
-  effectiveTo: string | null;
-  orderingKey: number;
+export interface FleetCardStateHistory {
+  state: FleetCardState;
+  occurredAt: string;
 }
 
 interface FleetCardApiResponse extends FleetCard {
@@ -47,14 +43,8 @@ export class CardManagementService {
     );
   }
 
-  reassignCard(cardId: string, vehicleId: string): Observable<FleetCard> {
-    return this.http.put<FleetCardApiResponse>(`/api/cards/${cardId}/assignment`, { vehicleId }).pipe(
-      map((card) => this.toCard(card)),
-    );
-  }
-
-  getAssignmentHistory(cardId: string): Observable<FleetCardAssignment[]> {
-    return this.http.get<FleetCardAssignment[]>(`/api/cards/${cardId}/assignment-history`);
+  getStateHistory(cardId: string): Observable<FleetCardStateHistory[]> {
+    return this.http.get<FleetCardStateHistory[]>(`/api/cards/${cardId}/state-history`);
   }
 
   private toCard(card: FleetCardApiResponse): FleetCard {

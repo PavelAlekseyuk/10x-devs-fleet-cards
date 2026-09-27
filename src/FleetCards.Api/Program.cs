@@ -479,57 +479,21 @@ app.MapPut(
     .WithName("ChangeCardState")
     .WithTags("Cards");
 
-app.MapPut(
-        "/api/cards/{id:guid}/assignment",
-        async (
-            Guid id,
-            ReassignFleetCardRequest request,
-            HttpContext context,
-            IFleetCardService service,
-            IFleetVehicleService vehicleService,
-            CancellationToken cancellationToken
-        ) =>
-        {
-            if (!CsrfProtection.IsValid(context))
-            {
-                return (IResult)Results.StatusCode(StatusCodes.Status403Forbidden);
-            }
-
-            var result = await service.ReassignAsync(
-                id,
-                request,
-                context.User.Identity?.Name ?? "unknown",
-                context.TraceIdentifier,
-                cancellationToken
-            );
-            if (!result.IsSuccess)
-            {
-                return MapCardCommandResult(result);
-            }
-
-            var vehiclePlates = await GetVehiclePlatesAsync(vehicleService, cancellationToken);
-            return (IResult)Results.Ok(ToCardApiResponse(result.Card!, vehiclePlates));
-        }
-    )
-    .RequireAuthorization("ReadWrite")
-    .WithName("ReassignCard")
-    .WithTags("Cards");
-
 app.MapGet(
-        "/api/cards/{id:guid}/assignment-history",
+        "/api/cards/{id:guid}/state-history",
         async (Guid id, IFleetCardService service, CancellationToken cancellationToken) =>
         {
-            var result = await service.GetAssignmentHistoryAsync(id, cancellationToken);
+            var result = await service.GetStateHistoryAsync(id, cancellationToken);
             return result.Error switch
             {
-                CardCommandError.None => Results.Ok(result.Assignments),
+                CardCommandError.None => Results.Ok(result.History),
                 CardCommandError.NotFound => Results.NotFound(),
                 _ => Results.Problem(statusCode: StatusCodes.Status500InternalServerError),
             };
         }
     )
     .RequireAuthorization()
-    .WithName("GetCardAssignmentHistory")
+    .WithName("GetCardStateHistory")
     .WithTags("Cards");
 
 app.MapGet(
@@ -683,9 +647,7 @@ static FleetCardApiResponse ToCardApiResponse(
         card.ProviderToken,
         card.State,
         card.AssignedCarId,
-        card.AssignedCarId is Guid vehicleId && vehiclePlates.TryGetValue(vehicleId, out var plate)
-            ? plate
-            : null
+        vehiclePlates.TryGetValue(card.AssignedCarId, out var plate) ? plate : null
     );
 
 static bool TryGetTransactionReportRequest(

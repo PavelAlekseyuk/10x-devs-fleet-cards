@@ -41,7 +41,7 @@ public sealed class CardApiTests : IClassFixture<WebApplicationFactory<Program>>
         using var client = host.CreateClient();
 
         using var cards = await client.GetAsync("/api/cards");
-        using var history = await client.GetAsync($"/api/cards/{SeededCardId}/assignment-history");
+        using var history = await client.GetAsync($"/api/cards/{SeededCardId}/state-history");
         using var issue = await client.PostAsJsonAsync(
             "/api/cards",
             new IssueFleetCardRequest(SecondVehicleId)
@@ -50,16 +50,13 @@ public sealed class CardApiTests : IClassFixture<WebApplicationFactory<Program>>
             $"/api/cards/{SeededCardId}/state",
             new ChangeFleetCardStateRequest("Blocked")
         );
-        using var assignment = await client.PutAsJsonAsync(
-            $"/api/cards/{SeededCardId}/assignment",
-            new ReassignFleetCardRequest(SecondVehicleId)
-        );
+        using var assignment = await client.PutAsync($"/api/cards/{SeededCardId}/assignment", null);
 
         Assert.Equal(HttpStatusCode.Unauthorized, cards.StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, history.StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, issue.StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, state.StatusCode);
-        Assert.Equal(HttpStatusCode.Unauthorized, assignment.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, assignment.StatusCode);
     }
 
     [Fact]
@@ -69,7 +66,7 @@ public sealed class CardApiTests : IClassFixture<WebApplicationFactory<Program>>
         using var client = await SignInAsync(host, "piotr.wisniewski", "Piotr123!");
 
         using var cards = await client.GetAsync("/api/cards");
-        using var history = await client.GetAsync($"/api/cards/{SeededCardId}/assignment-history");
+        using var history = await client.GetAsync($"/api/cards/{SeededCardId}/state-history");
         using var issue = await client.PostAsJsonAsync(
             "/api/cards",
             new IssueFleetCardRequest(SecondVehicleId)
@@ -78,26 +75,35 @@ public sealed class CardApiTests : IClassFixture<WebApplicationFactory<Program>>
             $"/api/cards/{SeededCardId}/state",
             new ChangeFleetCardStateRequest("Blocked")
         );
-        using var assignment = await client.PutAsJsonAsync(
-            $"/api/cards/{SeededCardId}/assignment",
-            new ReassignFleetCardRequest(SecondVehicleId)
-        );
+        using var assignment = await client.PutAsync($"/api/cards/{SeededCardId}/assignment", null);
 
         Assert.Equal(HttpStatusCode.OK, cards.StatusCode);
         Assert.Equal(HttpStatusCode.OK, history.StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, issue.StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, state.StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, assignment.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, assignment.StatusCode);
+        var historyEntries = (
+            await history.Content.ReadFromJsonAsync<FleetCardStateHistoryResponse[]>()
+        )!;
+        Assert.Equal("Active", Assert.Single(historyEntries).State);
     }
 
     [Fact]
-    public async Task Read_write_users_can_issue_change_state_reassign_and_read_effective_history()
+    public async Task Read_write_users_can_issue_change_state_and_read_newest_first_history()
     {
         using var host = CreateCardHost();
         using var client = await SignInAsync(host, "anna.nowak", "Anna123!");
 
         using var initialCards = await client.GetAsync("/api/cards");
         var initial = (await initialCards.Content.ReadFromJsonAsync<FleetCardApiResponse[]>())!;
+        Assert.All(
+            initial,
+            card =>
+            {
+                Assert.NotEqual(Guid.Empty, card.AssignedCarId);
+                Assert.False(string.IsNullOrWhiteSpace(card.AssignedVehicleRegistrationPlate));
+            }
+        );
         var seeded = Assert.Single(initial, card => card.Id == SeededCardId);
         Assert.Equal("**** **** **** 4242", seeded.MaskedPan);
         Assert.Equal("mock-card-4242", seeded.ProviderToken);
@@ -117,18 +123,17 @@ public sealed class CardApiTests : IClassFixture<WebApplicationFactory<Program>>
         Assert.Equal("PO 98765", issued.AssignedVehicleRegistrationPlate);
 
         using var initialHistoryResponse = await client.GetAsync(
-            $"/api/cards/{issued.Id}/assignment-history"
+            $"/api/cards/{issued.Id}/state-history"
         );
+        Assert.Equal(HttpStatusCode.OK, initialHistoryResponse.StatusCode);
         var initialHistory = (
-            await initialHistoryResponse.Content.ReadFromJsonAsync<FleetCardAssignmentHistoryResponse[]>()
+            await initialHistoryResponse.Content.ReadFromJsonAsync<FleetCardStateHistoryResponse[]>()
         )!;
-        var initialAssignment = Assert.Single(initialHistory);
-        Assert.Equal(SecondVehicleId, initialAssignment.VehicleId);
-        Assert.Equal("PO 98765", initialAssignment.VehicleRegistrationPlate);
-        Assert.Equal(TimeSpan.Zero, initialAssignment.EffectiveFrom.Offset);
-        Assert.Null(initialAssignment.EffectiveTo);
+        var issuance = Assert.Single(initialHistory);
+        Assert.Equal("Active", issuance.State);
+        Assert.Equal(TimeSpan.Zero, issuance.OccurredAt.Offset);
 
-        foreach (var stateName in new[] { "Active", "Blocked", "Stolen", "Archived", "Active" })
+        foreach (var stateName in new[] { "Blocked", "Stolen", "Archived", "Active" })
         {
             using var stateResponse = await client.PutAsJsonAsync(
                 $"/api/cards/{issued.Id}/state",
@@ -140,31 +145,22 @@ public sealed class CardApiTests : IClassFixture<WebApplicationFactory<Program>>
             Assert.Equal(SecondVehicleId, updated.AssignedCarId);
         }
 
-        using var reassign = await client.PutAsJsonAsync(
+        using var assignmentMutation = await client.PutAsync(
             $"/api/cards/{issued.Id}/assignment",
-            new ReassignFleetCardRequest(FirstVehicleId)
+            null
         );
-        Assert.Equal(HttpStatusCode.OK, reassign.StatusCode);
-        var reassigned = (await reassign.Content.ReadFromJsonAsync<FleetCardApiResponse>())!;
-        Assert.Equal(FirstVehicleId, reassigned.AssignedCarId);
-        Assert.Equal("WA 12345", reassigned.AssignedVehicleRegistrationPlate);
+        Assert.Equal(HttpStatusCode.NotFound, assignmentMutation.StatusCode);
 
-        using var historyResponse = await client.GetAsync(
-            $"/api/cards/{issued.Id}/assignment-history"
-        );
+        using var historyResponse = await client.GetAsync($"/api/cards/{issued.Id}/state-history");
         Assert.Equal(HttpStatusCode.OK, historyResponse.StatusCode);
         var history = (
-            await historyResponse.Content.ReadFromJsonAsync<FleetCardAssignmentHistoryResponse[]>()
+            await historyResponse.Content.ReadFromJsonAsync<FleetCardStateHistoryResponse[]>()
         )!;
-        Assert.Equal(2, history.Length);
-        Assert.Equal(SecondVehicleId, history[0].VehicleId);
-        Assert.Equal("PO 98765", history[0].VehicleRegistrationPlate);
-        Assert.Equal(FirstVehicleId, history[1].VehicleId);
-        Assert.Equal("WA 12345", history[1].VehicleRegistrationPlate);
-        Assert.Equal(history[0].EffectiveTo, history[1].EffectiveFrom);
-        Assert.Null(history[1].EffectiveTo);
-        Assert.All(history, entry => Assert.Equal(TimeSpan.Zero, entry.EffectiveFrom.Offset));
-        Assert.Equal(new long[] { 1, 2 }, history.Select(entry => entry.OrderingKey));
+        Assert.Equal(
+            new[] { "Active", "Archived", "Stolen", "Blocked", "Active" },
+            history.Select(entry => entry.State)
+        );
+        Assert.All(history, entry => Assert.Equal(TimeSpan.Zero, entry.OccurredAt.Offset));
 
         await using var scope = host.Services.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<FleetCardsDbContext>();
@@ -173,10 +169,9 @@ public sealed class CardApiTests : IClassFixture<WebApplicationFactory<Program>>
             .Where(audit => audit.EntityId == issued.Id)
             .OrderBy(audit => audit.OccurredAt)
             .ToArrayAsync();
-        Assert.Equal(7, audits.Length);
+        Assert.Equal(5, audits.Length);
         Assert.Equal(1, audits.Count(audit => audit.Action == "CardIssued"));
-        Assert.Equal(5, audits.Count(audit => audit.Action.StartsWith("CardStateChangedTo")));
-        Assert.Equal(1, audits.Count(audit => audit.Action == "CardReassigned"));
+        Assert.Equal(4, audits.Count(audit => audit.Action.StartsWith("CardStateChangedTo")));
         Assert.All(
             audits,
             audit =>
@@ -222,27 +217,22 @@ public sealed class CardApiTests : IClassFixture<WebApplicationFactory<Program>>
             new IssueFleetCardRequest(Guid.NewGuid())
         );
         using var missingCardHistory = await client.GetAsync(
-            $"/api/cards/{Guid.NewGuid()}/assignment-history"
+            $"/api/cards/{Guid.NewGuid()}/state-history"
         );
         using var missingCardState = await client.PutAsJsonAsync(
             $"/api/cards/{Guid.NewGuid()}/state",
             new ChangeFleetCardStateRequest("Active")
         );
-        using var missingCardAssignment = await client.PutAsJsonAsync(
-            $"/api/cards/{Guid.NewGuid()}/assignment",
-            new ReassignFleetCardRequest(SecondVehicleId)
-        );
-        using var missingAssignmentVehicle = await client.PutAsJsonAsync(
+        using var removedAssignmentRoute = await client.PutAsync(
             $"/api/cards/{SeededCardId}/assignment",
-            new ReassignFleetCardRequest(Guid.NewGuid())
+            null
         );
 
         Assert.Equal(HttpStatusCode.BadRequest, invalidIssue.StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, missingVehicle.StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, missingCardHistory.StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, missingCardState.StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, missingCardAssignment.StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, missingAssignmentVehicle.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, removedAssignmentRoute.StatusCode);
 
         using var archiveVehicle = await client.PostAsync(
             $"/api/cars/{SecondVehicleId}/archive",
@@ -253,12 +243,7 @@ public sealed class CardApiTests : IClassFixture<WebApplicationFactory<Program>>
             "/api/cards",
             new IssueFleetCardRequest(SecondVehicleId)
         );
-        using var reassignArchivedVehicle = await client.PutAsJsonAsync(
-            $"/api/cards/{SeededCardId}/assignment",
-            new ReassignFleetCardRequest(SecondVehicleId)
-        );
         Assert.Equal(HttpStatusCode.Conflict, issueArchivedVehicle.StatusCode);
-        Assert.Equal(HttpStatusCode.Conflict, reassignArchivedVehicle.StatusCode);
 
         using var issued = await client.PostAsJsonAsync(
             "/api/cards",
@@ -269,12 +254,7 @@ public sealed class CardApiTests : IClassFixture<WebApplicationFactory<Program>>
             $"/api/cards/{issuedCard.Id}/state",
             new ChangeFleetCardStateRequest("Archived")
         );
-        using var reassignArchivedCard = await client.PutAsJsonAsync(
-            $"/api/cards/{issuedCard.Id}/assignment",
-            new ReassignFleetCardRequest(SecondVehicleId)
-        );
         Assert.Equal(HttpStatusCode.OK, archiveCard.StatusCode);
-        Assert.Equal(HttpStatusCode.Conflict, reassignArchivedCard.StatusCode);
 
         using var restoreVehicle = await client.PostAsync(
             $"/api/cars/{SecondVehicleId}/restore",
@@ -286,12 +266,7 @@ public sealed class CardApiTests : IClassFixture<WebApplicationFactory<Program>>
             $"/api/cards/{issuedCard.Id}/state",
             new ChangeFleetCardStateRequest("Active")
         );
-        using var reassignReactivatedCard = await client.PutAsJsonAsync(
-            $"/api/cards/{issuedCard.Id}/assignment",
-            new ReassignFleetCardRequest(SecondVehicleId)
-        );
         Assert.Equal(HttpStatusCode.OK, reactivateCard.StatusCode);
-        Assert.Equal(HttpStatusCode.OK, reassignReactivatedCard.StatusCode);
     }
 
     [Fact]
@@ -310,10 +285,6 @@ public sealed class CardApiTests : IClassFixture<WebApplicationFactory<Program>>
             $"/api/cards/{SeededCardId}/state",
             new ChangeFleetCardStateRequest("Blocked")
         );
-        using var missingAssignmentCsrf = await client.PutAsJsonAsync(
-            $"/api/cards/{SeededCardId}/assignment",
-            new ReassignFleetCardRequest(SecondVehicleId)
-        );
         client.DefaultRequestHeaders.Add("X-XSRF-TOKEN", "not-the-cookie-token");
         using var invalidIssueCsrf = await client.PostAsJsonAsync(
             "/api/cards",
@@ -323,17 +294,12 @@ public sealed class CardApiTests : IClassFixture<WebApplicationFactory<Program>>
             $"/api/cards/{SeededCardId}/state",
             new ChangeFleetCardStateRequest("Blocked")
         );
-        using var invalidAssignmentCsrf = await client.PutAsJsonAsync(
-            $"/api/cards/{SeededCardId}/assignment",
-            new ReassignFleetCardRequest(SecondVehicleId)
-        );
-
         Assert.All(
-            new[] { missingIssueCsrf, missingStateCsrf, missingAssignmentCsrf },
+            new[] { missingIssueCsrf, missingStateCsrf },
             response => Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode)
         );
         Assert.All(
-            new[] { invalidIssueCsrf, invalidStateCsrf, invalidAssignmentCsrf },
+            new[] { invalidIssueCsrf, invalidStateCsrf },
             response => Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode)
         );
         Assert.NotEqual("not-the-cookie-token", csrfToken);
@@ -357,7 +323,7 @@ public sealed class CardApiTests : IClassFixture<WebApplicationFactory<Program>>
         using var cards = await client.GetAsync("/api/cards");
         body += await cards.Content.ReadAsStringAsync();
         var issued = (await issue.Content.ReadFromJsonAsync<FleetCardApiResponse>())!;
-        using var history = await client.GetAsync($"/api/cards/{issued.Id}/assignment-history");
+        using var history = await client.GetAsync($"/api/cards/{issued.Id}/state-history");
         body += await history.Content.ReadAsStringAsync();
 
         await using var scope = host.Services.CreateAsyncScope();

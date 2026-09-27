@@ -60,6 +60,19 @@ namespace FleetCards.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("AuditEvents", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("77777777-7777-7777-7777-777777777777"),
+                            Action = "CardIssued",
+                            Actor = "system",
+                            CorrelationId = "seeded-card-issue",
+                            EntityId = new Guid("22222222-2222-2222-2222-222222222222"),
+                            EntityType = "FleetCard",
+                            OccurredAt = new DateTimeOffset(new DateTime(2026, 9, 9, 12, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Succeeded = true
+                        });
                 });
 
             modelBuilder.Entity("FleetCards.Domain.FleetCar", b =>
@@ -136,7 +149,7 @@ namespace FleetCards.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("AssignedCarId")
+                    b.Property<Guid>("AssignedCarId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("ClientId")
@@ -479,7 +492,8 @@ namespace FleetCards.Infrastructure.Migrations
                     b.HasOne("FleetCards.Domain.FleetCar", null)
                         .WithMany()
                         .HasForeignKey("AssignedCarId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("FleetCards.Domain.FleetClient", null)
                         .WithMany()

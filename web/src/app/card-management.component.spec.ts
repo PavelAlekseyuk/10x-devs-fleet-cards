@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { AuthService } from './auth.service';
 import { CardManagementComponent } from './card-management.component';
-import { FleetCard, FleetCardAssignment } from './card-management.service';
+import { FleetCard, FleetCardStateHistory } from './card-management.service';
 import { FleetVehicle } from './fleet-vehicles.service';
 import { LanguageService } from './language.service';
 
@@ -30,22 +30,14 @@ const card: FleetCard = {
   assignedVehicleRegistrationPlate: activeVehicle.registrationPlate,
 };
 
-const history: FleetCardAssignment[] = [
+const history: FleetCardStateHistory[] = [
   {
-    cardId: card.id,
-    vehicleId: secondVehicle.id,
-    vehicleRegistrationPlate: secondVehicle.registrationPlate,
-    effectiveFrom: '2026-08-01T09:00:00Z',
-    effectiveTo: '2026-09-01T09:00:00Z',
-    orderingKey: 1,
+    state: 'Blocked',
+    occurredAt: '2026-09-02T09:00:00Z',
   },
   {
-    cardId: card.id,
-    vehicleId: activeVehicle.id,
-    vehicleRegistrationPlate: activeVehicle.registrationPlate,
-    effectiveFrom: '2026-09-01T09:00:00Z',
-    effectiveTo: null,
-    orderingKey: 2,
+    state: 'Active',
+    occurredAt: '2026-09-01T09:00:00Z',
   },
 ];
 
@@ -159,79 +151,79 @@ describe('CardManagementComponent', () => {
     expect(element.textContent).not.toContain('provider-secret');
   });
 
-  it('reassigns only to an active vehicle and has no unassign action', async () => {
+  it('selects the persisted card state after a fresh card load', async () => {
+    const fixture = createFixture();
+    await flushInitial(fixture, [{ ...card, state: 'Blocked' }]);
+    const element = fixture.nativeElement as HTMLElement;
+    const stateSelect = element.querySelector<HTMLSelectElement>(
+      '[aria-label="State: •••• 4242"]',
+    )!;
+
+    expect(element.querySelector('.badge')?.textContent).toContain('Blocked');
+    expect(stateSelect.value).toBe('Blocked');
+  });
+
+  it('does not expose card reassignment controls', async () => {
     const fixture = createFixture();
     await flushInitial(fixture);
     const element = fixture.nativeElement as HTMLElement;
-    element.querySelector<HTMLButtonElement>('.card-actions .text-action')!.click();
-    const initialHistoryRequest = http.expectOne('/api/cards/card-1/assignment-history');
-    initialHistoryRequest.flush(history);
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    const reassignSelect = element.querySelector<HTMLSelectElement>(
-      '[aria-label="Reassign vehicle: •••• 4242"]',
-    )!;
-    reassignSelect.value = secondVehicle.id;
-    reassignSelect.dispatchEvent(new Event('change'));
-    await fixture.whenStable();
-    fixture.detectChanges();
-    const reassignButton = Array.from(element.querySelectorAll('button')).find(
-      (button) => button.textContent?.trim() === 'Reassign vehicle',
-    )!;
-    reassignButton.click();
-
-    const request = http.expectOne('/api/cards/card-1/assignment');
-    expect(request.request.method).toBe('PUT');
-    expect(request.request.body).toEqual({ vehicleId: secondVehicle.id });
-    request.flush({
-      ...card,
-      assignedCarId: secondVehicle.id,
-      assignedVehicleRegistrationPlate: secondVehicle.registrationPlate,
-      providerToken: 'provider-secret',
-    });
-    const refreshedHistoryRequest = http.expectOne('/api/cards/card-1/assignment-history');
-    expect(refreshedHistoryRequest.request.method).toBe('GET');
-    const thirdEffectiveFrom = '2026-10-01T09:00:00Z';
-    refreshedHistoryRequest.flush([
-      history[0],
-      { ...history[1], effectiveTo: thirdEffectiveFrom },
-      {
-        cardId: card.id,
-        vehicleId: secondVehicle.id,
-        vehicleRegistrationPlate: secondVehicle.registrationPlate,
-        effectiveFrom: thirdEffectiveFrom,
-        effectiveTo: null,
-        orderingKey: 3,
-      },
-    ]);
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    expect(element.textContent).toContain(secondVehicle.registrationPlate);
-    expect(element.textContent).not.toMatch(/unassign/i);
-    expect(element.querySelectorAll('.assignment-timeline li')).toHaveLength(3);
+    expect(element.querySelector('[aria-label="Reassign vehicle: •••• 4242"]')).toBeNull();
+    expect(element.textContent).not.toContain('Reassign vehicle');
+    http.expectNone((request) => request.url.includes('/assignment'));
   });
 
-  it('loads and renders assignment periods as a timeline', async () => {
+  it('loads and renders newest-first card state history', async () => {
     const fixture = createFixture();
     await flushInitial(fixture);
     const element = fixture.nativeElement as HTMLElement;
     Array.from(element.querySelectorAll('button')).find(
-      (button) => button.textContent?.trim() === 'Assignment history',
+      (button) => button.textContent?.trim() === 'State history',
     )!.click();
 
-    const request = http.expectOne('/api/cards/card-1/assignment-history');
+    const request = http.expectOne('/api/cards/card-1/state-history');
     expect(request.request.method).toBe('GET');
     request.flush(history);
     await fixture.whenStable();
     fixture.detectChanges();
 
-    const timeline = element.querySelector('.assignment-timeline');
+    const timeline = element.querySelector('.state-timeline');
     expect(timeline).not.toBeNull();
-    expect(timeline?.textContent).toContain('KR 98765');
-    expect(timeline?.textContent).toContain('WA 12345');
-    expect(timeline?.textContent).toContain('Current assignment');
+    expect(Array.from(timeline!.querySelectorAll('li strong')).map((entry) => entry.textContent)).toEqual([
+      'Blocked',
+      'Active',
+    ]);
+  });
+
+  it('refreshes open state history after a successful state change', async () => {
+    const fixture = createFixture();
+    await flushInitial(fixture);
+    const element = fixture.nativeElement as HTMLElement;
+    Array.from(element.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === 'State history',
+    )!.click();
+
+    http.expectOne('/api/cards/card-1/state-history').flush([history[1]]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const stateSelect = element.querySelector<HTMLSelectElement>(
+      '[aria-label="State: •••• 4242"]',
+    )!;
+    stateSelect.value = 'Stolen';
+    stateSelect.dispatchEvent(new Event('change'));
+    const stateRequest = http.expectOne('/api/cards/card-1/state');
+    stateRequest.flush({ ...card, state: 'Stolen', providerToken: 'provider-secret' });
+
+    const refreshedHistory = http.expectOne('/api/cards/card-1/state-history');
+    refreshedHistory.flush([{ state: 'Stolen', occurredAt: '2026-09-03T09:00:00Z' }, ...history]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const states = Array.from(
+      element.querySelectorAll('.state-timeline li strong'),
+      (entry) => entry.textContent,
+    );
+    expect(states).toEqual(['Stolen', 'Blocked', 'Active']);
   });
 
   it('hides mutation controls from ReadOnly users but leaves history available', async () => {
@@ -242,7 +234,7 @@ describe('CardManagementComponent', () => {
     expect(element.querySelector('.issue-form')).toBeNull();
     expect(element.querySelector('[aria-label="State: •••• 4242"]')).toBeNull();
     expect(element.querySelector('[aria-label="Reassign vehicle: •••• 4242"]')).toBeNull();
-    expect(element.textContent).toContain('Assignment history');
+    expect(element.textContent).toContain('State history');
     http.expectNone((request) => request.method === 'POST' || request.method === 'PUT');
   });
 
@@ -259,6 +251,6 @@ describe('CardManagementComponent', () => {
     fixture.detectChanges();
     expect(element.textContent).toContain('Wydaj kartę wirtualną');
     expect(element.textContent).toContain('Aktywna');
-    expect(element.textContent).toContain('Historia przypisań');
+    expect(element.textContent).toContain('Historia stanu');
   });
 });

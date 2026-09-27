@@ -39,7 +39,7 @@ public sealed record FleetCardResponse(
     string MaskedPan,
     string ProviderToken,
     string State,
-    Guid? AssignedCarId
+    Guid AssignedCarId
 );
 
 public sealed record FleetCardApiResponse(
@@ -47,7 +47,7 @@ public sealed record FleetCardApiResponse(
     string MaskedPan,
     string ProviderToken,
     string State,
-    Guid? AssignedCarId,
+    Guid AssignedCarId,
     string? AssignedVehicleRegistrationPlate
 );
 
@@ -55,16 +55,7 @@ public sealed record IssueFleetCardRequest(Guid VehicleId);
 
 public sealed record ChangeFleetCardStateRequest(string State);
 
-public sealed record ReassignFleetCardRequest(Guid VehicleId);
-
-public sealed record FleetCardAssignmentHistoryResponse(
-    Guid CardId,
-    Guid VehicleId,
-    string VehicleRegistrationPlate,
-    DateTimeOffset EffectiveFrom,
-    DateTimeOffset? EffectiveTo,
-    long OrderingKey
-);
+public sealed record FleetCardStateHistoryResponse(string State, DateTimeOffset OccurredAt);
 
 public sealed record FuelTransactionResponse(
     Guid Id,
@@ -98,6 +89,7 @@ public sealed record TransactionReportTotals(
     decimal NetTotal,
     decimal VatTotal,
     decimal GrossTotal,
+    decimal GrossSavingsTotal,
     int RowCount
 );
 

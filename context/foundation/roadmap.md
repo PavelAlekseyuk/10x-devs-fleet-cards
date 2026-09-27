@@ -3,7 +3,7 @@ project: "Beznynowicz Fleet Cards Client Portal"
 version: 1
 status: draft
 created: 2026-09-22
-updated: 2026-09-26
+updated: 2026-09-27
 prd_version: 1
 main_goal: speed
 top_blocker: decisions
@@ -46,7 +46,8 @@ Company representatives need both access to several fuel networks and clear cost
 | S-02 | manage-fleet-vehicles | create, view, change, archive, and restore fleet vehicles with allowed fuel types | S-01 | FR-002, US-01 | in-progress |
 | S-03 | issue-and-assign-virtual-cards | issue, manage, return, and assign a virtual card without exposing full PAN data | S-02 | FR-003, FR-004, US-01 | in-progress |
 | S-04 | review-generated-card-spending | review generated fuel transactions for a selected period and reconcile them to the landing-page total | S-03 | FR-005, FR-006, FR-007, US-01 | in-progress |
-| S-05 | harden-operational-card-flow | verify the completed operational card flow through Aspire and document its local demonstration contract | S-04 | Acceptance criteria 1-6, 10; US-01 | proposed |
+| S-05 | bug-fixes-after-s04-20260927 | review card state and accurate period spending while keeping cards assigned to their issue-time vehicles | S-04 | FR-003, FR-004, FR-005, FR-006, FR-007, US-01 | in-progress |
+| S-06 | harden-operational-card-flow | verify the completed operational card flow through Aspire and document its local demonstration contract | S-05 | Acceptance criteria 1-6, 10; US-01 | proposed |
 
 ## Baseline
 
@@ -153,12 +154,33 @@ What is already in place in the codebase as of `2026-09-22` (auto-researched and
 - **Exit criteria:** users can inspect transactions and period totals with explicit net/gross/VAT presentation.
 - **Status:** in-progress
 
-### S-05: Harden operational card flow
+### S-05: Bug fixes after S04
+
+- **Outcome:** user can review accurate card status and selected-period spending while each issued card remains assigned to its issue-time vehicle.
+- **Change ID:** bug-fixes-after-s04-20260927
+- **PRD refs:** FR-003, FR-004, FR-005, FR-006, FR-007, US-01
+- **Prerequisites:** S-04
+- **Parallel with:** -
+- **Blockers:** -
+- **Unknowns:**
+  - Should savings use net or gross amounts, and how should signed corrections affect it? - Owner: product/client stakeholders. Block: no.
+  - Should state history include the initial Active state at issuance? - Owner: product/client stakeholders. Block: no.
+  - What causes a blocked state to appear as Active after a refresh? - Owner: implementation. Block: no.
+- **Risk:** Existing card contracts and tests permit reassignment; the revised rule and savings summary must stay consistent across EF, seeded, API, and UI paths before composed-flow hardening.
+- **Implementation scope:**
+  - Enforce issue-time vehicle assignment immutability in EF and seeded services and the API; remove reassignment controls and update the affected tests while preserving transaction vehicle snapshots.
+  - Replace the assignment-history view with card state history ordered newest-first; ensure a fresh card read displays the persisted state in the state control.
+  - Update English and Polish overview labels, add savings from POS-price and discounted transaction amounts using the selected period's report rules, and add previous/next month controls to Spend Overview that reload the summary.
+  - Verify savings reconciliation, state-history ordering, refreshed state display, and period synchronization through focused tests and the composed user flow.
+- **Exit criteria:** card vehicle assignments cannot be changed after issuance; state history shows the newest change first; refreshed state controls match persisted state; localized overview totals and savings reconcile to the selected-period transactions; month navigation updates the summary and transaction period together.
+- **Status:** in-progress
+
+### S-06: Harden operational card flow
 
 - **Outcome:** user can rely on the completed operational card flow because it is verified through Aspire and its local demonstration contract is documented.
 - **Change ID:** harden-operational-card-flow
 - **PRD refs:** US-01; Acceptance criteria 1-6 and 10; Non-Functional Requirements
-- **Prerequisites:** S-04
+- **Prerequisites:** S-05
 - **Parallel with:** -
 - **Blockers:** -
 - **Unknowns:** -
@@ -179,7 +201,8 @@ What is already in place in the codebase as of `2026-09-22` (auto-researched and
 | S-02 | manage-fleet-vehicles | Deliver fleet vehicle management | no | Requires S-01. |
 | S-03 | issue-and-assign-virtual-cards | Deliver virtual-card issue and assignment | no | Requires S-02. |
 | S-04 | review-generated-card-spending | Deliver generated transaction and total review | no | Requires S-03 and the VAT decision. |
-| S-05 | harden-operational-card-flow | Harden the operational card flow | no | Requires S-04. |
+| S-05 | bug-fixes-after-s04-20260927 | Correct card lifecycle and overview spending | no | Requires S-04; settle savings and state-history details during planning. |
+| S-06 | harden-operational-card-flow | Harden the operational card flow | no | Requires S-05. |
 
 ## Open Roadmap Questions
 

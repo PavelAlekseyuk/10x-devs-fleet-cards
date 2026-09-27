@@ -60,6 +60,7 @@ public sealed class TransactionReportApiTests : IClassFixture<WebApplicationFact
             Assert.Equal(326.60m, report.Totals.GrossTotal);
             Assert.Equal(265.53m, report.Totals.NetTotal);
             Assert.Equal(61.07m, report.Totals.VatTotal);
+            Assert.Equal(9.33m, report.Totals.GrossSavingsTotal);
             Assert.Equal(report.Totals, summary.PeriodTotals);
             Assert.Equal(
                 report.Totals.GrossTotal,
@@ -132,7 +133,7 @@ public sealed class TransactionReportApiTests : IClassFixture<WebApplicationFact
         Assert.Equal(HttpStatusCode.OK, reportResponse.StatusCode);
         Assert.Equal(HttpStatusCode.OK, summaryResponse.StatusCode);
         Assert.Empty(report.Transactions);
-        Assert.Equal(new TransactionReportTotals(0m, 0m, 0m, 0), report.Totals);
+        Assert.Equal(new TransactionReportTotals(0m, 0m, 0m, 0m, 0), report.Totals);
         Assert.Equal(report.Totals, summary.PeriodTotals);
     }
 
@@ -147,45 +148,60 @@ public sealed class TransactionReportApiTests : IClassFixture<WebApplicationFact
                 CreatePurchase(
                     Guid.Parse("70000000-0000-0000-0000-000000000001"),
                     new DateTimeOffset(2027, 1, 15, 12, 0, 0, TimeSpan.Zero),
-                    100m,
-                    23m,
-                    123m,
+                    180m,
+                    41.40m,
+                    221.40m,
                     TransactionStatus.Completed,
-                    version: 1
+                    version: 1,
+                    quantity: 10m,
+                    unitPrice: 20m,
+                    discount: 2m
                 ),
                 CreatePurchase(
                     Guid.Parse("70000000-0000-0000-0000-000000000002"),
                     new DateTimeOffset(2027, 1, 15, 12, 0, 0, TimeSpan.Zero),
-                    200m,
-                    46m,
-                    246m,
+                    190m,
+                    43.70m,
+                    233.70m,
                     TransactionStatus.Recalculated,
                     version: 2,
-                    correctsTransactionId: Guid.Parse("70000000-0000-0000-0000-000000000001")
+                    correctsTransactionId: Guid.Parse("70000000-0000-0000-0000-000000000001"),
+                    quantity: 10m,
+                    unitPrice: 20m,
+                    discount: 1m
                 ),
                 CreateCorrection(
                     Guid.Parse("70000000-0000-0000-0000-000000000003"),
                     Guid.Parse("70000000-0000-0000-0000-000000000001"),
                     TransactionStatus.Refunded,
-                    -10m,
-                    -2.30m,
-                    -12.30m
+                    -9m,
+                    -2.07m,
+                    -11.07m,
+                    quantity: -0.5m,
+                    unitPrice: 20m,
+                    discount: 2m
                 ),
                 CreateCorrection(
                     Guid.Parse("70000000-0000-0000-0000-000000000004"),
                     Guid.Parse("70000000-0000-0000-0000-000000000001"),
                     TransactionStatus.Refunded,
-                    -15m,
-                    -3.45m,
-                    -18.45m
+                    -13.5m,
+                    -3.11m,
+                    -16.61m,
+                    quantity: -0.75m,
+                    unitPrice: 20m,
+                    discount: 2m
                 ),
                 CreateCorrection(
                     Guid.Parse("70000000-0000-0000-0000-000000000005"),
                     Guid.Parse("70000000-0000-0000-0000-000000000001"),
                     TransactionStatus.Cancelled,
-                    -5m,
-                    -1.15m,
-                    -6.15m
+                    -4.5m,
+                    -1.04m,
+                    -5.54m,
+                    quantity: -0.25m,
+                    unitPrice: 20m,
+                    discount: 2m
                 )
             );
             await dbContext.SaveChangesAsync();
@@ -211,7 +227,8 @@ public sealed class TransactionReportApiTests : IClassFixture<WebApplicationFact
 
         var effectivePurchase = Assert.Single(january.Transactions);
         Assert.Equal(Guid.Parse("70000000-0000-0000-0000-000000000002"), effectivePurchase.Id);
-        Assert.Equal(246m, january.Totals.GrossTotal);
+        Assert.Equal(233.70m, january.Totals.GrossTotal);
+        Assert.Equal(12.30m, january.Totals.GrossSavingsTotal);
         Assert.Equal(
             new Guid[]
             {
@@ -221,7 +238,8 @@ public sealed class TransactionReportApiTests : IClassFixture<WebApplicationFact
             },
             february.Transactions.Select(row => row.Id)
         );
-        Assert.Equal(-36.90m, february.Totals.GrossTotal);
+        Assert.Equal(-33.22m, february.Totals.GrossTotal);
+        Assert.Equal(-3.68m, february.Totals.GrossSavingsTotal);
         Assert.Equal(
             february.Transactions.Sum(row => row.GrossTotal),
             summary.PeriodTotals.GrossTotal
@@ -299,7 +317,10 @@ public sealed class TransactionReportApiTests : IClassFixture<WebApplicationFact
         decimal gross,
         TransactionStatus status,
         int version,
-        Guid? correctsTransactionId = null
+        Guid? correctsTransactionId = null,
+        decimal quantity = 1m,
+        decimal? unitPrice = null,
+        decimal discount = 0m
     ) =>
         new()
         {
@@ -318,9 +339,9 @@ public sealed class TransactionReportApiTests : IClassFixture<WebApplicationFact
             PosTimeZoneId = "Europe/Warsaw",
             StationName = "Report Test Station",
             FuelType = "Diesel",
-            Quantity = 1m,
-            UnitPrice = net,
-            Discount = 0m,
+            Quantity = quantity,
+            UnitPrice = unitPrice ?? net,
+            Discount = discount,
             NetTotal = net,
             VatRate = 0.23m,
             VatAmount = vat,
@@ -334,7 +355,10 @@ public sealed class TransactionReportApiTests : IClassFixture<WebApplicationFact
         TransactionStatus status,
         decimal net,
         decimal vat,
-        decimal gross
+        decimal gross,
+        decimal quantity,
+        decimal unitPrice,
+        decimal discount = 0m
     )
     {
         var occurredAt = new DateTimeOffset(2027, 2, 2, 9, 30, 0, TimeSpan.Zero);
@@ -354,9 +378,9 @@ public sealed class TransactionReportApiTests : IClassFixture<WebApplicationFact
             PosTimeZoneId = "Europe/Warsaw",
             StationName = "Report Test Station",
             FuelType = "Diesel",
-            Quantity = 0m,
-            UnitPrice = 0m,
-            Discount = 0m,
+            Quantity = quantity,
+            UnitPrice = unitPrice,
+            Discount = discount,
             NetTotal = net,
             VatRate = 0.23m,
             VatAmount = vat,

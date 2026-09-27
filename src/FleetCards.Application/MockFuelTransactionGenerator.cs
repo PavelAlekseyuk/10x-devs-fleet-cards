@@ -41,29 +41,34 @@ public sealed class MockFuelTransactionGenerator
     )
     {
         var issuedAtUtc = issuedAt.ToUniversalTime();
-        var previousMonthStart = new DateTimeOffset(
-            issuedAtUtc.Year,
-            issuedAtUtc.Month,
+        var issuedAtLocal = TimeZoneInfo.ConvertTime(issuedAtUtc, PointOfSaleTimeZone);
+        var currentLocalMonthStart = new DateTime(
+            issuedAtLocal.Year,
+            issuedAtLocal.Month,
             1,
             0,
             0,
             0,
-            TimeSpan.Zero
-        ).AddMonths(-1);
+            DateTimeKind.Unspecified
+        );
+        var previousLocalMonthStart = currentLocalMonthStart.AddMonths(-1);
+        var previousMonthStart = new DateTimeOffset(
+            TimeZoneInfo.ConvertTimeToUtc(previousLocalMonthStart, PointOfSaleTimeZone)
+        );
+        var currentMonthStart = new DateTimeOffset(
+            TimeZoneInfo.ConvertTimeToUtc(currentLocalMonthStart, PointOfSaleTimeZone)
+        );
         var random = CreateRandom(cardId, vehicle.Id, issuedAtUtc);
-        var count = random.Next(1, 6);
+        var count = random.Next(5, 16);
         var transactions = new FuelTransaction[count];
-        var daysInMonth = DateTime.DaysInMonth(previousMonthStart.Year, previousMonthStart.Month);
+        var monthDurationMinutes = (int)(currentMonthStart - previousMonthStart).TotalMinutes;
 
         for (var index = 0; index < count; index++)
         {
             var quantity = random.Next(15_000, 55_001) / 1_000m;
             var unitPrice = random.Next(450, 801) / 100m;
             var discount = random.Next(5, 31) / 100m;
-            var occurredAt = previousMonthStart
-                .AddDays(random.Next(0, daysInMonth))
-                .AddHours(random.Next(0, 24))
-                .AddMinutes(random.Next(0, 60));
+            var occurredAt = previousMonthStart.AddMinutes(random.Next(0, monthDurationMinutes));
             var netTotal = TransactionReportingService.CalculateNetTotal(
                 quantity,
                 unitPrice,
