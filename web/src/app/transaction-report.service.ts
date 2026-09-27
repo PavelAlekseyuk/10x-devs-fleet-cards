@@ -7,6 +7,7 @@ export interface TransactionReportTotals {
   netTotal: number;
   vatTotal: number;
   grossTotal: number;
+  grossSavingsTotal: number;
   rowCount: number;
 }
 

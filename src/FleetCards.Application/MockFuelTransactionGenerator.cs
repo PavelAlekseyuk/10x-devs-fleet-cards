@@ -51,7 +51,7 @@ public sealed class MockFuelTransactionGenerator
             TimeSpan.Zero
         ).AddMonths(-1);
         var random = CreateRandom(cardId, vehicle.Id, issuedAtUtc);
-        var count = random.Next(1, 6);
+        var count = random.Next(5, 16);
         var transactions = new FuelTransaction[count];
         var daysInMonth = DateTime.DaysInMonth(previousMonthStart.Year, previousMonthStart.Month);
 

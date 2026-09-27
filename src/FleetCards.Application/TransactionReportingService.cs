@@ -185,13 +185,28 @@ public sealed class TransactionReportingService : ITransactionReportingService
 
     private static TransactionReportTotals CalculateTotals(
         IReadOnlyCollection<TransactionReportRowResponse> rows
-    ) =>
-        new(
+    )
+    {
+        var grossSavingsTotal = rows.Sum(row =>
+        {
+            var posNet = decimal.Round(
+                row.Quantity * row.UnitPrice,
+                2,
+                MidpointRounding.AwayFromZero
+            );
+            var posVat = decimal.Round(posNet * row.VatRate, 2, MidpointRounding.AwayFromZero);
+            var posGross = posNet + posVat;
+            return posGross - row.GrossTotal;
+        });
+
+        return new TransactionReportTotals(
             decimal.Round(rows.Sum(row => row.NetTotal), 2, MidpointRounding.AwayFromZero),
             decimal.Round(rows.Sum(row => row.VatAmount), 2, MidpointRounding.AwayFromZero),
             decimal.Round(rows.Sum(row => row.GrossTotal), 2, MidpointRounding.AwayFromZero),
+            grossSavingsTotal,
             rows.Count
         );
+    }
 
     private static bool IsPurchaseVersion(FuelTransaction transaction) =>
         transaction.Status is TransactionStatus.Completed or TransactionStatus.Recalculated;

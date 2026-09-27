@@ -89,6 +89,7 @@ public sealed record TransactionReportTotals(
     decimal NetTotal,
     decimal VatTotal,
     decimal GrossTotal,
+    decimal GrossSavingsTotal,
     int RowCount
 );
 

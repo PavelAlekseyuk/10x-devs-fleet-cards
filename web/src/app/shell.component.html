@@ -32,9 +32,9 @@
             <small>{{ language.text(summaryStateLabel) }}</small>
           </article>
           <article class="metric-card accent-gold">
-            <span>{{ language.text('totalPaidWithDiscount') }}</span>
-            <strong>{{ summary() ? formatCurrency(summary()!.periodTotals.grossTotal) : '—' }}</strong>
-            <small>{{ language.text(summaryStateLabel) }}</small>
+            <span>{{ language.text('grossSavings') }}</span>
+            <strong>{{ summary() ? formatCurrency(summary()!.periodTotals.grossSavingsTotal) : '—' }}</strong>
+            <small>{{ formatSelectedMonth() }}</small>
           </article>
           <article class="metric-card accent-ink">
             <span>{{ language.text('client') }}</span>
@@ -46,7 +46,21 @@
           <article class="panel spend-panel">
             <div class="panel-heading">
               <div><p class="eyebrow">{{ language.text('spendOverview') }}</p><h3>{{ language.text('fuelSpend') }}</h3></div>
-              <span class="record-count">{{ formatSelectedMonth() }}</span>
+              <div class="period-navigation" role="group" [attr.aria-label]="language.text('reportPeriod')">
+                <button
+                  class="icon-button"
+                  type="button"
+                  [attr.aria-label]="language.text('previousMonth')"
+                  (click)="moveSummaryMonth(-1)"
+                ><span aria-hidden="true">←</span></button>
+                <span class="record-count">{{ formatSelectedMonth() }}</span>
+                <button
+                  class="icon-button"
+                  type="button"
+                  [attr.aria-label]="language.text('nextMonth')"
+                  (click)="moveSummaryMonth(1)"
+                ><span aria-hidden="true">→</span></button>
+              </div>
             </div>
             @if (summaryLoading()) {
               <p class="message" role="status">{{ language.text('summaryLoading') }}</p>
@@ -57,11 +71,12 @@
               </div>
             } @else if (summary(); as data) {
               <div class="spend-total">
-                <span>{{ language.text('totalPaidWithDiscount') }}</span>
+                <span>{{ language.text('grossSpend') }}</span>
                 <strong>{{ formatCurrency(data.periodTotals.grossTotal) }}</strong>
               </div>
               <div class="spend-breakdown">
                 <div><span>{{ language.text('netSpend') }}</span><strong>{{ formatCurrency(data.periodTotals.netTotal) }}</strong></div>
+                <div><span>{{ language.text('grossSavings') }}</span><strong>{{ formatCurrency(data.periodTotals.grossSavingsTotal) }}</strong></div>
                 <div><span>{{ language.text('vatPaid') }}</span><strong>{{ formatCurrency(data.periodTotals.vatTotal) }}</strong></div>
               </div>
               <a class="text-button period-link" routerLink="/transactions">

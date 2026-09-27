@@ -78,6 +78,12 @@ export class ShellComponent {
     this.loadSummary();
   }
 
+  protected moveSummaryMonth(offset: number): void {
+    if (this.reports.moveSelectedMonth(offset)) {
+      this.loadSummary();
+    }
+  }
+
   protected async logout(): Promise<void> { await this.auth.logout(); await this.router.navigateByUrl('/login'); }
 
   private async loadClient(): Promise<void> {

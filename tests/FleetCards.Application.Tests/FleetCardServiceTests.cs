@@ -42,7 +42,7 @@ public sealed class FleetCardServiceTests
         var transactions = await context
             .Transactions.Where(transaction => transaction.CardId == card.Id)
             .ToArrayAsync();
-        Assert.InRange(transactions.Length, 1, 5);
+        Assert.InRange(transactions.Length, 5, 15);
         var previousMonthStart = new DateTimeOffset(
             issuedAt.Year,
             issuedAt.Month,
@@ -332,7 +332,7 @@ public sealed class FleetCardServiceTests
         var previousMonthStart = new DateTimeOffset(2026, 8, 1, 0, 0, 0, TimeSpan.Zero);
         var currentMonthStart = previousMonthStart.AddMonths(1);
 
-        Assert.InRange(first.Count, 1, 5);
+        Assert.InRange(first.Count, 5, 15);
         Assert.Equal(first.Select(ToStableValues), second.Select(ToStableValues));
         Assert.All(
             first,
@@ -504,7 +504,7 @@ public sealed class FleetCardServiceTests
             new[] { "Stolen", "Blocked", "Active" },
             stateHistory.History.Select(entry => entry.State)
         );
-        Assert.InRange(transactions.Length, 1, 5);
+        Assert.InRange(transactions.Length, 5, 15);
         Assert.All(
             transactions,
             transaction =>

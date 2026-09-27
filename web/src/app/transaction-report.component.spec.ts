@@ -36,7 +36,7 @@ const reportResponse: TransactionReport = {
       status: 'Completed',
     },
   ],
-  totals: { netTotal: 90, vatTotal: 20.7, grossTotal: 999.99, rowCount: 1 },
+  totals: { netTotal: 90, vatTotal: 20.7, grossTotal: 999.99, grossSavingsTotal: 2.5, rowCount: 1 },
 };
 
 describe('TransactionReportComponent', () => {

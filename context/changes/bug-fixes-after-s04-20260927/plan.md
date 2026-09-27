@@ -224,24 +224,24 @@ The cleanup is intentionally irreversible under normal migration rollback. Take 
 
 #### Automated
 
-- [x] 1.1 Application tests prove immutable issue-time assignment and newest-first state history in EF-backed and seeded modes.
-- [x] 1.2 API tests prove reassignment is unavailable and authenticated state history includes issuance and subsequent state changes.
+- [x] 1.1 Application tests prove immutable issue-time assignment and newest-first state history in EF-backed and seeded modes. — f2be194
+- [x] 1.2 API tests prove reassignment is unavailable and authenticated state history includes issuance and subsequent state changes. — f2be194
 
 #### Manual
 
-- [x] 1.3 Verify through the UI that a card remains assigned to its issue-time vehicle and its history starts at Active and lists the latest change first.
+- [x] 1.3 Verify through the UI that a card remains assigned to its issue-time vehicle and its history starts at Active and lists the latest change first. — f2be194
 
 ### Phase 2: Gross Savings and Angular Workflows
 
 #### Automated
 
-- [ ] 2.1 Reporting tests prove POS-based gross savings, signed correction handling, and report/summary reconciliation.
-- [ ] 2.2 Angular tests prove refreshed state selection, state-history rendering, removal of reassignment controls, and shared-month summary reload.
-- [ ] 2.3 `npm test` and `npm run build` pass with English and Polish overview labels.
+- [x] 2.1 Reporting tests prove POS-based gross savings, signed correction handling, and report/summary reconciliation.
+- [x] 2.2 Angular tests prove refreshed state selection, state-history rendering, removal of reassignment controls, and shared-month summary reload.
+- [x] 2.3 `npm test` and `npm run build` pass with English and Polish overview labels.
 
 #### Manual
 
-- [ ] 2.4 Verify refreshed blocked state and reconcile savings and spend across two selected months in both languages.
+- [x] 2.4 Verify refreshed blocked state and reconcile savings and spend across two selected months in both languages.
 
 ### Phase 3: Composed Verification and Policy Alignment
 
