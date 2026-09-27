@@ -96,7 +96,13 @@ export class CardManagementComponent implements OnInit {
     this.pendingCardId = card.id;
     this.error = null;
     this.cardsService.changeState(card.id, state as FleetCardState).subscribe({
-      next: (updatedCard) => this.finishCardMutation(updatedCard),
+      next: (updatedCard) => {
+        this.finishCardMutation(updatedCard);
+        delete this.stateHistory[card.id];
+        if (this.openHistoryCardId === card.id) {
+          this.loadStateHistory(card.id);
+        }
+      },
       error: () => this.failCardMutation(),
     });
   }

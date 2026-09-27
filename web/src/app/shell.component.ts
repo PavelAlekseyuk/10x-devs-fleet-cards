@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Subscription } from 'rxjs';
 import { AuthService } from './auth.service';
 import { CardManagementComponent } from './card-management.component';
 import { FleetVehiclesComponent } from './fleet-vehicles.component';
@@ -39,6 +39,7 @@ export class ShellComponent {
   ];
 
   private readonly destroyRef = inject(DestroyRef);
+  private activeSummaryRequest?: Subscription;
 
   constructor(route: ActivatedRoute, private readonly http: HttpClient) {
     this.activeSection = (route.snapshot.data['section'] as SectionKey) ?? 'overview';
@@ -92,19 +93,23 @@ export class ShellComponent {
   }
 
   private loadSummary(): void {
+    this.activeSummaryRequest?.unsubscribe();
     this.summary.set(null);
     this.summaryLoading.set(true);
     this.summaryError.set(false);
-    this.reports.getSummary().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (summary) => {
-        this.summary.set(summary);
-        this.summaryLoading.set(false);
-      },
-      error: () => {
-        this.summaryLoading.set(false);
-        this.summaryError.set(true);
-      },
-    });
+    this.activeSummaryRequest = this.reports
+      .getSummary()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (summary) => {
+          this.summary.set(summary);
+          this.summaryLoading.set(false);
+        },
+        error: () => {
+          this.summaryLoading.set(false);
+          this.summaryError.set(true);
+        },
+      });
   }
 
   private get locale(): string {

@@ -30,7 +30,7 @@ The overview's net and gross labels identify their tax basis, and its savings me
 
 - Adding card reassignment, unassignment, card return, or a new card-state transition matrix.
 - Adding a user-facing workflow for creating refunds, cancellations, or recalculations; this change only ensures reportable transaction rows carry the POS basis needed for savings.
-- Changing the mocked card provider, authentication, PAN redaction boundary, or card issuance transaction generation beyond the transaction pricing fields needed for the new aggregate.
+- Changing the mocked card provider, authentication, or PAN redaction boundary. Transaction generation may change only to provide the approved 5–15 previous-month demo transactions and the pricing fields needed for the new aggregate; unrelated generation changes remain out of scope.
 - Implementing program comparison, lifetime savings, or a second savings metric.
 
 ## Implementation Approach

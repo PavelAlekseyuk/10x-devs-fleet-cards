@@ -194,6 +194,38 @@ describe('CardManagementComponent', () => {
     ]);
   });
 
+  it('refreshes open state history after a successful state change', async () => {
+    const fixture = createFixture();
+    await flushInitial(fixture);
+    const element = fixture.nativeElement as HTMLElement;
+    Array.from(element.querySelectorAll('button')).find(
+      (button) => button.textContent?.trim() === 'State history',
+    )!.click();
+
+    http.expectOne('/api/cards/card-1/state-history').flush([history[1]]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const stateSelect = element.querySelector<HTMLSelectElement>(
+      '[aria-label="State: •••• 4242"]',
+    )!;
+    stateSelect.value = 'Stolen';
+    stateSelect.dispatchEvent(new Event('change'));
+    const stateRequest = http.expectOne('/api/cards/card-1/state');
+    stateRequest.flush({ ...card, state: 'Stolen', providerToken: 'provider-secret' });
+
+    const refreshedHistory = http.expectOne('/api/cards/card-1/state-history');
+    refreshedHistory.flush([{ state: 'Stolen', occurredAt: '2026-09-03T09:00:00Z' }, ...history]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const states = Array.from(
+      element.querySelectorAll('.state-timeline li strong'),
+      (entry) => entry.textContent,
+    );
+    expect(states).toEqual(['Stolen', 'Blocked', 'Active']);
+  });
+
   it('hides mutation controls from ReadOnly users but leaves history available', async () => {
     const fixture = createFixture('ReadOnly');
     await flushInitial(fixture);

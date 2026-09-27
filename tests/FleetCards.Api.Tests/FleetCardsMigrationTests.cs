@@ -26,7 +26,9 @@ public sealed class FleetCardsMigrationTests
     [Fact]
     public async Task Assignment_required_migration_removes_only_unassigned_card_facts()
     {
-        await using var sqlServer = new MsSqlBuilder()
+        await using var sqlServer = new MsSqlBuilder(
+            "mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04"
+        )
             .WithPassword("FleetCards_migration_Test123!")
             .Build();
         await sqlServer.StartAsync();

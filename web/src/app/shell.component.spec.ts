@@ -140,6 +140,32 @@ describe('ShellComponent', () => {
     http.verify();
   });
 
+  it('cancels the previous summary request when the selected month changes', async () => {
+    const { fixture, http } = createFixture();
+    flushClient(http);
+    const reports = TestBed.inject(TransactionReportService);
+    const previousSummary = http.expectOne((request) => request.url === '/api/dashboard/summary');
+
+    const element = fixture.nativeElement as HTMLElement;
+    element.querySelector<HTMLButtonElement>('[aria-label="Next month"]')!.click();
+    expect(previousSummary.cancelled).toBe(true);
+
+    const [year, month] = reports.selectedMonth().split('-');
+    const selectedSummary = http.expectOne((request) => request.url === '/api/dashboard/summary');
+    expect(selectedSummary.request.params.get('year')).toBe(year);
+    expect(selectedSummary.request.params.get('month')).toBe(month);
+    selectedSummary.flush({
+      ...summaryResponse,
+      periodTotals: { ...summaryResponse.periodTotals, grossSavingsTotal: 34 },
+    });
+    await fixture.whenStable();
+
+    expect(
+      element.querySelector('.metric-card.accent-gold strong')?.textContent,
+    ).toContain('34.00');
+    http.verify();
+  });
+
   it('shows explicit net, gross, and savings labels in English and Polish', async () => {
     const { fixture, http } = createFixture();
     flushClient(http);

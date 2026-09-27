@@ -53,6 +53,35 @@ public sealed class TransactionReportingTests
     }
 
     [Fact]
+    public void Generated_transactions_use_the_previous_pos_month_at_a_utc_month_boundary()
+    {
+        var generator = new MockFuelTransactionGenerator();
+        var issuedAt = new DateTimeOffset(2026, 9, 30, 22, 30, 0, TimeSpan.Zero);
+        var generated = generator.Generate(
+            CardId,
+            new FleetCar
+            {
+                Id = VehicleId,
+                RegistrationPlate = "WA 12345",
+                FuelType = "Diesel",
+            },
+            issuedAt
+        );
+        var previousPosMonthStartUtc = new DateTimeOffset(2026, 8, 31, 22, 0, 0, TimeSpan.Zero);
+        var currentPosMonthStartUtc = new DateTimeOffset(2026, 9, 30, 22, 0, 0, TimeSpan.Zero);
+
+        Assert.All(
+            generated,
+            transaction =>
+            {
+                Assert.True(transaction.OccurredAt >= previousPosMonthStartUtc);
+                Assert.True(transaction.OccurredAt < currentPosMonthStartUtc);
+                Assert.Equal(9, transaction.PosOccurredAtLocal.Month);
+            }
+        );
+    }
+
+    [Fact]
     public void Report_uses_latest_purchase_version_and_adds_each_signed_correction_once()
     {
         var occurredAt = new DateTimeOffset(2026, 9, 9, 12, 0, 0, TimeSpan.Zero);
@@ -246,6 +275,45 @@ public sealed class TransactionReportingTests
         Assert.Empty(emptyReport.Transactions);
         Assert.Equal(new TransactionReportTotals(0m, 0m, 0m, 0m, 0), emptyReport.Totals);
         Assert.Equal(emptyReport.Totals, emptySummary.PeriodTotals);
+    }
+
+    [Fact]
+    public async Task Seeded_read_service_reports_signed_correction_savings_in_report_and_summary()
+    {
+        var purchase = CreateTransaction(
+            PurchaseId,
+            new DateTimeOffset(2026, 9, 9, 12, 0, 0, TimeSpan.Zero),
+            180m,
+            41.40m,
+            221.40m,
+            quantity: 10m,
+            unitPrice: 20m,
+            discount: 2m
+        );
+        var refund = CreateCorrection(
+            Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaab"),
+            PurchaseId,
+            new DateTimeOffset(2026, 10, 2, 8, 0, 0, TimeSpan.Zero),
+            TransactionStatus.Refunded,
+            -18m,
+            -4.14m,
+            -22.14m,
+            quantity: -1m,
+            unitPrice: 20m,
+            discount: 2m
+        );
+        var seededReadService = new SeededFleetCardsReadService(
+            new TransactionFactsFleetCardService([purchase, refund]),
+            new SeededFleetVehicleService(),
+            reportingService
+        );
+        var october = reportingService.ResolvePeriod(new TransactionReportRequest(2026, 10));
+
+        var report = await seededReadService.GetTransactionReportAsync(october);
+        var summary = await seededReadService.GetDashboardSummaryAsync(october);
+
+        Assert.Equal(-2.46m, report.Totals.GrossSavingsTotal);
+        Assert.Equal(report.Totals, summary.PeriodTotals);
     }
 
     [Fact]
@@ -596,4 +664,37 @@ public sealed class TransactionReportingTests
             GrossTotal = gross,
             Status = status,
         };
+
+    private sealed class TransactionFactsFleetCardService(IReadOnlyList<FuelTransaction> facts)
+        : IFleetCardService
+    {
+        public IReadOnlyList<FleetCardResponse> GetCards() => [];
+
+        public IReadOnlyList<FuelTransaction> GetTransactionFacts() => facts;
+
+        public IReadOnlyList<FuelTransactionResponse> GetTransactions(
+            DateTimeOffset? from,
+            DateTimeOffset? to
+        ) => [];
+
+        public Task<CardCommandResult> IssueAsync(
+            IssueFleetCardRequest request,
+            string actor,
+            string correlationId,
+            CancellationToken cancellationToken = default
+        ) => throw new NotSupportedException();
+
+        public Task<CardCommandResult> ChangeStateAsync(
+            Guid cardId,
+            ChangeFleetCardStateRequest request,
+            string actor,
+            string correlationId,
+            CancellationToken cancellationToken = default
+        ) => throw new NotSupportedException();
+
+        public Task<CardStateHistoryResult> GetStateHistoryAsync(
+            Guid cardId,
+            CancellationToken cancellationToken = default
+        ) => throw new NotSupportedException();
+    }
 }

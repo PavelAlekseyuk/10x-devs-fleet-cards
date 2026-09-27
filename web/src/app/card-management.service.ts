@@ -8,7 +8,7 @@ export interface FleetCard {
   id: string;
   maskedPan: string;
   state: FleetCardState;
-  assignedCarId: string | null;
+  assignedCarId: string;
   assignedVehicleRegistrationPlate: string | null;
 }
 
