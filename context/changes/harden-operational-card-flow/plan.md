@@ -248,11 +248,11 @@ The assignment-required migration remains forward-only in its data effect for nu
 
 #### Automated
 
-- [x] 3.1 A configuration-focused test or startup check proves local/validated E2E automatic migration is enabled and deployed configuration does not silently migrate the database.
-- [x] 3.2 The deployment workflow still generates and applies the idempotent migration script before deploying the application archive, and its smoke test validates API, authentication, and client-data access.
-- [x] 3.3 A clean E2E run leaves no pending migrations and uses only its generated database name.
+- [x] 3.1 A configuration-focused test or startup check proves local/validated E2E automatic migration is enabled and deployed configuration does not silently migrate the database. — 5780c4d
+- [x] 3.2 The deployment workflow still generates and applies the idempotent migration script before deploying the application archive, and its smoke test validates API, authentication, and client-data access. — 5780c4d
+- [x] 3.3 A clean E2E run leaves no pending migrations and uses only its generated database name. — 5780c4d
 
 #### Manual
 
-- [x] 3.4 Review the deployment workflow and runbook together and confirm the sequence is understandable: provision, controlled migration, deploy, smoke test, and rollback limitations.
-- [x] 3.5 Perform one clean local demonstration using the documented commands and verify the seeded users and synthetic-data limitation are visible to the operator.
+- [x] 3.4 Review the deployment workflow and runbook together and confirm the sequence is understandable: provision, controlled migration, deploy, smoke test, and rollback limitations. — 5780c4d
+- [x] 3.5 Perform one clean local demonstration using the documented commands and verify the seeded users and synthetic-data limitation are visible to the operator. — 5780c4d
