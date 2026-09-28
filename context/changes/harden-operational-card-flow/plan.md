@@ -98,7 +98,7 @@ Close the remaining executable gaps in the existing Aspire/Playwright and SQL-ba
 
 #### 1. Operational card-flow browser coverage
 
-**File**: `web/e2e/card-management.spec.ts`, `web/e2e/transaction-report.spec.ts`, `web/e2e/fleet-vehicles.spec.ts`
+**File**: `web/e2e/card-management.spec.ts`, `web/e2e/transaction-report.spec.ts`, `web/e2e/fleet-vehicles.spec.ts`, `web/src/app/card-management.component.spec.ts`, `web/src/app/language.service.ts`, `web/src/app/language.service.spec.ts`
 
 **Intent**: Make the browser suite prove the full operational gate, including the approved generated-transaction count and cross-view financial reconciliation.
 
@@ -145,7 +145,7 @@ Separate disposable local/E2E migration behavior from deployed migration executi
 
 #### 1. Migration execution mode
 
-**File**: `src/FleetCards.Api/Program.cs`, `src/FleetCards.Api/appsettings.json`, `src/FleetCards.Api/appsettings.Development.json`, `.github/workflows/main.yml`
+**File**: `src/FleetCards.Api/Program.cs`, `src/FleetCards.Api/appsettings.json`, `src/FleetCards.Api/appsettings.Development.json`, `infra/terraform/main.tf`, `.github/workflows/main.yml`
 
 **Intent**: Prevent deployed API startup from silently applying a destructive or otherwise unreviewed migration while preserving automatic setup for local and E2E environments.
 
@@ -256,3 +256,10 @@ The assignment-required migration remains forward-only in its data effect for nu
 
 - [x] 3.4 Review the deployment workflow and runbook together and confirm the sequence is understandable: provision, controlled migration, deploy, smoke test, and rollback limitations. — 5780c4d
 - [x] 3.5 Perform one clean local demonstration using the documented commands and verify the seeded users and synthetic-data limitation are visible to the operator. — 5780c4d
+
+### Review Evidence — 2026-09-28
+
+- `dotnet test FleetCards.sln --configuration Release` passed (100 tests).
+- From `web/`, `npm test` passed (42 tests), `npm run build` succeeded (with the existing SCSS budget warning), and `npm run test:e2e` passed (4 tests against isolated Aspire).
+- The deployment workflow and runbook were reviewed together; their migration-before-deploy and smoke-test sequence is consistent.
+- This records current automated verification and document review. No separate record of the historical hands-on manual sessions is available; the passing E2E suite is supporting automated evidence, not a claim that those sessions were repeated manually.

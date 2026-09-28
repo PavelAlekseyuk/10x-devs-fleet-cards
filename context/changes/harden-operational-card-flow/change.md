@@ -1,7 +1,7 @@
 ---
 change_id: harden-operational-card-flow
 title: Harden operational card flow
-status: implemented
+status: impl_reviewed
 created: 2026-09-28
 updated: 2026-09-28
 archived_at: null

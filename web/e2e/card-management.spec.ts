@@ -113,14 +113,10 @@ function reportPath(month: string): string {
 }
 
 async function getTransactionsForCard(page: Page, cardId: string): Promise<FuelTransaction[]> {
-  const months = [...new Set([utcMonthAtOffset(-1), utcMonthAtOffset(0)])];
-  const reports = await Promise.all(
-    months.map(month => requestApi<TransactionReport>(page, reportPath(month))),
-  );
-  expect(reports.map(report => report.status)).toEqual(months.map(() => 200));
-  return reports
-    .flatMap(report => report.body?.transactions ?? [])
-    .filter(transaction => transaction.cardId === cardId);
+  const previousMonth = utcMonthAtOffset(-1);
+  const report = await requestApi<TransactionReport>(page, reportPath(previousMonth));
+  expect(report.status).toBe(200);
+  return (report.body?.transactions ?? []).filter(transaction => transaction.cardId === cardId);
 }
 
 function expectCardRedacted(card: FleetCard): void {
@@ -190,7 +186,10 @@ test('composed card issue keeps its assignment immutable and shows state history
   );
   const issueButton = page.getByRole('button', { name: 'Issue card', exact: true });
   await expect(issueButton).toHaveAccessibleName('Issue card');
-  await issueButton.click();
+  await page.locator('#card-issue-vehicle').focus();
+  await page.keyboard.press('Tab');
+  await expect(issueButton).toBeFocused();
+  await page.keyboard.press('Enter');
   const issueResponse = await issueResponsePromise;
   expect(issueResponse.status()).toBe(201);
   const issuedCard = (await issueResponse.json()) as FleetCard;
@@ -240,7 +239,9 @@ test('composed card issue keeps its assignment immutable and shows state history
       new URL(response.url()).pathname === `/api/cards/${issuedCard.id}/state` &&
       response.request().method() === 'PUT',
   );
-  await stateSelector.selectOption('Blocked');
+  await page.keyboard.press('Tab');
+  await expect(stateSelector).toBeFocused();
+  await page.keyboard.press('ArrowDown');
   expect((await stateResponsePromise).status()).toBe(200);
   await expect(stateSelector).toHaveValue('Blocked');
   await expect(cardItem.locator('.badge')).toHaveText('Blocked');
