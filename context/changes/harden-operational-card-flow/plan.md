@@ -233,26 +233,26 @@ The assignment-required migration remains forward-only in its data effect for nu
 
 #### Automated
 
-- [x] 2.1 `dotnet test FleetCards.sln --configuration Release` passes, including migration, authorization, lifecycle, and redaction tests.
-- [x] 2.2 From `web/`, `npm test`, `npm run build`, and `npm run test:e2e` pass against the isolated Aspire runtime.
-- [x] 2.3 The composed browser suite proves the full operational gate for acceptance criteria `1-9` and `11`, including 5-15 generated transactions and report/overview reconciliation.
-- [x] 2.4 Any architecture or accessibility checks produce explicit results without being treated as a pass merely because the test project is loadable.
+- [x] 2.1 `dotnet test FleetCards.sln --configuration Release` passes, including migration, authorization, lifecycle, and redaction tests. — 990a81e
+- [x] 2.2 From `web/`, `npm test`, `npm run build`, and `npm run test:e2e` pass against the isolated Aspire runtime. — 990a81e
+- [x] 2.3 The composed browser suite proves the full operational gate for acceptance criteria `1-9` and `11`, including 5-15 generated transactions and report/overview reconciliation. — 990a81e
+- [x] 2.4 Any architecture or accessibility checks produce explicit results without being treated as a pass merely because the test project is loadable. — 990a81e
 
 #### Manual
 
-- [x] 2.5 In English, complete sign-in, vehicle creation, card issuance, state changes, reload, state-history inspection, and spending review as ReadWrite; confirm the vehicle and transaction snapshots remain unchanged.
-- [x] 2.6 Switch to Polish and confirm the same card, state-history, overview, and transaction-report evidence remains understandable and period-aligned.
-- [x] 2.7 Sign in as ReadOnly and confirm visibility remains available while card and vehicle commands are unavailable.
+- [x] 2.5 In English, complete sign-in, vehicle creation, card issuance, state changes, reload, state-history inspection, and spending review as ReadWrite; confirm the vehicle and transaction snapshots remain unchanged. — 990a81e
+- [x] 2.6 Switch to Polish and confirm the same card, state-history, overview, and transaction-report evidence remains understandable and period-aligned. — 990a81e
+- [x] 2.7 Sign in as ReadOnly and confirm visibility remains available while card and vehicle commands are unavailable. — 990a81e
 
 ### Phase 3: Make Migration and Demonstration Operations Explicit
 
 #### Automated
 
-- [ ] 3.1 A configuration-focused test or startup check proves local/validated E2E automatic migration is enabled and deployed configuration does not silently migrate the database.
-- [ ] 3.2 The deployment workflow still generates and applies the idempotent migration script before deploying the application archive, and its smoke test validates API, authentication, and client-data access.
-- [ ] 3.3 A clean E2E run leaves no pending migrations and uses only its generated database name.
+- [x] 3.1 A configuration-focused test or startup check proves local/validated E2E automatic migration is enabled and deployed configuration does not silently migrate the database.
+- [x] 3.2 The deployment workflow still generates and applies the idempotent migration script before deploying the application archive, and its smoke test validates API, authentication, and client-data access.
+- [x] 3.3 A clean E2E run leaves no pending migrations and uses only its generated database name.
 
 #### Manual
 
-- [ ] 3.4 Review the deployment workflow and runbook together and confirm the sequence is understandable: provision, controlled migration, deploy, smoke test, and rollback limitations.
-- [ ] 3.5 Perform one clean local demonstration using the documented commands and verify the seeded users and synthetic-data limitation are visible to the operator.
+- [x] 3.4 Review the deployment workflow and runbook together and confirm the sequence is understandable: provision, controlled migration, deploy, smoke test, and rollback limitations.
+- [x] 3.5 Perform one clean local demonstration using the documented commands and verify the seeded users and synthetic-data limitation are visible to the operator.
