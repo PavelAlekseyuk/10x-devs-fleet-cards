@@ -222,27 +222,27 @@ The assignment-required migration remains forward-only in its data effect for nu
 
 #### Automated
 
-- [x] 1.1 Repository documentation contains no operational S-06 claim that contradicts the approved 5-15 transaction, archive, or acceptance-criteria contract.
-- [x] 1.2 The roadmap identifies S-06 as the gate for acceptance criteria `1-9` and `11`, with program criterion `10` still parked.
+- [x] 1.1 Repository documentation contains no operational S-06 claim that contradicts the approved 5-15 transaction, archive, or acceptance-criteria contract. — 354c0e2
+- [x] 1.2 The roadmap identifies S-06 as the gate for acceptance criteria `1-9` and `11`, with program criterion `10` still parked. — 354c0e2
 
 #### Manual
 
-- [x] 1.3 A reviewer can follow the local runbook from a clean checkout, identify both seeded accounts, understand the disposable test-data boundary, and distinguish local automatic migrations from deployed controlled migrations.
+- [x] 1.3 A reviewer can follow the local runbook from a clean checkout, identify both seeded accounts, understand the disposable test-data boundary, and distinguish local automatic migrations from deployed controlled migrations. — 354c0e2
 
 ### Phase 2: Complete Composed Acceptance Coverage
 
 #### Automated
 
-- [ ] 2.1 `dotnet test FleetCards.sln --configuration Release` passes, including migration, authorization, lifecycle, and redaction tests.
-- [ ] 2.2 From `web/`, `npm test`, `npm run build`, and `npm run test:e2e` pass against the isolated Aspire runtime.
-- [ ] 2.3 The composed browser suite proves the full operational gate for acceptance criteria `1-9` and `11`, including 5-15 generated transactions and report/overview reconciliation.
-- [ ] 2.4 Any architecture or accessibility checks produce explicit results without being treated as a pass merely because the test project is loadable.
+- [x] 2.1 `dotnet test FleetCards.sln --configuration Release` passes, including migration, authorization, lifecycle, and redaction tests.
+- [x] 2.2 From `web/`, `npm test`, `npm run build`, and `npm run test:e2e` pass against the isolated Aspire runtime.
+- [x] 2.3 The composed browser suite proves the full operational gate for acceptance criteria `1-9` and `11`, including 5-15 generated transactions and report/overview reconciliation.
+- [x] 2.4 Any architecture or accessibility checks produce explicit results without being treated as a pass merely because the test project is loadable.
 
 #### Manual
 
-- [ ] 2.5 In English, complete sign-in, vehicle creation, card issuance, state changes, reload, state-history inspection, and spending review as ReadWrite; confirm the vehicle and transaction snapshots remain unchanged.
-- [ ] 2.6 Switch to Polish and confirm the same card, state-history, overview, and transaction-report evidence remains understandable and period-aligned.
-- [ ] 2.7 Sign in as ReadOnly and confirm visibility remains available while card and vehicle commands are unavailable.
+- [x] 2.5 In English, complete sign-in, vehicle creation, card issuance, state changes, reload, state-history inspection, and spending review as ReadWrite; confirm the vehicle and transaction snapshots remain unchanged.
+- [x] 2.6 Switch to Polish and confirm the same card, state-history, overview, and transaction-report evidence remains understandable and period-aligned.
+- [x] 2.7 Sign in as ReadOnly and confirm visibility remains available while card and vehicle commands are unavailable.
 
 ### Phase 3: Make Migration and Demonstration Operations Explicit
 

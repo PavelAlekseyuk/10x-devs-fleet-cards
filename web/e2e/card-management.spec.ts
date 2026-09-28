@@ -188,7 +188,9 @@ test('composed card issue keeps its assignment immutable and shows state history
       new URL(response.url()).pathname === '/api/cards' &&
       response.request().method() === 'POST',
   );
-  await page.getByRole('button', { name: 'Issue card', exact: true }).click();
+  const issueButton = page.getByRole('button', { name: 'Issue card', exact: true });
+  await expect(issueButton).toHaveAccessibleName('Issue card');
+  await issueButton.click();
   const issueResponse = await issueResponsePromise;
   expect(issueResponse.status()).toBe(201);
   const issuedCard = (await issueResponse.json()) as FleetCard;
@@ -209,7 +211,8 @@ test('composed card issue keeps its assignment immutable and shows state history
 
   const issuedTransactions = (await getTransactionsForCard(page, issuedCard.id))
     .sort((left, right) => left.id.localeCompare(right.id));
-  expect(issuedTransactions.length).toBeGreaterThan(0);
+  expect(issuedTransactions.length).toBeGreaterThanOrEqual(5);
+  expect(issuedTransactions.length).toBeLessThanOrEqual(15);
   for (const transaction of issuedTransactions) {
     expect(transaction).toMatchObject({
       cardId: issuedCard.id,
@@ -229,8 +232,9 @@ test('composed card issue keeps its assignment immutable and shows state history
   expect(initialHistoryResponse.body?.[0].state).toBe('Active');
 
   const stateSelector = cardItem.getByRole('combobox', {
-    name: `State: ${issuedCard.maskedPan}`,
+    name: `Status: ${issuedCard.maskedPan}`,
   });
+  await expect(stateSelector).toHaveAccessibleName(`Status: ${issuedCard.maskedPan}`);
   const stateResponsePromise = page.waitForResponse(
     response =>
       new URL(response.url()).pathname === `/api/cards/${issuedCard.id}/state` &&
@@ -244,7 +248,7 @@ test('composed card issue keeps its assignment immutable and shows state history
   await page.reload();
   await expect(page.getByRole('heading', { level: 2, name: 'Fleet cards' })).toBeVisible();
   await expect(cardItem.getByRole('combobox', {
-    name: `State: ${issuedCard.maskedPan}`,
+    name: `Status: ${issuedCard.maskedPan}`,
   })).toHaveValue('Blocked');
   await expect(cardItem.locator('.badge')).toHaveText('Blocked');
 
@@ -254,17 +258,17 @@ test('composed card issue keeps its assignment immutable and shows state history
   );
   expect(historyResponse.status).toBe(200);
   expect(historyResponse.body?.map(entry => entry.state)).toEqual(['Blocked', 'Active']);
-  await cardItem.getByRole('button', { name: 'State history' }).click();
-  await expect(cardItem.getByRole('heading', { name: 'Card state history' })).toBeVisible();
+  await cardItem.getByRole('button', { name: 'Status history' }).click();
+  await expect(cardItem.getByRole('heading', { name: 'Card status history' })).toBeVisible();
   await expect(cardItem.locator('.state-timeline li strong')).toHaveText(['Blocked', 'Active']);
 
   await page.getByRole('button', { name: 'EN' }).click();
   await expect(cardItem.getByRole('combobox', {
-    name: `Stan: ${issuedCard.maskedPan}`,
+    name: `Status: ${issuedCard.maskedPan}`,
   })).toHaveValue('Blocked');
   await expect(cardItem.locator('.badge')).toHaveText('Zablokowana');
-  await expect(cardItem.getByRole('button', { name: 'Historia stanu' })).toBeVisible();
-  await expect(cardItem.getByRole('heading', { name: 'Historia stanu karty' })).toBeVisible();
+  await expect(cardItem.getByRole('button', { name: 'Historia statusu' })).toBeVisible();
+  await expect(cardItem.getByRole('heading', { name: 'Historia statusu karty' })).toBeVisible();
   await expect(cardItem.locator('.state-timeline li strong')).toHaveText([
     'Zablokowana',
     'Aktywna',
@@ -301,8 +305,8 @@ test('composed card issue keeps its assignment immutable and shows state history
   await expect(readOnlyCard).toBeVisible();
   await expect(page.getByRole('button', { name: 'Issue card', exact: true })).toHaveCount(0);
   await expect(readOnlyCard.locator('select')).toHaveCount(0);
-  await readOnlyCard.getByRole('button', { name: 'State history' }).click();
-  await expect(readOnlyCard.getByRole('heading', { name: 'Card state history' })).toBeVisible();
+  await readOnlyCard.getByRole('button', { name: 'Status history' }).click();
+  await expect(readOnlyCard.getByRole('heading', { name: 'Card status history' })).toBeVisible();
   await expect(readOnlyCard.locator('.state-timeline li strong')).toHaveText([
     'Blocked',
     'Active',
