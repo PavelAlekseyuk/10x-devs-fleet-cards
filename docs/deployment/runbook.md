@@ -2,7 +2,7 @@
 
 The workflow in `.github/workflows/main.yml` runs only for pushes to `main`. A successful run builds, tests,
 provisions the demo resources, applies the idempotent database migration, deploys the exact published API/SPA
-archive, and checks the public root, API metadata, and database-backed card endpoint.
+archive, and checks the public root, API metadata, authentication, and database-backed client endpoints.
 
 ## Local seeded sign-in
 
@@ -12,8 +12,8 @@ Start the composed local runtime from the repository root:
 dotnet run --project src/FleetCards.AppHost/FleetCards.AppHost.csproj
 ```
 
-Open the Angular portal at `http://localhost:4200/`. The API applies pending EF migrations during startup,
-including the seeded credential migration. The local seeded accounts are:
+Open the Angular portal at `http://localhost:4200/`. In the local Development environment, the API applies
+pending EF migrations during startup, including the seeded credential migration. The local seeded accounts are:
 
 | Username | Password | Permission |
 | --- | --- | --- |
@@ -48,6 +48,12 @@ dotnet test tests/FleetCards.Application.Tests/FleetCards.Application.Tests.cspr
 Push-Location web; npm test; npm run build; Pop-Location
 dotnet build FleetCards.sln
 ```
+
+The composed acceptance suite uses a disposable SQL Server session and a fresh database per run. Run it from
+`web/` with `npm run test:e2e`; it starts Aspire, applies the local migrations, verifies the seeded roles,
+checks the vehicle-to-card-to-spending journey, and removes the session database when the run ends. Each newly
+issued card must have 5-15 persisted previous-month transactions. Card archive preserves history; card return is
+not an MVP operation.
 
 During a composed run, inspect the `api` resource logs in the Aspire dashboard or the AppHost terminal for
 successful, failed, throttled, logout, and denied authentication events. Logs must not contain passwords,
@@ -98,6 +104,9 @@ session values, full PAN, CVV, or PIN data.
 
 - The concurrency group prevents overlapping deployments. A newly queued run replaces an older pending run,
   but never stops an active migration or deployment.
+- Deployed schema changes are applied by the workflow's generated idempotent SQL script before application
+   deployment. Do not rely on API startup to apply a new deployed migration, and confirm the required backup
+   and approval decision before applying a destructive migration.
 - The migration script is forward-only and idempotent. A migration failure stops the workflow before app
   deployment.
 - F1 has no slots. To roll back application code, rerun a successful prior workflow or deploy its retained

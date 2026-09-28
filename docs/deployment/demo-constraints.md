@@ -3,6 +3,18 @@
 This deployment is a public MVP demonstration, not a production service. It must contain only seeded or
 synthetic data. Never deploy real client data, credentials, full PAN, CVV, PIN, or provider secrets.
 
+## Operational Acceptance Boundary
+
+The MVP release gate covers seeded authentication and authorization, client and vehicle access, issue-time card
+assignment, card state history, 5-15 generated previous-month transactions, VAT-aware totals and gross savings,
+localization, and Aspire startup from a clean environment. Fleet-card program comparison remains parked, and
+card archive is used instead of card return.
+
+Local and isolated E2E environments may apply EF migrations automatically because their data is disposable. A
+deployed environment applies the generated idempotent migration script through the controlled deployment workflow
+before the application archive is released. Application rollback does not undo schema changes or reconstruct data
+removed by the legacy unassigned-card cleanup migration.
+
 ## Tier Rules
 
 - Prefer a Windows App Service `F1` plan and an Azure SQL free offer only after confirming availability in

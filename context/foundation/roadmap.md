@@ -44,10 +44,10 @@ Company representatives need both access to several fuel networks and clear cost
 | F-01 | repeatable-demo-runtime | (foundation) run a repeatable local demonstration with safe seeded data and a verified health path | - | US-01, FR-001 | ready |
 | S-01 | seeded-sign-in-and-access | sign in with a seeded account and access only the portal actions permitted to that account | F-01 | FR-001 | in-progress |
 | S-02 | manage-fleet-vehicles | create, view, change, archive, and restore fleet vehicles with allowed fuel types | S-01 | FR-002, US-01 | in-progress |
-| S-03 | issue-and-assign-virtual-cards | issue, manage, return, and assign a virtual card without exposing full PAN data | S-02 | FR-003, FR-004, US-01 | in-progress |
+| S-03 | issue-and-assign-virtual-cards | issue, manage, and archive a virtual card without exposing full PAN data | S-02 | FR-003, FR-004, US-01 | in-progress |
 | S-04 | review-generated-card-spending | review generated fuel transactions for a selected period and reconcile them to the landing-page total | S-03 | FR-005, FR-006, FR-007, US-01 | in-progress |
 | S-05 | bug-fixes-after-s04-20260927 | review card state and accurate period spending while keeping cards assigned to their issue-time vehicles | S-04 | FR-003, FR-004, FR-005, FR-006, FR-007, US-01 | in-progress |
-| S-06 | harden-operational-card-flow | verify the completed operational card flow through Aspire and document its local demonstration contract | S-05 | Acceptance criteria 1-6, 10; US-01 | proposed |
+| S-06 | harden-operational-card-flow | verify the completed operational card flow through Aspire and document its local demonstration contract | S-05 | Acceptance criteria 1-9, 11; US-01 | in-progress |
 
 ## Baseline
 
@@ -148,7 +148,7 @@ What is already in place in the codebase as of `2026-09-22` (auto-researched and
 - **Unknowns:** -
 - **Risk:** The primary journey depends on applying the locked transaction and VAT rules consistently across EF and seeded modes so the required totals remain verifiable.
 - **Implementation scope:**
-  - Generate and persist 1-5 previous-month transactions after issuance.
+  - Generate and persist 5-15 previous-month transactions after issuance.
   - Implement decimal precision, VAT fields, transaction status/version metadata, filtering, totals, and UI views.
   - Add deterministic calculation tests for discounted and non-discounted totals.
 - **Exit criteria:** users can inspect transactions and period totals with explicit net/gross/VAT presentation.
@@ -179,7 +179,7 @@ What is already in place in the codebase as of `2026-09-22` (auto-researched and
 
 - **Outcome:** user can rely on the completed operational card flow because it is verified through Aspire and its local demonstration contract is documented.
 - **Change ID:** harden-operational-card-flow
-- **PRD refs:** US-01; Acceptance criteria 1-6 and 10; Non-Functional Requirements
+- **PRD refs:** US-01; Acceptance criteria 1-9 and 11; Non-Functional Requirements
 - **Prerequisites:** S-05
 - **Parallel with:** -
 - **Blockers:** -
@@ -190,7 +190,7 @@ What is already in place in the codebase as of `2026-09-22` (auto-researched and
   - Add architecture tests, migration checks, sensitive-data scans, and accessibility checks for the core workflows.
   - Document seeded accounts, local startup, test-data reset, and known MVP limitations.
 - **Exit criteria:** all primary-flow requirements pass locally through Aspire.
-- **Status:** proposed
+- **Status:** in-progress
 
 ## Backlog Handoff
 

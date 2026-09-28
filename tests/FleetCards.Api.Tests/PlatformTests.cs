@@ -5,6 +5,7 @@ using FleetCards.Contracts;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -252,6 +253,20 @@ public sealed class PlatformTests : IClassFixture<WebApplicationFactory<Program>
         using var response = await client.GetAsync(path);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public void Migration_startup_is_enabled_for_development_but_disabled_in_base_configuration()
+    {
+        var developmentConfiguration = factory.Services.GetRequiredService<IConfiguration>();
+        Assert.True(developmentConfiguration.GetValue<bool>("Database:ApplyMigrations"));
+
+        var baseConfiguration = new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
+            .AddJsonFile("appsettings.json", optional: false)
+            .Build();
+
+        Assert.False(baseConfiguration.GetValue<bool>("Database:ApplyMigrations"));
     }
 
     private async Task<HttpClient> CreateCsrfClient(

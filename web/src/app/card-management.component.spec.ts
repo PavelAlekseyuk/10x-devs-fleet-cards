@@ -135,7 +135,7 @@ describe('CardManagementComponent', () => {
     const fixture = createFixture();
     await flushInitial(fixture);
     const element = fixture.nativeElement as HTMLElement;
-    const stateSelect = element.querySelector<HTMLSelectElement>('[aria-label="State: •••• 4242"]')!;
+    const stateSelect = element.querySelector<HTMLSelectElement>('[aria-label="Status: •••• 4242"]')!;
     stateSelect.value = 'Blocked';
     stateSelect.dispatchEvent(new Event('change'));
 
@@ -156,7 +156,7 @@ describe('CardManagementComponent', () => {
     await flushInitial(fixture, [{ ...card, state: 'Blocked' }]);
     const element = fixture.nativeElement as HTMLElement;
     const stateSelect = element.querySelector<HTMLSelectElement>(
-      '[aria-label="State: •••• 4242"]',
+      '[aria-label="Status: •••• 4242"]',
     )!;
 
     expect(element.querySelector('.badge')?.textContent).toContain('Blocked');
@@ -177,7 +177,7 @@ describe('CardManagementComponent', () => {
     await flushInitial(fixture);
     const element = fixture.nativeElement as HTMLElement;
     Array.from(element.querySelectorAll('button')).find(
-      (button) => button.textContent?.trim() === 'State history',
+      (button) => button.textContent?.trim() === 'Status history',
     )!.click();
 
     const request = http.expectOne('/api/cards/card-1/state-history');
@@ -199,7 +199,7 @@ describe('CardManagementComponent', () => {
     await flushInitial(fixture);
     const element = fixture.nativeElement as HTMLElement;
     Array.from(element.querySelectorAll('button')).find(
-      (button) => button.textContent?.trim() === 'State history',
+      (button) => button.textContent?.trim() === 'Status history',
     )!.click();
 
     http.expectOne('/api/cards/card-1/state-history').flush([history[1]]);
@@ -207,7 +207,7 @@ describe('CardManagementComponent', () => {
     fixture.detectChanges();
 
     const stateSelect = element.querySelector<HTMLSelectElement>(
-      '[aria-label="State: •••• 4242"]',
+      '[aria-label="Status: •••• 4242"]',
     )!;
     stateSelect.value = 'Stolen';
     stateSelect.dispatchEvent(new Event('change'));
@@ -232,9 +232,9 @@ describe('CardManagementComponent', () => {
     const element = fixture.nativeElement as HTMLElement;
 
     expect(element.querySelector('.issue-form')).toBeNull();
-    expect(element.querySelector('[aria-label="State: •••• 4242"]')).toBeNull();
+    expect(element.querySelector('[aria-label="Status: •••• 4242"]')).toBeNull();
     expect(element.querySelector('[aria-label="Reassign vehicle: •••• 4242"]')).toBeNull();
-    expect(element.textContent).toContain('State history');
+    expect(element.textContent).toContain('Status history');
     http.expectNone((request) => request.method === 'POST' || request.method === 'PUT');
   });
 
@@ -251,6 +251,6 @@ describe('CardManagementComponent', () => {
     fixture.detectChanges();
     expect(element.textContent).toContain('Wydaj kartę wirtualną');
     expect(element.textContent).toContain('Aktywna');
-    expect(element.textContent).toContain('Historia stanu');
+    expect(element.textContent).toContain('Historia statusu');
   });
 });

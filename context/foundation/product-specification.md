@@ -22,7 +22,7 @@ Each client has its own installation and database. Fleet Card Programs are the o
 | PAN | Never stored or returned in full; provider owns BIN and generates a valid 16-digit Luhn PAN |
 | Card actions | Issue, assign to a car, block, mark stolen, archive; no return operation |
 | Card archive | Non-destructive; read-write users may choose any card state, and card/transaction history remains available |
-| Transactions | Mock provider generates 1-5 persisted fuel transactions for the previous month per issued card |
+| Transactions | Mock provider generates 5-15 persisted fuel transactions for the previous month per issued card |
 | Transaction facts | Date/time, station, fuel type, quantity, price, discount, totals, VAT, and status/version metadata |
 | Programs | Seeded/imported JSON; fuel-type percentage discount or premium |
 | Program assignment | Whole-client, effective-dated, immutable history; zero or one active program |

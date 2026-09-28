@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 var e2eDatabaseName = builder.Configuration["FLEETCARDS_E2E_DATABASE"];
 var isE2e = e2eDatabaseName is not null;
+var applyMigrations = isE2e || builder.Configuration.GetValue("Database:ApplyMigrations", false);
 if (
     isE2e
     && !Regex.IsMatch(
@@ -64,7 +65,7 @@ if (isE2e && string.IsNullOrWhiteSpace(connectionString))
     throw new InvalidOperationException("E2E mode requires the fleetcards database connection.");
 }
 
-if (!string.IsNullOrWhiteSpace(connectionString))
+if (applyMigrations && !string.IsNullOrWhiteSpace(connectionString))
 {
     await using var scope = app.Services.CreateAsyncScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<FleetCardsDbContext>();

@@ -59,6 +59,7 @@ resource "azurerm_windows_web_app" "demo" {
 
   app_settings = {
     ASPNETCORE_ENVIRONMENT          = "Production"
+    "Database__ApplyMigrations"     = "false"
     WEBSITE_RUN_FROM_PACKAGE        = "1"
     "ConnectionStrings__fleetcards" = "Server=tcp:${azurerm_mssql_server.demo.fully_qualified_domain_name},1433;Initial Catalog=${azurerm_mssql_database.demo.name};Authentication=Active Directory Managed Identity;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
   }

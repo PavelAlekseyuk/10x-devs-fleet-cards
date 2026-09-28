@@ -21,9 +21,12 @@ describe('LanguageService', () => {
     const service = TestBed.inject(LanguageService);
 
     expect(service.text('reportTimeZone')).toBe('Reporting timezone');
+    expect(service.text('status')).toBe('Status');
     expect(service.text('transactionRefunded')).toBe('Refunded');
     service.language.set('PL');
     expect(service.text('reportTimeZone')).toBe('Strefa czasowa raportu');
+    expect(service.text('status')).toBe('Status');
+    expect(service.text('active')).toBe('Aktywny');
     expect(service.text('transactionRefunded')).toBe('Zwrócona');
     expect(service.text('vat')).toBe('VAT');
   });
