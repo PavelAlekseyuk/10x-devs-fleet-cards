@@ -88,6 +88,23 @@ describe('CardManagementComponent', () => {
     expect(text).not.toContain('providerToken');
   });
 
+  it('puts the assigned vehicle first in the card summary and preserves the no-vehicle fallback', async () => {
+    const fixture = createFixture();
+    await flushInitial(fixture);
+    const element = fixture.nativeElement as HTMLElement;
+    const summaryValues = element.querySelectorAll('.card-summary > div');
+
+    expect(summaryValues[0].querySelector('.vehicle-identity')?.textContent?.trim()).toBe(
+      activeVehicle.registrationPlate,
+    );
+    expect(summaryValues[1].querySelector('.masked-pan')?.textContent?.trim()).toBe(card.maskedPan);
+
+    const unassignedFixture = createFixture();
+    await flushInitial(unassignedFixture, [{ ...card, assignedVehicleRegistrationPlate: null }], []);
+    const fallback = (unassignedFixture.nativeElement as HTMLElement).querySelector('.vehicle-identity');
+    expect(fallback?.textContent?.trim()).toBe(TestBed.inject(LanguageService).text('cardNoVehicle'));
+  });
+
   it('validates an active vehicle selection before issuing', async () => {
     const fixture = createFixture();
     await flushInitial(fixture);
@@ -159,7 +176,7 @@ describe('CardManagementComponent', () => {
       '[aria-label="Status: •••• 4242"]',
     )!;
 
-    expect(element.querySelector('.badge')?.textContent).toContain('Blocked');
+    expect(element.querySelector('.status-badge')?.textContent).toContain('Blocked');
     expect(stateSelect.value).toBe('Blocked');
   });
 

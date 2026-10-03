@@ -19,9 +19,9 @@
         <label for="password">{{ language.text('password') }}</label>
         <input id="password" name="password" type="password" [(ngModel)]="password" autocomplete="current-password" />
         @if (auth.error()) { <p class="error" role="alert">{{ auth.error() }}</p> }
-        <button class="primary-button" type="submit" [disabled]="auth.loading()">
+        <app-button type="submit" [disabled]="auth.loading()">
           {{ auth.loading() ? '...' : language.text('signInButton') }} <span aria-hidden="true">→</span>
-        </button>
+        </app-button>
       </form>
     </div>
   </section>

@@ -6,9 +6,9 @@
       <p class="muted">{{ language.text('vehicleManagementDescription') }}</p>
     </div>
     @if (canWrite) {
-      <button class="primary-button" type="button" (click)="startCreate()">
+      <app-button type="button" (click)="startCreate()">
         {{ language.text('vehicleAdd') }} <span aria-hidden="true">+</span>
-      </button>
+      </app-button>
     }
   </div>
 
@@ -17,7 +17,7 @@
       <label for="vehicle-search">{{ language.text('vehicleSearch') }}</label>
       <div class="search-entry">
         <input id="vehicle-search" name="search" type="search" [value]="search" (input)="onSearchInput($event)" />
-        <button class="quiet-button" type="submit">{{ language.text('search') }}</button>
+        <app-button variant="quiet" type="submit">{{ language.text('search') }}</app-button>
       </div>
     </form>
     <div class="filter-control" role="group" [attr.aria-label]="language.text('vehicleFilter')">
@@ -67,10 +67,10 @@
         <p class="message error-message" role="alert">{{ formError }}</p>
       }
       <div class="form-actions">
-        <button class="quiet-button" type="button" (click)="cancelEdit()">{{ language.text('cancel') }}</button>
-        <button class="primary-button" type="submit" [disabled]="saving">
+        <app-button variant="quiet" type="button" (click)="cancelEdit()">{{ language.text('cancel') }}</app-button>
+        <app-button type="submit" [disabled]="saving">
           {{ language.text(saving ? 'saving' : 'vehicleSave') }}
-        </button>
+        </app-button>
       </div>
     </form>
   }
@@ -102,13 +102,13 @@
                 <td><strong>{{ vehicle.registrationPlate }}</strong></td>
                 <td>{{ fuelLabel(vehicle.fuelType) }}</td>
                 <td>{{ vehicleDescription(vehicle) }}</td>
-                <td><span class="badge" [class.warning]="vehicle.isArchived">{{ language.text(vehicle.isArchived ? 'archived' : 'active') }}</span></td>
+                <td><app-status-badge [label]="language.text(vehicle.isArchived ? 'archived' : 'active')" [tone]="vehicle.isArchived ? 'warning' : 'active'" /></td>
                 @if (canWrite) {
                   <td class="row-actions">
                     @if (vehicle.isArchived) {
-                      <button class="text-action" type="button" (click)="restoreVehicle(vehicle)">{{ language.text('vehicleRestore') }}</button>
+                      <app-button variant="text" type="button" (click)="restoreVehicle(vehicle)">{{ language.text('vehicleRestore') }}</app-button>
                     } @else {
-                      <button class="text-action" type="button" (click)="startEdit(vehicle)">{{ language.text('vehicleEdit') }}</button>
+                      <app-button variant="text" type="button" (click)="startEdit(vehicle)">{{ language.text('vehicleEdit') }}</app-button>
                       <button class="text-action danger-action" type="button" (click)="archiveVehicle(vehicle)">{{ language.text('vehicleArchive') }}</button>
                     }
                   </td>

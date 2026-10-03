@@ -19,7 +19,7 @@
     <header class="topbar"><div><span class="eyebrow">{{ client?.legalName ?? 'Fleet Cards' }}</span><h1>{{ activeTitle }}</h1></div><div class="topbar-meta"><span class="status-dot">{{ language.text('demoEnvironment') }}</span><button class="icon-button" type="button" [attr.aria-label]="language.text('notifications')">♢</button></div></header>
     <div class="content">
       @if (activeSection === 'overview') {
-        <section class="hero-row"><div><p class="eyebrow">{{ language.text('fleetSummary') }}</p><h2>{{ language.text('goodMorning') }}, {{ displayName }}.</h2><p class="muted">{{ language.text('manageDescription') }}</p></div>@if (canWrite()) {<button class="primary-button" type="button" routerLink="/cards">{{ language.text('issueCard') }} <span>+</span></button>}</section>
+        <section class="hero-row"><div><p class="eyebrow">{{ language.text('fleetSummary') }}</p><h2>{{ language.text('goodMorning') }}, {{ displayName }}.</h2><p class="muted">{{ language.text('manageDescription') }}</p></div>@if (canWrite()) {<app-button type="button" routerLink="/cards">{{ language.text('issueCard') }} <span>+</span></app-button>}</section>
         <section class="metric-grid" [attr.aria-label]="language.text('fleetSummary')">
           <article class="metric-card accent-coral">
             <span>{{ language.text('fleetVehicles') }}</span>
@@ -67,7 +67,7 @@
             } @else if (summaryError()) {
               <div class="message error-message" role="alert">
                 <span>{{ language.text('summaryFailure') }}</span>
-                <button class="text-button" type="button" (click)="retrySummary()">{{ language.text('retry') }}</button>
+                <app-button variant="text" type="button" (click)="retrySummary()">{{ language.text('retry') }}</app-button>
               </div>
             } @else if (summary(); as data) {
               <div class="spend-total">
@@ -98,8 +98,8 @@
         } @else if (activeSection === 'transactions') {
           <app-transaction-report />
         } @else {
-        <section class="section-intro"><div><p class="eyebrow">{{ language.text('clientWorkspace') }}</p><h2>{{ activeTitle }}</h2><p class="muted">{{ language.text('authenticatedAccess') }} {{ displayName }}.</p></div>@if (canWrite()) {<button class="primary-button" type="button">{{ language.text('addNew') }} <span>+</span></button>}</section>
-        <section class="panel table-panel"><div class="panel-heading"><div><p class="eyebrow">{{ language.text('seededData') }}</p><h3>{{ activeTitle }}</h3></div><span class="record-count">{{ language.text('programCount') }}</span></div><div class="table-row table-header"><span>{{ language.text('name') }}</span><span>{{ language.text('status') }}</span><span>{{ language.text('updated') }}</span><span></span></div><div class="table-row"><span><strong>{{ activeTitle }}</strong><small>{{ client?.legalName }}</small></span><span class="badge">{{ language.text('active') }}</span><span class="muted">{{ language.text('today') }}</span><span class="row-arrow">→</span></div></section>
+        <section class="section-intro"><div><p class="eyebrow">{{ language.text('clientWorkspace') }}</p><h2>{{ activeTitle }}</h2><p class="muted">{{ language.text('authenticatedAccess') }} {{ displayName }}.</p></div>@if (canWrite()) {<app-button type="button">{{ language.text('addNew') }} <span>+</span></app-button>}</section>
+        <section class="panel table-panel"><div class="panel-heading"><div><p class="eyebrow">{{ language.text('seededData') }}</p><h3>{{ activeTitle }}</h3></div><span class="record-count">{{ language.text('programCount') }}</span></div><div class="table-row table-header"><span>{{ language.text('name') }}</span><span>{{ language.text('status') }}</span><span>{{ language.text('updated') }}</span><span></span></div><div class="table-row"><span><strong>{{ activeTitle }}</strong><small>{{ client?.legalName }}</small></span><span><app-status-badge [label]="language.text('active')" /></span><span class="muted">{{ language.text('today') }}</span><span class="row-arrow">→</span></div></section>
         }
       }
     </div>

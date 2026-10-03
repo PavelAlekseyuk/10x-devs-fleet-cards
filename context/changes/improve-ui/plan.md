@@ -224,20 +224,20 @@ No data migration or API compatibility work is required. All current route surfa
 
 #### Automated
 
-- [x] 2.1 `cd web; npm run build` passes with the token definitions available through the configured global stylesheet.
-- [x] 2.2 `context/changes/improve-ui/ui-tokens.md` and the source provenance note agree on the raw values added to `web/src/styles.scss`.
+- [x] 2.1 `cd web; npm run build` passes with the token definitions available through the configured global stylesheet. — 210e511
+- [x] 2.2 `context/changes/improve-ui/ui-tokens.md` and the source provenance note agree on the raw values added to `web/src/styles.scss`. — 210e511
 
 #### Manual
 
-- [x] 2.3 Confirm the recorded roles preserve the approved forest-green, warm-neutral, and coral direction and do not introduce a second palette.
+- [x] 2.3 Confirm the recorded roles preserve the approved forest-green, warm-neutral, and coral direction and do not introduce a second palette. — 210e511
 
 ### Phase 3: Vehicle-First Card Management and Route Migration
 
 #### Automated
 
-- [ ] 3.1 `cd web; npm test` passes with component coverage for vehicle-first hierarchy, issue/state/history behavior, localization, permissions, and no reassignment controls or requests.
-- [ ] 3.2 `cd web; npm run build` passes with the card page consuming the shared UI primitives.
-- [ ] 3.3 `rg -n -i --glob '*.scss' --glob '*.html' --glob '*.ts' '(#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?)\s*\()' web/src/app` reports no matches in the migrated route surfaces. For this gate, color literals mean hex, RGB, or HSL notation.
+- [x] 3.1 `cd web; npm test` passes with component coverage for vehicle-first hierarchy, issue/state/history behavior, localization, permissions, and no reassignment controls or requests.
+- [x] 3.2 `cd web; npm run build` passes with the card page consuming the shared UI primitives.
+- [x] 3.3 `rg -n -i --glob '*.scss' --glob '*.html' --glob '*.ts' '(#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?)\s*\()' web/src/app` reports no matches in the migrated route surfaces. For this gate, color literals mean hex, RGB, or HSL notation.
 
 #### Manual
 

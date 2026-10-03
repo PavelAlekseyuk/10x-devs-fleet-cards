@@ -10,6 +10,8 @@ import { LanguageService, TranslationKey } from './language.service';
 import { DashboardSummary, TransactionReportService } from './transaction-report.service';
 import { TransactionReportComponent } from './transaction-report.component';
 import { UserSettingsService } from './user-settings.service';
+import { ButtonComponent } from './shared/ui/button.component';
+import { StatusBadgeComponent } from './shared/ui/status-badge.component';
 
 type SectionKey = 'overview' | 'cars' | 'cards' | 'transactions' | 'programs';
 interface NavigationItem { key: SectionKey; icon: string; }
@@ -18,7 +20,14 @@ interface Client { legalName: string; nip: string; jurisdiction: string; address
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterLink, FleetVehiclesComponent, CardManagementComponent, TransactionReportComponent],
+  imports: [
+    RouterLink,
+    FleetVehiclesComponent,
+    CardManagementComponent,
+    TransactionReportComponent,
+    ButtonComponent,
+    StatusBadgeComponent,
+  ],
   templateUrl: './shell.component.html',
   styleUrl: './app.scss',
 })

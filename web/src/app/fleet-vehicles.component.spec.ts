@@ -121,7 +121,7 @@ describe('FleetVehiclesComponent', () => {
     fixture.detectChanges();
     flushInitial(fixture);
     (fixture.nativeElement as HTMLElement)
-      .querySelector<HTMLButtonElement>('.vehicle-heading .primary-button')!
+      .querySelector<HTMLButtonElement>('.vehicle-heading app-button button')!
       .click();
     fixture.detectChanges();
     (fixture.nativeElement as HTMLElement)
@@ -141,7 +141,7 @@ describe('FleetVehiclesComponent', () => {
     flushInitial(fixture);
     const element = fixture.nativeElement as HTMLElement;
 
-    element.querySelector<HTMLButtonElement>('.vehicle-heading .primary-button')!.click();
+    element.querySelector<HTMLButtonElement>('.vehicle-heading app-button button')!.click();
     fixture.detectChanges();
     element.querySelector<HTMLInputElement>('[name="registrationPlate"]')!.value = 'GD 24680';
     element
@@ -174,7 +174,7 @@ describe('FleetVehiclesComponent', () => {
     refreshed.flush([activeVehicle]);
     fixture.detectChanges();
 
-    element.querySelector<HTMLButtonElement>('.row-actions .text-action')!.click();
+    element.querySelector<HTMLButtonElement>('.row-actions app-button button')!.click();
     fixture.detectChanges();
     element.querySelector<HTMLInputElement>('[name="model"]')!.value = 'FH 500';
     element.querySelector<HTMLInputElement>('[name="model"]')!.dispatchEvent(new Event('input'));
@@ -211,7 +211,7 @@ describe('FleetVehiclesComponent', () => {
     fixture.detectChanges();
     http.expectOne((request) => request.url === '/api/cars').flush([archivedVehicle]);
     fixture.detectChanges();
-    element.querySelector<HTMLButtonElement>('.row-actions .text-action')!.click();
+    element.querySelector<HTMLButtonElement>('.row-actions app-button button')!.click();
     const restoreRequest = http.expectOne('/api/cars/vehicle-2/restore');
     expect(restoreRequest.request.method).toBe('POST');
     restoreRequest.flush({ ...archivedVehicle, isArchived: false });

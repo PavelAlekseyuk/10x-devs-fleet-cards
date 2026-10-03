@@ -3,7 +3,7 @@
 }
 
 .transaction-report {
-  color: #24372f;
+  color: var(--ui-color-foreground-strong);
 }
 
 .report-heading,
@@ -35,16 +35,14 @@
   gap: 4px;
 }
 
-.period-button,
-.quiet-button,
-.text-action {
+.period-button {
   min-width: 40px;
   min-height: 40px;
   padding: 8px 11px;
-  border: 1px solid #d5ddd5;
+  border: 1px solid var(--ui-color-border);
   border-radius: 2px;
-  color: #344b40;
-  background: #f1f2ec;
+  color: var(--ui-color-foreground-soft);
+  background: var(--ui-color-surface-muted);
   cursor: pointer;
   font: inherit;
   font-size: 12px;
@@ -58,7 +56,7 @@
 .timezone-control label {
   display: grid;
   gap: 6px;
-  color: #52645b;
+  color: var(--ui-color-foreground-soft);
   font-size: 11px;
   font-weight: 700;
 }
@@ -68,10 +66,10 @@
   min-width: 0;
   min-height: 40px;
   padding: 8px 10px;
-  border: 1px solid #cbd4cc;
+  border: 1px solid var(--ui-color-border);
   border-radius: 2px;
-  color: #24372f;
-  background: #fff;
+  color: var(--ui-color-foreground-strong);
+  background: var(--ui-color-surface);
   font: inherit;
   font-weight: 400;
 }
@@ -85,15 +83,15 @@
   width: 190px;
 }
 
-.timezone-entry .quiet-button {
+.timezone-entry app-button {
   white-space: nowrap;
 }
 
 .totals-panel {
   margin-bottom: 18px;
   padding: 20px 22px;
-  border-top: 3px solid #5a9d89;
-  background: #fff;
+  border-top: 3px solid var(--ui-color-focus);
+  background: var(--ui-color-surface);
 }
 
 .totals-heading {
@@ -109,7 +107,7 @@
 
 .totals-heading > span,
 .totals-grid > div > span {
-  color: #718078;
+  color: var(--ui-color-muted);
   font-size: 11px;
 }
 
@@ -132,12 +130,12 @@
 }
 
 .gross-total strong {
-  color: #34755f;
+  color: var(--ui-color-accent);
 }
 
 .report-table-wrap {
   overflow-x: auto;
-  background: #fff;
+  background: var(--ui-color-surface);
 }
 
 table {
@@ -150,12 +148,12 @@ table {
 th,
 td {
   padding: 13px 12px;
-  border-bottom: 1px solid #eef0eb;
+  border-bottom: 1px solid var(--ui-color-border-subtle);
   vertical-align: top;
 }
 
 th {
-  color: #75827a;
+  color: var(--ui-color-muted-subtle);
   font-size: 10px;
   font-weight: 700;
   white-space: nowrap;
@@ -172,28 +170,15 @@ td small {
 
 td small {
   margin-top: 4px;
-  color: #78877d;
+  color: var(--ui-color-muted);
   font-size: 10px;
-}
-
-.badge {
-  display: inline-block;
-  padding: 5px 8px;
-  color: #34755f;
-  background: #e2f2e8;
-  font-size: 10px;
-}
-
-.badge.warning {
-  color: #9b6632;
-  background: #f8ead4;
 }
 
 .message {
   margin: 0;
   padding: 20px;
-  color: #64736a;
-  background: #fff;
+  color: var(--ui-color-muted);
+  background: var(--ui-color-surface);
   font-size: 13px;
 }
 
@@ -203,12 +188,26 @@ td small {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  color: #9a3d32;
-  background: #fff0ed;
+  color: var(--ui-color-destructive);
+  background: var(--ui-color-destructive-background);
 }
 
 .empty-message {
-  border-top: 1px solid #eef0eb;
+  border-top: 1px solid var(--ui-color-border-subtle);
+}
+
+button:not(:disabled):hover {
+  background-color: var(--ui-color-surface-muted);
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--ui-focus-ring);
+  outline-offset: 2px;
+}
+
+input:hover {
+  border-color: var(--ui-color-focus);
 }
 
 .visually-hidden {
@@ -280,7 +279,7 @@ td small {
 
   tbody tr {
     padding: 7px 14px;
-    background: #fff;
+    background: var(--ui-color-surface);
   }
 
   td {
@@ -296,7 +295,7 @@ td small {
 
   td::before {
     content: attr(data-label);
-    color: #75827a;
+    color: var(--ui-color-muted-subtle);
     font-size: 10px;
     font-weight: 700;
   }

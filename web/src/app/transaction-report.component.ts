@@ -1,4 +1,6 @@
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { ButtonComponent } from './shared/ui/button.component';
+import { StatusBadgeComponent } from './shared/ui/status-badge.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subscription } from 'rxjs';
 import { LanguageService, TranslationKey } from './language.service';
@@ -24,6 +26,7 @@ const statusTranslationKeys: Record<string, TranslationKey> = {
 @Component({
   selector: 'app-transaction-report',
   standalone: true,
+  imports: [ButtonComponent, StatusBadgeComponent],
   templateUrl: './transaction-report.component.html',
   styleUrl: './transaction-report.component.scss',
 })
