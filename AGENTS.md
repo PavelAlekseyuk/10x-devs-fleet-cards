@@ -26,3 +26,9 @@ Current state: only read endpoints exist, backed by a hardcoded `SeededFleetCard
 No GitHub Actions workflows or Azure infrastructure exist yet — production deployment (Azure App Service + Azure SQL, GitHub Actions CI/CD) is documented follow-up work, not implemented (see "Deployment direction" in [context/foundation/architecture.md](context/foundation/architecture.md) and "Deferred after MVP" in [context/foundation/decisions.md](context/foundation/decisions.md)). When implementing CI/CD, check current free-tier availability by region/subscription before assuming Azure App Service F1 is usable.
 
 Known gaps tracked in [context/foundation/health-check.md](context/foundation/health-check.md): 3 high-severity NuGet vulnerabilities (Microsoft.OpenApi, MessagePack via Aspire), no NuGet lockfile, outdated test SDK/coverlet packages.
+
+## UI
+
+- Design tokens live in `web/src/styles.scss`; shared UI primitives live in `web/src/app/shared/ui`. Reuse these primitives before adding a new one.
+- Do not add literal colors or one-off palette values (hex, RGB, or HSL) in new or updated views; use the tokens.
+- Check with `rg -n -i --glob '*.scss' --glob '*.html' --glob '*.ts' '(#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?)\s*\()' web/src/app`, which must report no matches in the migrated route surfaces. No lint dependency is used for this.

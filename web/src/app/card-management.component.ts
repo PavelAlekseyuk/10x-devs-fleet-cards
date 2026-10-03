@@ -1,4 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
+import { ButtonComponent } from './shared/ui/button.component';
+import { StatusBadgeComponent } from './shared/ui/status-badge.component';
 import { AuthService } from './auth.service';
 import {
   CardManagementService,
@@ -21,6 +23,7 @@ const stateTranslationKeys: Record<FleetCardState, TranslationKey> = {
 @Component({
   selector: 'app-card-management',
   standalone: true,
+  imports: [ButtonComponent, StatusBadgeComponent],
   templateUrl: './card-management.component.html',
   styleUrl: './card-management.component.scss',
 })

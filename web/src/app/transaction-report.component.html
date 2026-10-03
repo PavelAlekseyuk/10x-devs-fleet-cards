@@ -54,7 +54,7 @@
               <option [value]="timeZone"></option>
             }
           </datalist>
-          <button class="quiet-button" type="submit">{{ language.text('applyTimeZone') }}</button>
+          <app-button variant="quiet" type="submit">{{ language.text('applyTimeZone') }}</app-button>
         </div>
       </form>
     </div>
@@ -74,7 +74,7 @@
   } @else if (error()) {
     <div class="message error-message" role="alert">
       <span>{{ language.text('reportLoadError') }}</span>
-      <button class="text-action" type="button" (click)="retry()">{{ language.text('retry') }}</button>
+      <app-button variant="text" type="button" (click)="retry()">{{ language.text('retry') }}</app-button>
     </div>
   } @else if (report(); as data) {
     <section class="totals-panel" [attr.aria-label]="language.text('periodTotals')">
@@ -134,9 +134,10 @@
                 </td>
                 <td [attr.data-label]="language.text('gross')"><strong>{{ formatCurrency(transaction.grossTotal) }}</strong></td>
                 <td [attr.data-label]="language.text('transactionStatus')">
-                  <span class="badge" [class.warning]="isWarningStatus(transaction.status)">
-                    {{ statusLabel(transaction.status) }}
-                  </span>
+                  <app-status-badge
+                    [label]="statusLabel(transaction.status)"
+                    [tone]="isWarningStatus(transaction.status) ? 'warning' : 'active'"
+                  />
                 </td>
               </tr>
             }

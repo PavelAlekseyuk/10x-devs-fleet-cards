@@ -31,9 +31,9 @@
             <option [value]="vehicle.id">{{ vehicle.registrationPlate }}</option>
           }
         </select>
-        <button class="primary-button" type="submit" [disabled]="savingIssue || loadingVehicles || vehicles.length === 0">
+        <app-button type="submit" [disabled]="savingIssue || loadingVehicles || vehicles.length === 0">
           {{ language.text(savingIssue ? 'saving' : 'cardIssue') }} <span aria-hidden="true">+</span>
-        </button>
+        </app-button>
       </div>
       @if (issueError) {
         <p class="message error-message" role="alert">{{ issueError }}</p>
@@ -55,16 +55,19 @@
         <article class="card-item">
           <div class="card-summary">
             <div>
+              <span class="eyebrow">{{ language.text('cardCurrentVehicle') }}</span>
+              <strong class="vehicle-identity">{{ card.assignedVehicleRegistrationPlate ?? language.text('cardNoVehicle') }}</strong>
+            </div>
+            <div>
               <span class="eyebrow">{{ language.text('cardNumber') }}</span>
               <strong class="masked-pan">{{ card.maskedPan }}</strong>
             </div>
             <div>
-              <span class="eyebrow">{{ language.text('cardCurrentVehicle') }}</span>
-              <strong>{{ card.assignedVehicleRegistrationPlate ?? language.text('cardNoVehicle') }}</strong>
-            </div>
-            <div>
               <span class="eyebrow">{{ language.text('cardState') }}</span>
-              <span class="badge" [class.warning]="card.state !== 'Active'">{{ stateLabel(card.state) }}</span>
+              <app-status-badge
+                [label]="stateLabel(card.state)"
+                [tone]="card.state === 'Active' ? 'active' : 'warning'"
+              />
             </div>
           </div>
 

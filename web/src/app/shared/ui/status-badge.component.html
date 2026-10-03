@@ -1,0 +1,8 @@
+<span
+  class="status-badge"
+  [class.status-badge--active]="tone === 'active'"
+  [class.status-badge--warning]="tone === 'warning'"
+  [attr.data-tone]="tone"
+>
+  {{ label }}
+</span>

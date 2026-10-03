@@ -1,4 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
+import { ButtonComponent } from './shared/ui/button.component';
+import { StatusBadgeComponent } from './shared/ui/status-badge.component';
 import { AuthService } from './auth.service';
 import { FleetVehicle, FleetVehicleRequest, FleetVehiclesService } from './fleet-vehicles.service';
 import { LanguageService, TranslationKey } from './language.service';
@@ -23,6 +25,7 @@ const fuelTranslationKeys: Record<string, TranslationKey> = {
 @Component({
   selector: 'app-fleet-vehicles',
   standalone: true,
+  imports: [ButtonComponent, StatusBadgeComponent],
   templateUrl: './fleet-vehicles.component.html',
   styleUrl: './fleet-vehicles.component.scss',
 })

@@ -1,13 +1,14 @@
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { ButtonComponent } from './shared/ui/button.component';
 import { AuthService } from './auth.service';
 import { LanguageService } from './language.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, ButtonComponent],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })

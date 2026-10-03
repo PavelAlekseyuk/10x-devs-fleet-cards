@@ -3,7 +3,7 @@
 }
 
 .card-management {
-  color: #24372f;
+  color: var(--ui-color-foreground-strong);
 }
 
 .card-heading {
@@ -22,13 +22,13 @@
 
 .issue-form,
 .card-list {
-  background: #fff;
+  background: var(--ui-color-surface);
 }
 
 .issue-form {
   margin-bottom: 24px;
   padding: 20px;
-  border-top: 3px solid #e86c54;
+  border-top: 3px solid var(--ui-color-primary);
 }
 
 .issue-copy h3,
@@ -41,7 +41,7 @@
 
 .issue-copy p {
   margin: 6px 0 18px;
-  color: #718078;
+  color: var(--ui-color-muted);
   font-size: 13px;
 }
 
@@ -49,7 +49,7 @@
 .card-actions label {
   display: grid;
   gap: 7px;
-  color: #52645b;
+  color: var(--ui-color-foreground-soft);
   font-size: 12px;
   font-weight: 700;
 }
@@ -65,10 +65,10 @@ select {
   min-width: 0;
   min-height: 40px;
   padding: 8px 10px;
-  border: 1px solid #cbd4cc;
+  border: 1px solid var(--ui-color-border);
   border-radius: 2px;
-  color: #24372f;
-  background: #fff;
+  color: var(--ui-color-foreground-strong);
+  background: var(--ui-color-surface);
   font: inherit;
 }
 
@@ -76,38 +76,31 @@ select {
   flex: 1;
 }
 
-.primary-button,
-.quiet-button,
-.text-action {
-  min-height: 38px;
-  padding: 9px 12px;
-  border: 0;
-  border-radius: 2px;
-  cursor: pointer;
-  font: inherit;
-  font-size: 12px;
-}
-
-.primary-button {
-  color: #fff;
-  background: #e86c54;
-  font-weight: 700;
-}
-
-.primary-button span {
+.issue-controls app-button span {
   margin-left: 9px;
   font-size: 17px;
 }
 
-.quiet-button {
-  color: #344b40;
-  background: #f1f2ec;
+.text-action {
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 2px;
+  color: var(--ui-button-text-foreground);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
 }
 
-.text-action {
-  color: #34755f;
-  background: transparent;
-  font-weight: 700;
+.text-action:hover {
+  background: var(--ui-button-text-hover-background);
+}
+
+.text-action:focus-visible {
+  outline: 3px solid var(--ui-focus-ring);
+  outline-offset: 2px;
 }
 
 button:disabled,
@@ -122,21 +115,21 @@ select:disabled {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #e6e7e1;
+  border-bottom: 1px solid var(--ui-color-border-subtle);
 }
 
 .record-count {
   min-width: 28px;
   padding: 5px 8px;
-  color: #52645b;
-  background: #edf1ec;
+  color: var(--ui-color-foreground-soft);
+  background: var(--ui-color-surface-muted);
   text-align: center;
   font-size: 11px;
 }
 
 .card-item {
   padding: 20px;
-  border-bottom: 1px solid #e6e7e1;
+  border-bottom: 1px solid var(--ui-color-border-subtle);
 }
 
 .card-summary {
@@ -154,29 +147,24 @@ select:disabled {
 
 .eyebrow {
   margin: 0;
-  color: #75827a;
+  color: var(--ui-color-muted-subtle);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: .12em;
   text-transform: uppercase;
 }
 
-.masked-pan,
-.card-summary strong {
+.masked-pan {
   font-size: 14px;
 }
 
-.badge {
-  width: max-content;
-  padding: 5px 8px;
-  color: #34755f;
-  background: #e2f2e8;
-  font-size: 10px;
+.card-summary .vehicle-identity {
+  color: var(--ui-color-foreground-strong);
+  font-size: 18px;
 }
 
-.badge.warning {
-  color: #9b6632;
-  background: #f8ead4;
+.masked-pan {
+  color: var(--ui-color-muted);
 }
 
 .card-actions {
@@ -185,7 +173,7 @@ select:disabled {
   display: flex;
   align-items: end;
   gap: 10px;
-  border-top: 1px solid #eef0eb;
+  border-top: 1px solid var(--ui-color-border-subtle);
 }
 
 .card-actions label {
@@ -199,8 +187,8 @@ select:disabled {
 .history-panel {
   margin-top: 18px;
   padding: 18px 20px;
-  border-left: 3px solid #5a9d89;
-  background: #f5f8f4;
+  border-left: 3px solid var(--ui-color-focus);
+  background: var(--ui-color-surface-muted);
 }
 
 .history-panel h4 {
@@ -210,7 +198,7 @@ select:disabled {
 .state-timeline {
   margin: 0;
   padding: 0 0 0 18px;
-  border-left: 1px solid #a8c7b6;
+  border-left: 1px solid var(--ui-color-accent);
   list-style: none;
 }
 
@@ -219,7 +207,7 @@ select:disabled {
   padding: 0 0 18px 12px;
   display: grid;
   gap: 5px;
-  color: #718078;
+  color: var(--ui-color-muted);
   font-size: 12px;
 }
 
@@ -234,30 +222,41 @@ select:disabled {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #5a9d89;
+  background: var(--ui-color-focus);
   content: '';
 }
 
 .state-timeline strong {
-  color: #24372f;
+  color: var(--ui-color-foreground-strong);
   font-size: 13px;
 }
 
 .message {
   margin: 0;
   padding: 20px;
-  color: #64736a;
+  color: var(--ui-color-muted);
   font-size: 13px;
 }
 
 .error-message {
   margin: 0 0 16px;
-  color: #9a3d32;
-  background: #fff0ed;
+  color: var(--ui-color-destructive);
+  background: var(--ui-color-destructive-background);
 }
 
 .empty-message {
-  border-top: 1px solid #eef0eb;
+  border-top: 1px solid var(--ui-color-border-subtle);
+}
+
+input:hover,
+select:hover {
+  border-color: var(--ui-color-focus);
+}
+
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--ui-focus-ring);
+  outline-offset: 2px;
 }
 
 @media (max-width: 720px) {

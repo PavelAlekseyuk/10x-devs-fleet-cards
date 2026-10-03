@@ -1,0 +1,52 @@
+:host {
+  display: inline-block;
+}
+
+button {
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+
+.button--primary {
+  border-color: var(--ui-button-primary-background);
+  color: var(--ui-button-primary-foreground);
+  background: var(--ui-button-primary-background);
+}
+
+.button--primary:hover:not(:disabled) {
+  background: var(--ui-button-primary-hover-background);
+}
+
+.button--quiet {
+  border-color: var(--ui-button-quiet-border);
+  color: var(--ui-button-quiet-foreground);
+  background: var(--ui-button-quiet-background);
+}
+
+.button--quiet:hover:not(:disabled) {
+  background: var(--ui-button-quiet-hover-background);
+}
+
+.button--text {
+  color: var(--ui-button-text-foreground);
+  background: transparent;
+}
+
+.button--text:hover:not(:disabled) {
+  background: var(--ui-button-text-hover-background);
+}
+
+button:focus-visible {
+  outline: 3px solid var(--ui-focus-ring);
+  outline-offset: 2px;
+}
+
+button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
