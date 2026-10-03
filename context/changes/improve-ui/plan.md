@@ -235,23 +235,23 @@ No data migration or API compatibility work is required. All current route surfa
 
 #### Automated
 
-- [x] 3.1 `cd web; npm test` passes with component coverage for vehicle-first hierarchy, issue/state/history behavior, localization, permissions, and no reassignment controls or requests.
-- [x] 3.2 `cd web; npm run build` passes with the card page consuming the shared UI primitives.
-- [x] 3.3 `rg -n -i --glob '*.scss' --glob '*.html' --glob '*.ts' '(#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?)\s*\()' web/src/app` reports no matches in the migrated route surfaces. For this gate, color literals mean hex, RGB, or HSL notation.
+- [x] 3.1 `cd web; npm test` passes with component coverage for vehicle-first hierarchy, issue/state/history behavior, localization, permissions, and no reassignment controls or requests. — 579d012
+- [x] 3.2 `cd web; npm run build` passes with the card page consuming the shared UI primitives. — 579d012
+- [x] 3.3 `rg -n -i --glob '*.scss' --glob '*.html' --glob '*.ts' '(#[0-9a-f]{3,8}\b|\b(?:rgba?|hsla?)\s*\()' web/src/app` reports no matches in the migrated route surfaces. For this gate, color literals mean hex, RGB, or HSL notation. — 579d012
 
 #### Manual
 
-- [ ] 3.4 Inspect login, overview, cars, cards, transactions, and programs at 1280×800 desktop and 390×844 mobile widths; confirm each remains usable and visually aligned.
-- [ ] 3.5 Review hover and keyboard focus-visible feedback on interactive controls across all route surfaces; confirm existing behavior remains unchanged.
+- [x] 3.4 Inspect login, overview, cars, cards, transactions, and programs at 1280×800 desktop and 390×844 mobile widths; confirm each remains usable and visually aligned. — 579d012
+- [x] 3.5 Review hover and keyboard focus-visible feedback on interactive controls across all route surfaces; confirm existing behavior remains unchanged. — 579d012
 
 ### Phase 4: Interaction States, Portal Visual Gate, and Guard
 
 #### Automated
 
-- [ ] 4.1 `cd web; npm test` passes with component assertions for default, disabled, error, empty, and loading card states and retains existing workflow coverage.
-- [ ] 4.2 `cd web; npm run test:e2e -- e2e/portal-visual.spec.ts` verifies card-control hover and keyboard focus-visible feedback in a real browser.
-- [ ] 4.3 `cd web; npm run test:e2e -- e2e/portal-visual.spec.ts` passes with desktop and mobile screenshot comparisons for all six route surfaces.
-- [ ] 4.4 `cd web; npm run build` passes after the state and guard changes.
+- [x] 4.1 `cd web; npm test` passes with component assertions for default, disabled, error, empty, and loading card states and retains existing workflow coverage.
+- [x] 4.2 `cd web; npm run test:e2e -- e2e/portal-visual.spec.ts` verifies card-control hover and keyboard focus-visible feedback in a real browser.
+- [x] 4.3 `cd web; npm run test:e2e -- e2e/portal-visual.spec.ts` passes with desktop and mobile screenshot comparisons for all six route surfaces.
+- [x] 4.4 `cd web; npm run build` passes after the state and guard changes.
 
 #### Manual
 

@@ -52,7 +52,6 @@ describe('CardManagementComponent', () => {
     }).compileComponents();
     http = TestBed.inject(HttpTestingController);
   });
-
   afterEach(() => http.verify());
 
   function createFixture(permission: 'ReadWrite' | 'ReadOnly' = 'ReadWrite') {
@@ -269,5 +268,91 @@ describe('CardManagementComponent', () => {
     expect(element.textContent).toContain('Wydaj kartę wirtualną');
     expect(element.textContent).toContain('Aktywna');
     expect(element.textContent).toContain('Historia statusu');
+  });
+
+  describe('interaction states', () => {
+    it('renders the default state with enabled controls and named actions', async () => {
+      const fixture = createFixture();
+      await flushInitial(fixture);
+      const element = fixture.nativeElement as HTMLElement;
+
+      expect(element.querySelector<HTMLSelectElement>('#card-issue-vehicle')!.disabled).toBe(false);
+      expect(element.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(false);
+      expect(
+        element.querySelector<HTMLSelectElement>('[aria-label="Status: •••• 4242"]')!.disabled,
+      ).toBe(false);
+      expect(element.querySelector('button.text-action')?.getAttribute('aria-expanded')).toBe('false');
+      expect(element.querySelector('[role="alert"]')).toBeNull();
+      expect(element.querySelector('[role="status"]')).toBeNull();
+    });
+
+    it('disables issuing when there are no active vehicles', async () => {
+      const fixture = createFixture();
+      await flushInitial(fixture, [card], []);
+      const element = fixture.nativeElement as HTMLElement;
+
+      expect(element.querySelector<HTMLSelectElement>('#card-issue-vehicle')!.disabled).toBe(true);
+      expect(element.querySelector<HTMLButtonElement>('button[type="submit"]')!.disabled).toBe(true);
+    });
+
+    it('disables card state changes while a state mutation is pending', async () => {
+      const fixture = createFixture();
+      await flushInitial(fixture);
+      const element = fixture.nativeElement as HTMLElement;
+      const stateSelect = element.querySelector<HTMLSelectElement>(
+        '[aria-label="Status: •••• 4242"]',
+      )!;
+      stateSelect.value = 'Blocked';
+      stateSelect.dispatchEvent(new Event('change'));
+      fixture.detectChanges();
+
+      expect(stateSelect.disabled).toBe(true);
+      http.expectOne('/api/cards/card-1/state').flush({ ...card, state: 'Blocked' });
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(stateSelect.disabled).toBe(false);
+    });
+
+    it('shows an alert when cards fail to load', async () => {
+      const fixture = createFixture();
+      fixture.detectChanges();
+      http.expectOne('/api/cards').flush('failure', { status: 500, statusText: 'Server Error' });
+      http.expectOne((request) => request.url === '/api/cars').flush([]);
+      await fixture.whenStable();
+      fixture.detectChanges();
+      const element = fixture.nativeElement as HTMLElement;
+
+      expect(element.querySelector('[role="alert"]')?.textContent).toContain(
+        'Could not load cards and active vehicles.',
+      );
+      expect(element.querySelector('.card-item')).toBeNull();
+      expect(element.querySelector('.empty-message')).toBeNull();
+    });
+
+    it('shows the empty message when no cards exist', async () => {
+      const fixture = createFixture();
+      await flushInitial(fixture, []);
+      const element = fixture.nativeElement as HTMLElement;
+
+      expect(element.querySelector('.empty-message')?.textContent).toContain(
+        'No virtual cards have been issued.',
+      );
+      expect(element.querySelector('.card-item')).toBeNull();
+    });
+
+    it('shows a loading status until cards and vehicles resolve', async () => {
+      const fixture = createFixture();
+      fixture.detectChanges();
+      const element = fixture.nativeElement as HTMLElement;
+
+      expect(element.querySelector('[role="status"]')?.textContent).toContain('Loading...');
+      expect(element.querySelector('.card-item')).toBeNull();
+
+      http.expectOne('/api/cards').flush([]);
+      http.expectOne((request) => request.url === '/api/cars').flush([]);
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(element.querySelector('[role="status"]')).toBeNull();
+    });
   });
 });
