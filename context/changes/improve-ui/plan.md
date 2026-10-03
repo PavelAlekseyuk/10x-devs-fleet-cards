@@ -248,12 +248,12 @@ No data migration or API compatibility work is required. All current route surfa
 
 #### Automated
 
-- [x] 4.1 `cd web; npm test` passes with component assertions for default, disabled, error, empty, and loading card states and retains existing workflow coverage.
-- [x] 4.2 `cd web; npm run test:e2e -- e2e/portal-visual.spec.ts` verifies card-control hover and keyboard focus-visible feedback in a real browser.
-- [x] 4.3 `cd web; npm run test:e2e -- e2e/portal-visual.spec.ts` passes with desktop and mobile screenshot comparisons for all six route surfaces.
-- [x] 4.4 `cd web; npm run build` passes after the state and guard changes.
+- [x] 4.1 `cd web; npm test` passes with component assertions for default, disabled, error, empty, and loading card states and retains existing workflow coverage. — 81245e6
+- [x] 4.2 `cd web; npm run test:e2e -- e2e/portal-visual.spec.ts` verifies card-control hover and keyboard focus-visible feedback in a real browser. — 81245e6
+- [x] 4.3 `cd web; npm run test:e2e -- e2e/portal-visual.spec.ts` passes with desktop and mobile screenshot comparisons for all six route surfaces. — 81245e6
+- [x] 4.4 `cd web; npm run build` passes after the state and guard changes. — 81245e6
 
 #### Manual
 
-- [ ] 4.5 Inspect each of the seven card states for readable content, accessible control names, visible keyboard focus, and token-driven feedback.
-- [ ] 4.6 Review all desktop and mobile route screenshot diffs; accept only diffs that match the approved portal-wide visual alignment.
+- [x] 4.5 Inspect each of the seven card states for readable content, accessible control names, visible keyboard focus, and token-driven feedback. — 81245e6
+- [x] 4.6 Review all desktop and mobile route screenshot diffs; accept only diffs that match the approved portal-wide visual alignment. — 81245e6
