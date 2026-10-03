@@ -1,0 +1,9 @@
+<button
+  [class.button--primary]="variant === 'primary'"
+  [class.button--quiet]="variant === 'quiet'"
+  [class.button--text]="variant === 'text'"
+  [type]="type"
+  [disabled]="disabled"
+>
+  <ng-content />
+</button>

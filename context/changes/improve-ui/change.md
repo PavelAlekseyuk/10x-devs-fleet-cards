@@ -1,7 +1,7 @@
 ---
 change_id: improve-ui
 title: Align card management around vehicle context
-status: planned
+status: implementing
 created: 2026-10-03
 updated: 2026-10-03
 archived_at: null

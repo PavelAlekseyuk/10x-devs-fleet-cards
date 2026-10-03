@@ -217,8 +217,8 @@ No data migration or API compatibility work is required. All current route surfa
 
 #### Automated
 
-- [ ] 1.1 `cd web; npm test` passes with focused tests for native button type, accessible name, disabled behavior, variants, and status-badge tones.
-- [ ] 1.2 `cd web; npm run build` passes with the new standalone components under strict Angular template checking.
+- [x] 1.1 `cd web; npm test` passes with focused tests for native button type, accessible name, disabled behavior, variants, and status-badge tones.
+- [x] 1.2 `cd web; npm run build` passes with the new standalone components under strict Angular template checking.
 
 ### Phase 2: Semantic UI Tokens
 
