@@ -217,19 +217,19 @@ No data migration or API compatibility work is required. All current route surfa
 
 #### Automated
 
-- [x] 1.1 `cd web; npm test` passes with focused tests for native button type, accessible name, disabled behavior, variants, and status-badge tones.
-- [x] 1.2 `cd web; npm run build` passes with the new standalone components under strict Angular template checking.
+- [x] 1.1 `cd web; npm test` passes with focused tests for native button type, accessible name, disabled behavior, variants, and status-badge tones. — 3058fc2
+- [x] 1.2 `cd web; npm run build` passes with the new standalone components under strict Angular template checking. — 3058fc2
 
 ### Phase 2: Semantic UI Tokens
 
 #### Automated
 
-- [ ] 2.1 `cd web; npm run build` passes with the token definitions available through the configured global stylesheet.
-- [ ] 2.2 `context/changes/improve-ui/ui-tokens.md` and the source provenance note agree on the raw values added to `web/src/styles.scss`.
+- [x] 2.1 `cd web; npm run build` passes with the token definitions available through the configured global stylesheet.
+- [x] 2.2 `context/changes/improve-ui/ui-tokens.md` and the source provenance note agree on the raw values added to `web/src/styles.scss`.
 
 #### Manual
 
-- [ ] 2.3 Confirm the recorded roles preserve the approved forest-green, warm-neutral, and coral direction and do not introduce a second palette.
+- [x] 2.3 Confirm the recorded roles preserve the approved forest-green, warm-neutral, and coral direction and do not introduce a second palette.
 
 ### Phase 3: Vehicle-First Card Management and Route Migration
 

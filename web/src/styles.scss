@@ -3,3 +3,61 @@
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; }
 button, a { font: inherit; }
+
+/* Semantic UI tokens. Provenance: raw values reuse the forest-green, warm-neutral and coral
+   palette from existing view styles; see context/changes/improve-ui/ui-tokens.md. */
+:root {
+  --ui-color-foreground: #17231f;
+  --ui-color-foreground-strong: #24372f;
+  --ui-color-foreground-soft: #344b40;
+  --ui-color-muted: #64736a;
+  --ui-color-muted-subtle: #75827a;
+  --ui-color-primary: #e86c54;
+  --ui-color-primary-hover: color-mix(in srgb, #e86c54 88%, #16241f);
+  --ui-color-primary-foreground: #fff;
+  --ui-color-accent: #34755f;
+  --ui-color-sidebar: #16241f;
+  --ui-color-background: #f6f3ed;
+  --ui-color-surface: #fff;
+  --ui-color-surface-muted: #edf1ec;
+  --ui-color-border: #cbd4cc;
+  --ui-color-border-subtle: #eef0eb;
+  --ui-color-destructive: #9b4238;
+  --ui-color-destructive-background: #fbe5df;
+  --ui-color-status-active: #34755f;
+  --ui-color-status-active-background: #e2f2e8;
+  --ui-color-status-warning: #9b6632;
+  --ui-color-status-warning-background: #f8ead4;
+  --ui-color-focus: #5a9d89;
+
+  --ui-space-1: 4px;
+  --ui-space-2: 8px;
+  --ui-space-3: 12px;
+  --ui-space-4: 16px;
+  --ui-space-5: 24px;
+  --ui-space-6: 32px;
+  --ui-radius-none: 0;
+  --ui-radius-sm: 2px;
+  --ui-radius-pill: 999px;
+  --ui-font-body: 'DM Sans', sans-serif;
+  --ui-font-display: 'Space Grotesk', sans-serif;
+  --ui-font-size-xs: 11px;
+  --ui-font-size-sm: 13px;
+  --ui-font-size-md: 14px;
+  --ui-font-size-lg: 18px;
+
+  --ui-button-primary-background: var(--ui-color-primary);
+  --ui-button-primary-foreground: var(--ui-color-primary-foreground);
+  --ui-button-primary-hover-background: var(--ui-color-primary-hover);
+  --ui-button-quiet-background: var(--ui-color-surface);
+  --ui-button-quiet-foreground: var(--ui-color-foreground-soft);
+  --ui-button-quiet-border: var(--ui-color-border);
+  --ui-button-quiet-hover-background: var(--ui-color-surface-muted);
+  --ui-button-text-foreground: var(--ui-color-accent);
+  --ui-button-text-hover-background: var(--ui-color-surface-muted);
+  --ui-focus-ring: var(--ui-color-focus);
+  --ui-status-active-foreground: var(--ui-color-status-active);
+  --ui-status-active-background: var(--ui-color-status-active-background);
+  --ui-status-warning-foreground: var(--ui-color-status-warning);
+  --ui-status-warning-background: var(--ui-color-status-warning-background);
+}
