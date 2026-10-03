@@ -10,7 +10,7 @@ Semantic tokens defined in `web/src/styles.scss` (`:root`). Raw values reuse the
 | `--ui-color-foreground-strong` | `#24372f` | Headings/sidebar hover in view and shell styles |
 | `--ui-color-foreground-soft` | `#344b40` | Labels in card/report/vehicle styles |
 | `--ui-color-muted` | `#64736a` | Messages/secondary text in `app.scss`, views |
-| `--ui-color-muted-subtle` | `#75827a` | Eyebrow/record-count text |
+| `--ui-color-muted-subtle` | `var(--ui-color-muted)` | Eyebrow/record-count text; aliases the existing muted color for stronger contrast |
 | `--ui-color-primary` | `#e86c54` | Coral primary button, active nav border (`app.scss`, login) |
 | `--ui-color-primary-hover` | `color-mix(in srgb, #e86c54 88%, #16241f)` | Derived: coral darkened with existing sidebar green |
 | `--ui-color-primary-foreground` | `#fff` | Primary button text |
@@ -45,7 +45,7 @@ Names referenced by `button.component.scss` and `status-badge.component.scss`:
 | Alias | Resolves to |
 | --- | --- |
 | `--ui-button-primary-background` | `--ui-color-primary` |
-| `--ui-button-primary-foreground` | `--ui-color-primary-foreground` |
+| `--ui-button-primary-foreground` | `--ui-color-foreground` |
 | `--ui-button-primary-hover-background` | `--ui-color-primary-hover` |
 | `--ui-button-quiet-background` | `--ui-color-surface` |
 | `--ui-button-quiet-foreground` | `--ui-color-foreground-soft` |

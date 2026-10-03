@@ -116,7 +116,7 @@ Rework card summaries around the assigned registration plate, then apply the sha
 
 #### 2. Migrate every current route surface
 
-**Files**: `web/src/app/app.scss`, `web/src/app/shell.component.html`, `web/src/app/login.component.html`, `web/src/app/login.component.scss`, `web/src/app/fleet-vehicles.component.html`, `web/src/app/fleet-vehicles.component.scss`, `web/src/app/transaction-report.component.html`, `web/src/app/transaction-report.component.scss`
+**Files**: `web/src/app/app.scss`, `web/src/app/shell.component.html`, `web/src/app/login.component.html`, `web/src/app/login.component.scss`, `web/src/app/fleet-vehicles.component.html`, `web/src/app/fleet-vehicles.component.scss`, `web/src/app/fleet-vehicles.component.spec.ts`, `web/src/app/transaction-report.component.html`, `web/src/app/transaction-report.component.scss`
 
 **Intent**: Align the authenticated shell (including overview and the programs placeholder), login, vehicle management, and transaction report with the same semantic palette and interaction treatment as cards.
 

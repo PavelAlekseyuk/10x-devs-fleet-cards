@@ -11,7 +11,7 @@ button, a { font: inherit; }
   --ui-color-foreground-strong: #24372f;
   --ui-color-foreground-soft: #344b40;
   --ui-color-muted: #64736a;
-  --ui-color-muted-subtle: #75827a;
+  --ui-color-muted-subtle: var(--ui-color-muted);
   --ui-color-primary: #e86c54;
   --ui-color-primary-hover: color-mix(in srgb, #e86c54 88%, #16241f);
   --ui-color-primary-foreground: #fff;
@@ -47,7 +47,7 @@ button, a { font: inherit; }
   --ui-font-size-lg: 18px;
 
   --ui-button-primary-background: var(--ui-color-primary);
-  --ui-button-primary-foreground: var(--ui-color-primary-foreground);
+  --ui-button-primary-foreground: var(--ui-color-foreground);
   --ui-button-primary-hover-background: var(--ui-color-primary-hover);
   --ui-button-quiet-background: var(--ui-color-surface);
   --ui-button-quiet-foreground: var(--ui-color-foreground-soft);
