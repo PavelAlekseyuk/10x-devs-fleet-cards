@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { CardManagementComponent } from './card-management.component';
 import { FleetVehiclesComponent } from './fleet-vehicles.component';
 import { LanguageService, TranslationKey } from './language.service';
+import { ProgramsComponent } from './programs.component';
 import { DashboardSummary, TransactionReportService } from './transaction-report.service';
 import { TransactionReportComponent } from './transaction-report.component';
 import { UserSettingsService } from './user-settings.service';
@@ -25,6 +26,7 @@ interface Client { legalName: string; nip: string; jurisdiction: string; address
     FleetVehiclesComponent,
     CardManagementComponent,
     TransactionReportComponent,
+    ProgramsComponent,
     ButtonComponent,
     StatusBadgeComponent,
   ],

@@ -141,17 +141,17 @@ Source: [frame.md](./frame.md) (confidence MEDIUM).
 
 #### Automated
 
-- [x] 4.1 Programs/history endpoints
-- [x] 4.2 Switch endpoint with validation and tests
-- [x] 4.3 Schedule assignment end without successor, with validation and tests
+- [x] 4.1 Programs/history endpoints — 4d901a7
+- [x] 4.2 Switch endpoint with validation and tests — 4d901a7
+- [x] 4.3 Schedule assignment end without successor, with validation and tests — 4d901a7
 
 ### Phase 5: Programs UI
 
 #### Automated
 
-- [ ] 5.1 Programs list, history and removal of Add new
-- [ ] 5.2 Change-program popup and specs
-- [ ] 5.3 Schedule an unassigned period from Programs UI and specs
+- [x] 5.1 Programs list, history and removal of Add new
+- [x] 5.2 Change-program popup and specs
+- [x] 5.3 Schedule an unassigned period from Programs UI and specs
 
 ### Phase 6: Demo generator
 
