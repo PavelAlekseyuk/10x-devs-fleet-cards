@@ -97,18 +97,27 @@ public sealed class EfFleetCardsReadService(
             .ToArrayAsync(cancellationToken);
     }
 
-    public IReadOnlyList<FleetCardProgramResponse> GetPrograms() =>
-        dbContext
+    public IReadOnlyList<FleetCardProgramResponse> GetPrograms()
+    {
+        var programs = dbContext
             .Programs.AsNoTracking()
             .OrderBy(program => program.ActiveFrom)
             .ThenBy(program => program.Name)
+            .ToArray();
+        var rules = dbContext.ProgramRules.AsNoTracking().ToArray();
+        return programs
             .Select(program => new FleetCardProgramResponse(
                 program.Id,
                 program.Name,
                 program.ActiveFrom,
-                program.ActiveTo
+                program.ActiveTo,
+                rules.Where(rule => rule.ProgramId == program.Id)
+                    .Select(rule => new FleetCardProgramRuleResponse(rule.FuelType, rule.Percent))
+                    .OrderBy(rule => rule.FuelType, StringComparer.Ordinal)
+                    .ToArray()
             ))
             .ToArray();
+    }
 }
 
 public sealed class EfAuthenticationService(FleetCardsDbContext dbContext) : IAuthenticationService

@@ -135,15 +135,15 @@ Source: [frame.md](./frame.md) (confidence MEDIUM).
 
 #### Automated
 
-- [x] 3.1 Comparison service and endpoint with tests
+- [x] 3.1 Comparison service and endpoint with tests — 17ce576
 
 ### Phase 4: Assignment API
 
 #### Automated
 
-- [ ] 4.1 Programs/history endpoints
-- [ ] 4.2 Switch endpoint with validation and tests
-- [ ] 4.3 Schedule assignment end without successor, with validation and tests
+- [x] 4.1 Programs/history endpoints
+- [x] 4.2 Switch endpoint with validation and tests
+- [x] 4.3 Schedule assignment end without successor, with validation and tests
 
 ### Phase 5: Programs UI
 

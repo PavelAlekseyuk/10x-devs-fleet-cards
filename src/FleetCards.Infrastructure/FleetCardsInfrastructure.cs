@@ -30,6 +30,7 @@ public static class FleetCardsInfrastructure
             services.AddSingleton<ICardProvider, MockCardProvider>();
             services.AddScoped<IProgramResolutionDataSource, EfProgramResolutionDataSource>();
             services.AddScoped<IProgramResolutionService, ProgramResolutionService>();
+            services.AddScoped<IProgramAssignmentService, EfProgramAssignmentService>();
             services.AddScoped<MockFuelTransactionGenerator>(serviceProvider =>
                 new MockFuelTransactionGenerator(
                     vatRate,
@@ -50,6 +51,7 @@ public static class FleetCardsInfrastructure
         services.AddSingleton<ICardProvider, MockCardProvider>();
         services.AddSingleton<IProgramResolutionDataSource, SeededProgramResolutionDataSource>();
         services.AddSingleton<IProgramResolutionService, ProgramResolutionService>();
+        services.AddSingleton<IProgramAssignmentService, SeededProgramAssignmentService>();
         services.AddSingleton<MockFuelTransactionGenerator>(serviceProvider =>
             new MockFuelTransactionGenerator(
                 vatRate,

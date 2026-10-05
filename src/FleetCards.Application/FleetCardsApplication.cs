@@ -133,7 +133,8 @@ public sealed class SeededProgramResolutionDataSource : IProgramResolutionDataSo
         .. CreateRules(AndromedaPetrolId, -0.03m, 0.09m),
         .. CreateRules(VoyagerBalancedId, 0.03m, 0.02m),
     ];
-    private static readonly ClientProgramAssignment[] Assignments =
+    internal static readonly object AssignmentLock = new();
+    private static readonly List<ClientProgramAssignment> Assignments =
     [
         new()
         {
@@ -147,6 +148,35 @@ public sealed class SeededProgramResolutionDataSource : IProgramResolutionDataSo
     public IReadOnlyList<FleetCardProgramRule> GetRules() => Rules;
 
     public IReadOnlyList<ClientProgramAssignment> GetAssignments() => Assignments;
+
+    internal static IReadOnlyList<ClientProgramAssignment> GetAssignmentSnapshot()
+    {
+        lock (AssignmentLock)
+        {
+            return Assignments.ToArray();
+        }
+    }
+
+    internal static void ApplyPlan(ProgramAssignmentPlan plan)
+    {
+        lock (AssignmentLock)
+        {
+            Assignments.RemoveAll(assignment =>
+                plan.PendingAssignmentIdsToReplace.Contains(assignment.Id)
+            );
+            if (plan.ActiveAssignmentId is not null)
+            {
+                Assignments
+                    .Single(assignment => assignment.Id == plan.ActiveAssignmentId.Value)
+                    .EndsAt = plan.ActiveEndsAt;
+            }
+
+            if (plan.NewAssignment is not null)
+            {
+                Assignments.Add(plan.NewAssignment);
+            }
+        }
+    }
 
     private static FleetCardProgramRule[] CreateRules(
         Guid programId,
@@ -166,7 +196,8 @@ public sealed class SeededProgramResolutionDataSource : IProgramResolutionDataSo
 public sealed class SeededFleetCardsReadService(
     IFleetCardService cardService,
     IFleetVehicleService vehicleService,
-    ITransactionReportingService reportingService
+    ITransactionReportingService reportingService,
+    IProgramResolutionDataSource programDataSource
 ) : IFleetCardsReadService
 {
     public CurrentUserResponse GetCurrentUser() => new("anna.nowak", "ReadWrite");
@@ -213,31 +244,168 @@ public sealed class SeededFleetCardsReadService(
         );
     }
 
-    public IReadOnlyList<FleetCardProgramResponse> GetPrograms() =>
-        [
-            new(
-                Guid.Parse("55555555-5555-5555-5555-555555555557"),
-                "Andromeda Petrol",
+    public IReadOnlyList<FleetCardProgramResponse> GetPrograms()
+    {
+        var programs = new[]
+        {
+            (Guid.Parse("55555555-5555-5555-5555-555555555557"), "Andromeda Petrol"),
+            (Guid.Parse("55555555-5555-5555-5555-555555555555"), "Nebula Basic"),
+            (Guid.Parse("55555555-5555-5555-5555-555555555556"), "Orion Diesel"),
+            (Guid.Parse("55555555-5555-5555-5555-555555555558"), "Voyager Balanced"),
+        };
+        var rules = programDataSource.GetRules();
+        return programs
+            .Select(program => new FleetCardProgramResponse(
+                program.Item1,
+                program.Item2,
                 new DateTimeOffset(2026, 3, 21, 0, 0, 0, TimeSpan.Zero),
-                null
-            ),
-            new(
-                Guid.Parse("55555555-5555-5555-5555-555555555555"),
-                "Nebula Basic",
-                new DateTimeOffset(2026, 3, 21, 0, 0, 0, TimeSpan.Zero),
-                null
-            ),
-            new(
-                Guid.Parse("55555555-5555-5555-5555-555555555556"),
-                "Orion Diesel",
-                new DateTimeOffset(2026, 3, 21, 0, 0, 0, TimeSpan.Zero),
-                null
-            ),
-            new(
-                Guid.Parse("55555555-5555-5555-5555-555555555558"),
-                "Voyager Balanced",
-                new DateTimeOffset(2026, 3, 21, 0, 0, 0, TimeSpan.Zero),
-                null
-            ),
-        ];
+                null,
+                rules.Where(rule => rule.ProgramId == program.Item1)
+                    .Select(rule => new FleetCardProgramRuleResponse(rule.FuelType, rule.Percent))
+                    .OrderBy(rule => rule.FuelType, StringComparer.Ordinal)
+                    .ToArray()
+            ))
+            .ToArray();
+    }
+}
+
+public sealed class SeededProgramAssignmentService : IProgramAssignmentService
+{
+    private static readonly Guid ClientId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    private readonly IProgramResolutionDataSource dataSource;
+    private readonly List<FleetAuditEvent> auditEvents = [];
+
+    public SeededProgramAssignmentService(IProgramResolutionDataSource dataSource)
+    {
+        this.dataSource = dataSource;
+    }
+
+    public Task<IReadOnlyList<FleetCardProgramAssignmentResponse>> GetAssignmentsAsync(
+        CancellationToken cancellationToken = default
+    )
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        lock (SeededProgramResolutionDataSource.AssignmentLock)
+        {
+            return Task.FromResult<IReadOnlyList<FleetCardProgramAssignmentResponse>>(
+                SeededProgramResolutionDataSource
+                    .GetAssignmentSnapshot()
+                    .OrderBy(assignment => assignment.StartsAt)
+                    .Select(ToResponse)
+                    .ToArray()
+            );
+        }
+    }
+
+    public IReadOnlyList<FleetAuditEvent> GetAuditEvents()
+    {
+        lock (SeededProgramResolutionDataSource.AssignmentLock)
+        {
+            return auditEvents.ToArray();
+        }
+    }
+
+    public Task<ProgramAssignmentCommandResult> ScheduleSwitchAsync(
+        Guid programId,
+        DateTimeOffset startsAt,
+        string actor,
+        string correlationId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!dataSource.GetRules().Any(rule => rule.ProgramId == programId))
+        {
+            return Task.FromResult(ProgramAssignmentCommandResult.NotFound());
+        }
+
+        lock (SeededProgramResolutionDataSource.AssignmentLock)
+        {
+            var now = DateTimeOffset.UtcNow;
+            var plan = ProgramAssignmentService.PlanSwitch(
+                SeededProgramResolutionDataSource.GetAssignmentSnapshot(),
+                ClientId,
+                programId,
+                startsAt,
+                now
+            );
+            if (!plan.IsValid)
+            {
+                return Task.FromResult(
+                    ProgramAssignmentCommandResult.Invalid(plan.ValidationErrors!)
+                );
+            }
+
+            SeededProgramResolutionDataSource.ApplyPlan(plan);
+            RecordAudit(
+                plan.NewAssignment!.Id,
+                "ProgramAssignmentScheduled",
+                actor,
+                correlationId,
+                now
+            );
+            return Task.FromResult(ProgramAssignmentCommandResult.Success());
+        }
+    }
+
+    public Task<ProgramAssignmentCommandResult> EndAsync(
+        DateTimeOffset endsAt,
+        string actor,
+        string correlationId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        lock (SeededProgramResolutionDataSource.AssignmentLock)
+        {
+            var now = DateTimeOffset.UtcNow;
+            var plan = ProgramAssignmentService.PlanEnd(
+                SeededProgramResolutionDataSource.GetAssignmentSnapshot(),
+                ClientId,
+                endsAt,
+                now
+            );
+            if (!plan.IsValid)
+            {
+                return Task.FromResult(
+                    ProgramAssignmentCommandResult.Invalid(plan.ValidationErrors!)
+                );
+            }
+
+            SeededProgramResolutionDataSource.ApplyPlan(plan);
+            RecordAudit(
+                plan.ActiveAssignmentId!.Value,
+                "ProgramAssignmentEnded",
+                actor,
+                correlationId,
+                now
+            );
+            return Task.FromResult(ProgramAssignmentCommandResult.Success());
+        }
+    }
+
+    private void RecordAudit(
+        Guid assignmentId,
+        string action,
+        string actor,
+        string correlationId,
+        DateTimeOffset occurredAt
+    ) =>
+        auditEvents.Add(
+            new FleetAuditEvent
+            {
+                Id = Guid.NewGuid(),
+                Actor = actor,
+                Action = action,
+                EntityType = "ClientProgramAssignment",
+                EntityId = assignmentId,
+                OccurredAt = occurredAt,
+                Succeeded = true,
+                CorrelationId = correlationId,
+            }
+        );
+
+    private static FleetCardProgramAssignmentResponse ToResponse(
+        ClientProgramAssignment assignment
+    ) => new(assignment.Id, assignment.ProgramId, assignment.StartsAt, assignment.EndsAt);
 }
