@@ -574,6 +574,49 @@ app.MapGet("/api/programs", (IFleetCardsReadService service) => service.GetProgr
     .WithName("GetPrograms")
     .WithTags("Programs");
 
+app.MapGet(
+        "/api/programs/comparison",
+        async (
+            DateTimeOffset? from,
+            DateTimeOffset? to,
+            ProgramComparisonService service,
+            CancellationToken cancellationToken
+        ) =>
+        {
+            if (from is null || to is null)
+            {
+                var errors = new Dictionary<string, string[]>();
+                if (from is null)
+                {
+                    errors["from"] = ["A valid from timestamp is required."];
+                }
+
+                if (to is null)
+                {
+                    errors["to"] = ["A valid to timestamp is required."];
+                }
+
+                return Results.ValidationProblem(errors);
+            }
+
+            try
+            {
+                return Results.Ok(
+                    await service.GetComparisonAsync(from.Value, to.Value, cancellationToken)
+                );
+            }
+            catch (ArgumentException exception)
+            {
+                return Results.ValidationProblem(
+                    new Dictionary<string, string[]> { ["from"] = [exception.Message] }
+                );
+            }
+        }
+    )
+    .RequireAuthorization("ReadWrite")
+    .WithName("GetProgramComparison")
+    .WithTags("Programs");
+
 app.MapDefaultEndpoints();
 app.MapFallback(async context =>
 {

@@ -128,14 +128,14 @@ Source: [frame.md](./frame.md) (confidence MEDIUM).
 
 #### Automated
 
-- [x] 2.1 Program resolution service
-- [x] 2.2 Generator and issuance flows use it, with tests
+- [x] 2.1 Program resolution service — 3439945
+- [x] 2.2 Generator and issuance flows use it, with tests — 3439945
 
 ### Phase 3: Comparison API
 
 #### Automated
 
-- [ ] 3.1 Comparison service and endpoint with tests
+- [x] 3.1 Comparison service and endpoint with tests
 
 ### Phase 4: Assignment API
 

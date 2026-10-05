@@ -21,6 +21,7 @@ public static class FleetCardsInfrastructure
         services.AddSingleton<ITransactionReportingService>(
             new TransactionReportingService(timeZoneId)
         );
+        services.AddScoped<ProgramComparisonService>();
         if (!string.IsNullOrWhiteSpace(connectionString))
         {
             services.AddDbContext<FleetCardsDbContext>(options =>

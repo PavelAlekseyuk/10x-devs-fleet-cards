@@ -141,3 +141,25 @@ public sealed record FleetCardProgramResponse(
     DateTimeOffset ActiveFrom,
     DateTimeOffset? ActiveTo
 );
+
+public sealed record ProgramComparisonBaseline(
+    decimal NetTotal,
+    decimal VatTotal,
+    decimal GrossTotal
+);
+
+public sealed record ProgramComparisonProgramResponse(
+    Guid ProgramId,
+    string ProgramName,
+    decimal HypotheticalNetTotal,
+    decimal HypotheticalGrossTotal,
+    decimal NetSavings,
+    decimal GrossSavings
+);
+
+public sealed record ProgramComparisonResponse(
+    DateTimeOffset FromUtc,
+    DateTimeOffset ToUtc,
+    ProgramComparisonBaseline Baseline,
+    IReadOnlyList<ProgramComparisonProgramResponse> Programs
+);
