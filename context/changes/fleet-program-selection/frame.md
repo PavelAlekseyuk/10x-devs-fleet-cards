@@ -11,7 +11,7 @@ The Programs view is a placeholder. A client needs to pick the most suitable fle
 - **User's stated cause or approach**: Programs are third-party mock data (4 cosmos-named programs with per-fuel-type percentages); the history of selection plus a what-if comparison is all that is missing.
 - **User's proposed direction**: Mock 4 programs, record selection history (initialised from the first transaction), comparison popup sorted by total cost, switch with a future start, remove the "add program" button, apply the new discounts to transactions generated after the switch.
 - **Pre-dispatch narrowing** (user answers):
-  - Comparison base: recompute from POS price, `qty × unit price × (1 − program %)` for every transaction; the discount actually applied is ignored.
+  - Comparison baseline: show the currently calculated transaction totals, including discounts actually stored whether or not a program assignment exists; compare each program's hypothetical totals against that baseline.
   - Display both net and gross, rank by gross.
   - Newly generated transactions (card issuance) should also take the discount from the program active at their time.
   - History starts with program (a) from the earliest existing transaction. Backdated transactions older than that get no program (POS price).
@@ -37,7 +37,7 @@ The Programs view is a placeholder. A client needs to pick the most suitable fle
 
 ## Narrowing Signals
 
-- The user wants the comparison to recompute from POS price, so the existing `Discount` per litre is irrelevant to the what-if. That removes the need for a "current actual" baseline in the popup.
+- The user wants the comparison to show current calculated transaction totals (including applied discounts), not a no-discount POS-price baseline. Program hypotheses are calculated separately from station price using each program's percentage.
 - The user wants issuance-time transactions to take the program active at their `OccurredAt`. Because all mock transactions are in the past, a future-dated switch can never be observed in generated data; only a switch with a past or "now" start can. This is a showcase limitation worth stating up front.
 - History initialises with program (a) from the earliest transaction. A new card can later add transactions older than that start, and these get no discount. This is an accepted edge case.
 
@@ -57,14 +57,14 @@ The initial framing was largely correct, but it understated the work. This is a 
 
 ## What Changes for /10x-plan
 
-Plan the data model first (programs with fuel rules, client assignment history, seed of 4 programs plus the initial assignment, migration), then the comparison query, the switch endpoint (read-write only, future-or-now start, overlap rejection) and the UI. Treat applying discounts in the generator as a separate, explicit step.
+Plan the data model first (programs with fuel rules, client assignment history, seed of 4 programs plus the initial assignment, migration), then the comparison query, the switch and end-without-successor endpoints (read-write only, future effective times, overlap rejection) and the UI. Treat applying discounts in the generator as a separate, explicit step.
 
 ## Decisions from the discussion (2026-10-05)
 
 1. **Discount calculation.** The what-if comparison is computed on the fly from the POS price using program percentages. It is never stored. For stored transactions, the program whose period contains the transaction's `OccurredAt` supplies the percentage. If no program covers that instant, the discount is 0 and the POS price applies. Programs have non-overlapping periods of activity.
 2. **Demo data.** Open. The user suggests an admin/demo panel that generates random transactions for a chosen period (see below).
 3. **"Add new +" button.** It is the shared `addNew` button in the Programs section intro (`shell.component.html:101`, `language.service.ts:47`). It is removed for Programs and replaced by "Change program".
-4. **Seed.** "Baltic Standard" is replaced by the four mock programs; "no discounts" is the initial assignment. Existing transactions get discount 0 (see the immutability caveat below).
+4. **Seed.** "Baltic Standard" is replaced by the four mock programs; Nebula Basic is the initial assignment from the earliest transaction. Existing transactions get discount 0 (see the immutability caveat below).
 5. **Switch start.** A new program can start only in the future and must not intersect any previously selected period. The default start is now + 1 s.
 
 ## Resolved (2026-10-05, second round)
@@ -72,14 +72,14 @@ Plan the data model first (programs with fuel rules, client assignment history, 
 - Zeroing discounts on existing transactions (with net/VAT/gross recompute) is accepted as a one-time migration.
 - Demo transactions: build an admin panel (read-write) that generates random demo transactions for a chosen period. Plan it as its own slice.
 - Pending future switch: replacing it is allowed; the MVP changes current behaviour directly, with no feature flags.
+- Future unassigned periods: an assignment may be ended at a future instant without choosing a successor. Gaps between assignments are valid and resolve to zero discount. Once started, an assignment's client, program and start time are immutable; the system may set or revise its future end time when a future switch or end is scheduled or replaced. Ended history is immutable.
+- Percentage representation and accounting: rule percentages are fractional decimals (10% = `0.10`). Convert them to a per-litre discount rounded to four decimals; round each transaction's net and VAT to cents using its VAT rate, then calculate gross as net plus VAT. The what-if comparison follows the same sequence.
 
-## Remaining Open Questions for /10x-plan (the first three bullets and the demo-generation item are resolved above)
+## Remaining Open Questions for /10x-plan (resolved items are listed above)
 
 - **Immutability caveat.** Zeroing the discount on existing transactions modifies stored facts (decisions.md #6, domain-model.md:32). Treat it as a one-time seed/migration reset, like decision #18, and recompute `NetTotal`, `VatAmount` and `GrossTotal` in the same step. Confirm that is acceptable.
-- **Percent to stored amount.** `FuelTransaction.Discount` is per-litre. Decide whether the generator stores `unitPrice × percent` (keeping the existing column and reporting formula) or adds a percent column. Rounding follows decisions.md #11.
 - **Fuel mapping.** Petrol means 95, 98, 95+ and 98+; diesel means Diesel and Diesel+. Program (b) gives 10% on Diesel and Diesel+ and -2% on petrol, so the rules need an explicit per-fuel-type table, including premiums as negative percent.
 - **Comparison scope.** Which timezone defines "last month", and which statuses count (existing report rules: Completed and Recalculated)?
-- **Pending switch.** A future assignment can be replaced before it starts (decisions.md #12). Does replacing it count as "intersecting"? I'd say it does not.
 - **Existing-period gap.** The initial program starts at the earliest existing transaction. Later backdated transactions before that point pay the POS price.
 - **Demo transaction generation (item 2).** Three options:
   - (a) A read-write "Generate demo transactions" action for a chosen date range on the Programs or Cards screen. It is the closest to your suggestion, and the generator already supports deterministic creation.
