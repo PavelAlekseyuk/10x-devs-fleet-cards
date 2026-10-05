@@ -27,7 +27,14 @@ public static class FleetCardsInfrastructure
                 options.UseSqlServer(connectionString)
             );
             services.AddSingleton<ICardProvider, MockCardProvider>();
-            services.AddSingleton(new MockFuelTransactionGenerator(vatRate));
+            services.AddScoped<IProgramResolutionDataSource, EfProgramResolutionDataSource>();
+            services.AddScoped<IProgramResolutionService, ProgramResolutionService>();
+            services.AddScoped<MockFuelTransactionGenerator>(serviceProvider =>
+                new MockFuelTransactionGenerator(
+                    vatRate,
+                    serviceProvider.GetRequiredService<IProgramResolutionService>()
+                )
+            );
             services.AddScoped<IFleetCardService, EfFleetCardService>();
             services.AddScoped<IFleetCardsReadService, EfFleetCardsReadService>();
             services.AddScoped<IFleetVehicleService, EfFleetVehicleService>();
@@ -40,7 +47,14 @@ public static class FleetCardsInfrastructure
             serviceProvider.GetRequiredService<SeededFleetVehicleService>()
         );
         services.AddSingleton<ICardProvider, MockCardProvider>();
-        services.AddSingleton(new MockFuelTransactionGenerator(vatRate));
+        services.AddSingleton<IProgramResolutionDataSource, SeededProgramResolutionDataSource>();
+        services.AddSingleton<IProgramResolutionService, ProgramResolutionService>();
+        services.AddSingleton<MockFuelTransactionGenerator>(serviceProvider =>
+            new MockFuelTransactionGenerator(
+                vatRate,
+                serviceProvider.GetRequiredService<IProgramResolutionService>()
+            )
+        );
         services.AddSingleton<IFleetCardService, SeededFleetCardService>();
         services.AddScoped<IFleetCardsReadService, SeededFleetCardsReadService>();
         services.AddSingleton<IAuthenticationService, SeededAuthenticationService>();

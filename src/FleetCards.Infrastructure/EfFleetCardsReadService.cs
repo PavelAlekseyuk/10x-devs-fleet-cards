@@ -131,3 +131,13 @@ public sealed class EfAuthenticationService(FleetCardsDbContext dbContext) : IAu
     private FleetUser? FindUser(string userName) =>
         dbContext.Users.AsNoTracking().SingleOrDefault(user => user.UserName == userName.Trim());
 }
+
+public sealed class EfProgramResolutionDataSource(FleetCardsDbContext dbContext)
+    : IProgramResolutionDataSource
+{
+    public IReadOnlyList<FleetCardProgramRule> GetRules() =>
+        dbContext.ProgramRules.AsNoTracking().ToArray();
+
+    public IReadOnlyList<ClientProgramAssignment> GetAssignments() =>
+        dbContext.ClientProgramAssignments.AsNoTracking().ToArray();
+}

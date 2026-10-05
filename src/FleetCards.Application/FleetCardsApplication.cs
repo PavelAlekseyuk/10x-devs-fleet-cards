@@ -112,6 +112,57 @@ public interface IFleetCardsReadService
     IReadOnlyList<FleetCardProgramResponse> GetPrograms();
 }
 
+public sealed class SeededProgramResolutionDataSource : IProgramResolutionDataSource
+{
+    private static readonly Guid NebulaBasicId = Guid.Parse(
+        "55555555-5555-5555-5555-555555555555"
+    );
+    private static readonly Guid OrionDieselId = Guid.Parse(
+        "55555555-5555-5555-5555-555555555556"
+    );
+    private static readonly Guid AndromedaPetrolId = Guid.Parse(
+        "55555555-5555-5555-5555-555555555557"
+    );
+    private static readonly Guid VoyagerBalancedId = Guid.Parse(
+        "55555555-5555-5555-5555-555555555558"
+    );
+    private static readonly FleetCardProgramRule[] Rules =
+    [
+        .. CreateRules(NebulaBasicId, 0.10m, -0.02m),
+        .. CreateRules(OrionDieselId, 0m, 0m),
+        .. CreateRules(AndromedaPetrolId, -0.03m, 0.09m),
+        .. CreateRules(VoyagerBalancedId, 0.03m, 0.02m),
+    ];
+    private static readonly ClientProgramAssignment[] Assignments =
+    [
+        new()
+        {
+            Id = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000001"),
+            ClientId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+            ProgramId = NebulaBasicId,
+            StartsAt = new DateTimeOffset(2026, 9, 9, 12, 0, 0, TimeSpan.Zero),
+        },
+    ];
+
+    public IReadOnlyList<FleetCardProgramRule> GetRules() => Rules;
+
+    public IReadOnlyList<ClientProgramAssignment> GetAssignments() => Assignments;
+
+    private static FleetCardProgramRule[] CreateRules(
+        Guid programId,
+        decimal dieselPercent,
+        decimal petrolPercent
+    ) =>
+        [
+            new() { ProgramId = programId, FuelType = "Diesel", Percent = dieselPercent },
+            new() { ProgramId = programId, FuelType = "Diesel+", Percent = dieselPercent },
+            new() { ProgramId = programId, FuelType = "95", Percent = petrolPercent },
+            new() { ProgramId = programId, FuelType = "98", Percent = petrolPercent },
+            new() { ProgramId = programId, FuelType = "95+", Percent = petrolPercent },
+            new() { ProgramId = programId, FuelType = "98+", Percent = petrolPercent },
+        ];
+}
+
 public sealed class SeededFleetCardsReadService(
     IFleetCardService cardService,
     IFleetVehicleService vehicleService,
