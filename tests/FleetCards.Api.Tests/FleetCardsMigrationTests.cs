@@ -99,6 +99,140 @@ public sealed class FleetCardsMigrationTests
         Assert.Empty(await context.Database.GetPendingMigrationsAsync());
     }
 
+    [Fact]
+    public async Task Program_selection_migration_seeds_catalog_and_resets_transaction_totals()
+    {
+        await using var sqlServer = new MsSqlBuilder(
+            "mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04"
+        )
+            .WithPassword("FleetCards_migration_Test123!")
+            .Build();
+        await sqlServer.StartAsync();
+
+        var connectionString = new SqlConnectionStringBuilder(sqlServer.GetConnectionString())
+        {
+            InitialCatalog = $"FleetCardsProgramMigration_{Guid.NewGuid():N}",
+        }.ConnectionString;
+        var options = new DbContextOptionsBuilder<FleetCardsDbContext>()
+            .UseSqlServer(connectionString)
+            .Options;
+
+        await using var context = new FleetCardsDbContext(options);
+        await context.Database.MigrateAsync(MigrationBeforeAssignmentRequired);
+
+        var legacyTransactionId = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
+        context.Transactions.Add(
+            CreateTransaction(
+                legacyTransactionId,
+                legacyTransactionId,
+                1,
+                null,
+                TransactionStatus.Completed,
+                10m,
+                47.50m,
+                10.93m,
+                58.43m,
+                cardId: AssignedCardId
+            )
+        );
+        await context.SaveChangesAsync();
+
+        await context.Database.MigrateAsync();
+        context.ChangeTracker.Clear();
+
+        var programs = await context.Programs.OrderBy(program => program.Name).ToArrayAsync();
+        Assert.Equal(
+            new[] { "Andromeda Petrol", "Nebula Basic", "Orion Diesel", "Voyager Balanced" },
+            programs.Select(program => program.Name).ToArray()
+        );
+        Assert.DoesNotContain(programs, program => program.Name == "Baltic Standard");
+
+        var rules = await context.ProgramRules.ToDictionaryAsync(
+            rule => (rule.ProgramId, rule.FuelType),
+            rule => rule.Percent
+        );
+        var dieselFuelTypes = new[] { "Diesel", "Diesel+" };
+        var petrolFuelTypes = new[] { "95", "98", "95+", "98+" };
+        var expectedRules = dieselFuelTypes
+            .Select(fuelType =>
+                (Guid.Parse("55555555-5555-5555-5555-555555555555"), fuelType, 0.10m)
+            )
+            .Concat(
+                petrolFuelTypes.Select(fuelType =>
+                    (Guid.Parse("55555555-5555-5555-5555-555555555555"), fuelType, -0.02m)
+                )
+            )
+            .Concat(
+                dieselFuelTypes.Select(fuelType =>
+                    (Guid.Parse("55555555-5555-5555-5555-555555555556"), fuelType, 0m)
+                )
+            )
+            .Concat(
+                petrolFuelTypes.Select(fuelType =>
+                    (Guid.Parse("55555555-5555-5555-5555-555555555556"), fuelType, 0m)
+                )
+            )
+            .Concat(
+                dieselFuelTypes.Select(fuelType =>
+                    (Guid.Parse("55555555-5555-5555-5555-555555555557"), fuelType, -0.03m)
+                )
+            )
+            .Concat(
+                petrolFuelTypes.Select(fuelType =>
+                    (Guid.Parse("55555555-5555-5555-5555-555555555557"), fuelType, 0.09m)
+                )
+            )
+            .Concat(
+                dieselFuelTypes.Select(fuelType =>
+                    (Guid.Parse("55555555-5555-5555-5555-555555555558"), fuelType, 0.03m)
+                )
+            )
+            .Concat(
+                petrolFuelTypes.Select(fuelType =>
+                    (Guid.Parse("55555555-5555-5555-5555-555555555558"), fuelType, 0.02m)
+                )
+            )
+            .ToDictionary(
+                expectedRule => (expectedRule.Item1, expectedRule.Item2),
+                expectedRule => expectedRule.Item3
+            );
+        Assert.Equal(expectedRules.Count, rules.Count);
+        foreach (var expectedRule in expectedRules)
+        {
+            Assert.Equal(expectedRule.Value, rules[expectedRule.Key]);
+        }
+
+        var assignment = await context.ClientProgramAssignments.SingleAsync();
+        Assert.Equal(ClientId, assignment.ClientId);
+        Assert.Equal(Guid.Parse("55555555-5555-5555-5555-555555555555"), assignment.ProgramId);
+        Assert.Equal(new DateTimeOffset(2026, 9, 9, 12, 0, 0, TimeSpan.Zero), assignment.StartsAt);
+        Assert.Null(assignment.EndsAt);
+
+        var transactions = await context.Transactions.ToArrayAsync();
+        Assert.Equal(2, transactions.Length);
+        Assert.All(
+            transactions,
+            transaction =>
+            {
+                var expectedNet = decimal.Round(
+                    transaction.Quantity * transaction.UnitPrice,
+                    2,
+                    MidpointRounding.AwayFromZero
+                );
+                var expectedVat = decimal.Round(
+                    expectedNet * transaction.VatRate,
+                    2,
+                    MidpointRounding.AwayFromZero
+                );
+                Assert.Equal(0m, transaction.Discount);
+                Assert.Equal(expectedNet, transaction.NetTotal);
+                Assert.Equal(expectedVat, transaction.VatAmount);
+                Assert.Equal(expectedNet + expectedVat, transaction.GrossTotal);
+            }
+        );
+        Assert.Empty(await context.Database.GetPendingMigrationsAsync());
+    }
+
     private static async Task InsertLegacyFactsAsync(FleetCardsDbContext context)
     {
         await context.Database.ExecuteSqlInterpolatedAsync(
@@ -205,7 +339,8 @@ public sealed class FleetCardsMigrationTests
         decimal quantity,
         decimal netTotal,
         decimal vatAmount,
-        decimal grossTotal
+        decimal grossTotal,
+        Guid? cardId = null
     ) =>
         new()
         {
@@ -213,7 +348,7 @@ public sealed class FleetCardsMigrationTests
             LineageId = lineageId,
             Version = version,
             CorrectsTransactionId = correctsTransactionId,
-            CardId = LegacyCardId,
+            CardId = cardId ?? LegacyCardId,
             VehicleId = AssignedCarId,
             VehiclePlate = "WA 12345",
             OccurredAt = new DateTimeOffset(2026, 8, 1, 12, 0, 0, TimeSpan.Zero),

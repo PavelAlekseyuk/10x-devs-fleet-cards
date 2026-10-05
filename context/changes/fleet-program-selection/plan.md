@@ -120,9 +120,9 @@ Source: [frame.md](./frame.md) (confidence MEDIUM).
 
 #### Automated
 
-- [ ] 1.1 Domain entities and DbContext seed
-- [ ] 1.2 Migration with zero-discount data fix and snapshot
-- [ ] 1.3 Seeded services updated and migration test
+- [x] 1.1 Domain entities and DbContext seed
+- [x] 1.2 Migration with zero-discount data fix and snapshot
+- [x] 1.3 Seeded services updated and migration test
 
 ### Phase 2: Discount resolution
 

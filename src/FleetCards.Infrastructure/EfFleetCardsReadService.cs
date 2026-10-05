@@ -101,6 +101,7 @@ public sealed class EfFleetCardsReadService(
         dbContext
             .Programs.AsNoTracking()
             .OrderBy(program => program.ActiveFrom)
+            .ThenBy(program => program.Name)
             .Select(program => new FleetCardProgramResponse(
                 program.Id,
                 program.Name,

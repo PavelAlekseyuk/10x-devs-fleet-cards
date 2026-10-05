@@ -107,3 +107,19 @@ public sealed class FleetCardProgram
     public DateTimeOffset ActiveFrom { get; set; }
     public DateTimeOffset? ActiveTo { get; set; }
 }
+
+public sealed class FleetCardProgramRule
+{
+    public Guid ProgramId { get; set; }
+    public string FuelType { get; set; } = string.Empty;
+    public decimal Percent { get; set; }
+}
+
+public sealed class ClientProgramAssignment
+{
+    public Guid Id { get; set; }
+    public Guid ClientId { get; set; }
+    public Guid ProgramId { get; set; }
+    public DateTimeOffset StartsAt { get; set; }
+    public DateTimeOffset? EndsAt { get; set; }
+}

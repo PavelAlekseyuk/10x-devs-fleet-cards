@@ -165,9 +165,27 @@ public sealed class SeededFleetCardsReadService(
     public IReadOnlyList<FleetCardProgramResponse> GetPrograms() =>
         [
             new(
+                Guid.Parse("55555555-5555-5555-5555-555555555557"),
+                "Andromeda Petrol",
+                new DateTimeOffset(2026, 3, 21, 0, 0, 0, TimeSpan.Zero),
+                null
+            ),
+            new(
                 Guid.Parse("55555555-5555-5555-5555-555555555555"),
-                "Baltic Standard",
-                DateTimeOffset.UtcNow.AddMonths(-6),
+                "Nebula Basic",
+                new DateTimeOffset(2026, 3, 21, 0, 0, 0, TimeSpan.Zero),
+                null
+            ),
+            new(
+                Guid.Parse("55555555-5555-5555-5555-555555555556"),
+                "Orion Diesel",
+                new DateTimeOffset(2026, 3, 21, 0, 0, 0, TimeSpan.Zero),
+                null
+            ),
+            new(
+                Guid.Parse("55555555-5555-5555-5555-555555555558"),
+                "Voyager Balanced",
+                new DateTimeOffset(2026, 3, 21, 0, 0, 0, TimeSpan.Zero),
                 null
             ),
         ];
