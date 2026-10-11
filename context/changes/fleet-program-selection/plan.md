@@ -157,12 +157,12 @@ Source: [frame.md](./frame.md) (confidence MEDIUM).
 
 #### Automated
 
-- [x] 6.1 Demo generator endpoint with tests
-- [x] 6.2 Admin demo page, route and nav
+- [x] 6.1 Demo generator endpoint with tests — 4c2c03a
+- [x] 6.2 Admin demo page, route and nav — 4c2c03a
 
 ### Phase 7: E2E and snapshots
 
 #### Automated
 
-- [ ] 7.1 Playwright e2e and snapshot updates
-- [ ] 7.2 Full test run green
+- [x] 7.1 Playwright e2e and snapshot updates
+- [x] 7.2 Full test run green

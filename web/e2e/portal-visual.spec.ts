@@ -181,6 +181,9 @@ for (const viewport of viewports) {
         if (route.name === 'cards') {
           await expect(page.getByText(maskedPan)).toBeVisible();
         }
+        if (route.name === 'programs') {
+          await expect(page.getByRole('heading', { level: 3, name: 'Assignment history' })).toBeVisible();
+        }
         if (route.name === 'transactions') {
           await expect(page.getByRole('table')).toBeVisible();
         }

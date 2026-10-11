@@ -557,7 +557,8 @@ public sealed class FleetCardServiceTests
                 programResolutionService: new ProgramResolutionService(
                     new EfProgramResolutionDataSource(context)
                 )
-            )
+            ),
+            new SeededFleetVehicleService()
         );
 
     private static object ToStableValues(FuelTransaction transaction) =>
