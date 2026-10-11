@@ -164,5 +164,5 @@ Source: [frame.md](./frame.md) (confidence MEDIUM).
 
 #### Automated
 
-- [x] 7.1 Playwright e2e and snapshot updates
-- [x] 7.2 Full test run green
+- [x] 7.1 Playwright e2e and snapshot updates — ffde7cc
+- [x] 7.2 Full test run green — ffde7cc
