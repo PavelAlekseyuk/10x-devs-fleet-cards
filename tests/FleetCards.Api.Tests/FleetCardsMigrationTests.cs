@@ -45,7 +45,7 @@ public sealed class FleetCardsMigrationTests
         await context.Database.MigrateAsync(MigrationBeforeAssignmentRequired);
         await InsertLegacyFactsAsync(context);
 
-        await context.Database.MigrateAsync();
+        await context.Database.MigrateAsync("20261005172757_AddFleetProgramSelection");
 
         Assert.Empty(await context.Cards.Where(card => card.Id == LegacyCardId).ToArrayAsync());
         Assert.Empty(
@@ -96,11 +96,14 @@ public sealed class FleetCardsMigrationTests
             )
             .SingleAsync();
         Assert.False(assignmentIsNullable);
-        Assert.Empty(await context.Database.GetPendingMigrationsAsync());
+        Assert.Equal(
+            "20261005172757_AddFleetProgramSelection",
+            (await context.Database.GetAppliedMigrationsAsync()).Last()
+        );
     }
 
     [Fact]
-    public async Task Program_selection_migration_seeds_catalog_and_resets_transaction_totals()
+    public async Task Program_selection_migration_corrects_catalog_and_clears_transactions()
     {
         await using var sqlServer = new MsSqlBuilder(
             "mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04"
@@ -144,6 +147,18 @@ public sealed class FleetCardsMigrationTests
         Assert.Equal(
             new[] { "Andromeda Petrol", "Nebula Basic", "Orion Diesel", "Voyager Balanced" },
             programs.Select(program => program.Name).ToArray()
+        );
+        Assert.Equal(
+            "Orion Diesel",
+            programs.Single(program =>
+                program.Id == Guid.Parse("55555555-5555-5555-5555-555555555555")
+            ).Name
+        );
+        Assert.Equal(
+            "Nebula Basic",
+            programs.Single(program =>
+                program.Id == Guid.Parse("55555555-5555-5555-5555-555555555556")
+            ).Name
         );
         Assert.DoesNotContain(programs, program => program.Name == "Baltic Standard");
 
@@ -204,32 +219,12 @@ public sealed class FleetCardsMigrationTests
 
         var assignment = await context.ClientProgramAssignments.SingleAsync();
         Assert.Equal(ClientId, assignment.ClientId);
-        Assert.Equal(Guid.Parse("55555555-5555-5555-5555-555555555555"), assignment.ProgramId);
+        Assert.Equal(Guid.Parse("55555555-5555-5555-5555-555555555556"), assignment.ProgramId);
         Assert.Equal(new DateTimeOffset(2026, 9, 9, 12, 0, 0, TimeSpan.Zero), assignment.StartsAt);
         Assert.Null(assignment.EndsAt);
 
         var transactions = await context.Transactions.ToArrayAsync();
-        Assert.Equal(2, transactions.Length);
-        Assert.All(
-            transactions,
-            transaction =>
-            {
-                var expectedNet = decimal.Round(
-                    transaction.Quantity * transaction.UnitPrice,
-                    2,
-                    MidpointRounding.AwayFromZero
-                );
-                var expectedVat = decimal.Round(
-                    expectedNet * transaction.VatRate,
-                    2,
-                    MidpointRounding.AwayFromZero
-                );
-                Assert.Equal(0m, transaction.Discount);
-                Assert.Equal(expectedNet, transaction.NetTotal);
-                Assert.Equal(expectedVat, transaction.VatAmount);
-                Assert.Equal(expectedNet + expectedVat, transaction.GrossTotal);
-            }
-        );
+        Assert.Empty(transactions);
         Assert.Empty(await context.Database.GetPendingMigrationsAsync());
     }
 

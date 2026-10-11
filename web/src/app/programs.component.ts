@@ -24,6 +24,8 @@ import {
 
 type PeriodMode = 'last-month' | 'last-30-days' | 'custom';
 type ChangeAction = 'program' | 'end';
+type SortKey = 'hypotheticalNetTotal' | 'hypotheticalGrossTotal' | 'netSavings' | 'grossSavings';
+type SortDirection = 'asc' | 'desc';
 
 interface ProgramHistoryEntry {
   id: string;
@@ -63,6 +65,17 @@ export class ProgramsComponent implements OnInit {
   protected readonly invalidPeriod = signal(false);
   protected readonly invalidSchedule = signal(false);
   protected readonly historyEntries = computed(() => makeHistoryEntries(this.assignments()));
+  protected readonly sortKey = signal<SortKey | null>(null);
+  protected readonly sortDirection = signal<SortDirection>('asc');
+  protected readonly sortedComparisonPrograms = computed(() => {
+    const programs = this.comparison()?.programs ?? [];
+    const key = this.sortKey();
+    if (!key) {
+      return programs;
+    }
+    const factor = this.sortDirection() === 'asc' ? 1 : -1;
+    return [...programs].sort((left, right) => (left[key] - right[key]) * factor);
+  });
 
   @ViewChild('changeDialog') private changeDialog?: ElementRef<HTMLDialogElement>;
 
@@ -150,6 +163,32 @@ export class ProgramsComponent implements OnInit {
     this.selectedProgramId.set('');
   }
 
+  protected toggleSort(key: SortKey): void {
+    if (this.sortKey() !== key) {
+      this.sortKey.set(key);
+      this.sortDirection.set('asc');
+    } else if (this.sortDirection() === 'asc') {
+      this.sortDirection.set('desc');
+    } else {
+      this.sortKey.set(null);
+      this.sortDirection.set('asc');
+    }
+  }
+
+  protected ariaSort(key: SortKey): 'ascending' | 'descending' | 'none' {
+    if (this.sortKey() !== key) {
+      return 'none';
+    }
+    return this.sortDirection() === 'asc' ? 'ascending' : 'descending';
+  }
+
+  protected sortIndicator(key: SortKey): string {
+    if (this.sortKey() !== key) {
+      return '';
+    }
+    return this.sortDirection() === 'asc' ? '▲' : '▼';
+  }
+
   protected onActionChange(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
     if (value === 'program' || value === 'end') {
@@ -225,7 +264,7 @@ export class ProgramsComponent implements OnInit {
       style: 'percent',
       maximumFractionDigits: 2,
       signDisplay: 'exceptZero',
-    }).format(value);
+    }).format(value === 0 ? 0 : -value);
   }
 
   protected formatDateTime(value: string | Date): string {
@@ -339,6 +378,11 @@ export class ProgramsComponent implements OnInit {
           }
         },
       });
+  }
+
+  private resetSort(): void {
+    this.sortKey.set(null);
+    this.sortDirection.set('asc');
   }
 
   private resolvePeriod(): { from: Date; to: Date } | null {

@@ -376,13 +376,13 @@ public sealed class FleetCardsDbContext(DbContextOptions<FleetCardsDbContext> op
                 new FleetCardProgram
                 {
                     Id = Guid.Parse("55555555-5555-5555-5555-555555555555"),
-                    Name = "Nebula Basic",
+                    Name = "Orion Diesel",
                     ActiveFrom = new DateTimeOffset(2026, 3, 21, 0, 0, 0, TimeSpan.Zero),
                 },
                 new FleetCardProgram
                 {
                     Id = Guid.Parse("55555555-5555-5555-5555-555555555556"),
-                    Name = "Orion Diesel",
+                    Name = "Nebula Basic",
                     ActiveFrom = new DateTimeOffset(2026, 3, 21, 0, 0, 0, TimeSpan.Zero),
                 },
                 new FleetCardProgram
@@ -555,7 +555,7 @@ public sealed class FleetCardsDbContext(DbContextOptions<FleetCardsDbContext> op
                 {
                     Id = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000001"),
                     ClientId = clientId,
-                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555555"),
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555556"),
                     StartsAt = new DateTimeOffset(2026, 9, 9, 12, 0, 0, TimeSpan.Zero),
                 }
             );

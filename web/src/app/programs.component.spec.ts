@@ -14,7 +14,8 @@ const programsResponse: ProgramsResponse = {
       activeTo: null,
       rules: [
         { fuelType: 'Diesel', percent: 0.05 },
-        { fuelType: '95', percent: 0.02 },
+        { fuelType: '95', percent: -0.02 },
+        { fuelType: '98', percent: 0 },
       ],
     },
     {
@@ -121,7 +122,9 @@ describe('ProgramsComponent', () => {
     const element = fixture.nativeElement as HTMLElement;
     expect(element.textContent).toContain('Nebula Basic');
     expect(element.textContent).toContain('Orion Diesel');
-    expect(element.textContent).toContain('5%');
+    expect(element.textContent).toContain('-5%');
+    expect(element.textContent).toContain('+2%');
+    expect(element.textContent).toContain('0%');
     expect(element.textContent).toContain('Unassigned');
     expect(element.textContent).toContain('No successor scheduled');
     expect(element.querySelector('button')?.textContent).not.toContain('Add new');
@@ -154,6 +157,87 @@ describe('ProgramsComponent', () => {
     expect(text).toContain('12.30');
   });
 
+  it('sorts program rows by cycling ascending, descending, and default while pinning the baseline', async () => {
+    const fixture = createFixture();
+    loadPrograms();
+    await fixture.whenStable();
+    const element = fixture.nativeElement as HTMLElement;
+    openDialog(element);
+    http.expectOne((entry) => entry.url === '/api/programs/comparison').flush(comparisonResponse);
+    await fixture.whenStable();
+
+    const headers = () =>
+      Array.from(element.querySelectorAll<HTMLTableCellElement>('.comparison-table thead th'));
+    const buttons = () =>
+      Array.from(element.querySelectorAll<HTMLButtonElement>('.comparison-table .sort-button'));
+    const rowNames = () =>
+      Array.from(element.querySelectorAll('.comparison-table tbody tr')).map((row) =>
+        row.textContent?.includes('Current actual cost')
+          ? 'baseline'
+          : row.querySelector('.program-choice span')?.textContent?.trim(),
+      );
+    const sortValues = () =>
+      headers()
+        .slice(1)
+        .map((header) => header.getAttribute('aria-sort'));
+
+    expect(buttons().length).toBe(4);
+    expect(headers()[0].hasAttribute('aria-sort')).toBe(false);
+    expect(sortValues()).toEqual(['none', 'none', 'none', 'none']);
+    expect(rowNames()).toEqual(['baseline', 'Orion Diesel', 'Nebula Basic']);
+
+    for (let index = 0; index < 4; index++) {
+      buttons()[index].click();
+      await fixture.whenStable();
+      const expected = ['none', 'none', 'none', 'none'];
+      expected[index] = 'ascending';
+      expect(sortValues()).toEqual(expected);
+      expect(rowNames()).toEqual(
+        ['baseline', 'Orion Diesel', 'Nebula Basic'].map((name, position) => {
+          // Orion has lower cost and higher savings, so ascending order differs by column kind.
+          return index < 2 ? name : ['baseline', 'Nebula Basic', 'Orion Diesel'][position];
+        }),
+      );
+
+      buttons()[index].click();
+      await fixture.whenStable();
+      expected[index] = 'descending';
+      expect(sortValues()).toEqual(expected);
+      expect(rowNames()).toEqual(
+        index < 2
+          ? ['baseline', 'Nebula Basic', 'Orion Diesel']
+          : ['baseline', 'Orion Diesel', 'Nebula Basic'],
+      );
+
+      buttons()[index].click();
+      await fixture.whenStable();
+      expect(sortValues()).toEqual(['none', 'none', 'none', 'none']);
+      expect(rowNames()).toEqual(['baseline', 'Orion Diesel', 'Nebula Basic']);
+    }
+  });
+
+  it('keeps radio selection bound to the correct program after sorting', async () => {
+    const fixture = createFixture();
+    loadPrograms();
+    await fixture.whenStable();
+    const element = fixture.nativeElement as HTMLElement;
+    openDialog(element);
+    http.expectOne((entry) => entry.url === '/api/programs/comparison').flush(comparisonResponse);
+    await fixture.whenStable();
+
+    element.querySelector<HTMLButtonElement>('.comparison-table .sort-button')!.click();
+    await fixture.whenStable();
+    const radios = element.querySelectorAll<HTMLInputElement>('input[name="programChoice"]');
+    expect(radios[0].value).toBe('program-diesel');
+    radios[0].click();
+    await fixture.whenStable();
+
+    const select = element.querySelector<HTMLSelectElement>('.change-options select')!;
+    expect(select.value).toBe('program-diesel');
+    expect(
+      element.querySelector<HTMLInputElement>('input[name="programChoice"]:checked')!.value,
+    ).toBe('program-diesel');
+  });
   it('requests a custom Europe/Warsaw date range as UTC instants', async () => {
     const fixture = createFixture();
     loadPrograms();

@@ -115,10 +115,10 @@ public interface IFleetCardsReadService
 public sealed class SeededProgramResolutionDataSource : IProgramResolutionDataSource
 {
     private static readonly Guid NebulaBasicId = Guid.Parse(
-        "55555555-5555-5555-5555-555555555555"
+        "55555555-5555-5555-5555-555555555556"
     );
     private static readonly Guid OrionDieselId = Guid.Parse(
-        "55555555-5555-5555-5555-555555555556"
+        "55555555-5555-5555-5555-555555555555"
     );
     private static readonly Guid AndromedaPetrolId = Guid.Parse(
         "55555555-5555-5555-5555-555555555557"
@@ -128,8 +128,8 @@ public sealed class SeededProgramResolutionDataSource : IProgramResolutionDataSo
     );
     private static readonly FleetCardProgramRule[] Rules =
     [
-        .. CreateRules(NebulaBasicId, 0.10m, -0.02m),
-        .. CreateRules(OrionDieselId, 0m, 0m),
+        .. CreateRules(OrionDieselId, 0.10m, -0.02m),
+        .. CreateRules(NebulaBasicId, 0m, 0m),
         .. CreateRules(AndromedaPetrolId, -0.03m, 0.09m),
         .. CreateRules(VoyagerBalancedId, 0.03m, 0.02m),
     ];
@@ -249,8 +249,8 @@ public sealed class SeededFleetCardsReadService(
         var programs = new[]
         {
             (Guid.Parse("55555555-5555-5555-5555-555555555557"), "Andromeda Petrol"),
-            (Guid.Parse("55555555-5555-5555-5555-555555555555"), "Nebula Basic"),
-            (Guid.Parse("55555555-5555-5555-5555-555555555556"), "Orion Diesel"),
+            (Guid.Parse("55555555-5555-5555-5555-555555555555"), "Orion Diesel"),
+            (Guid.Parse("55555555-5555-5555-5555-555555555556"), "Nebula Basic"),
             (Guid.Parse("55555555-5555-5555-5555-555555555558"), "Voyager Balanced"),
         };
         var rules = programDataSource.GetRules();

@@ -183,14 +183,79 @@
               <thead>
                 <tr>
                   <th scope="col">{{ language.text('selectProgram') }}</th>
-                  <th scope="col">
-                    {{ language.text('hypotheticalCost') }} · {{ language.text('net') }}
+                  <th scope="col" [attr.aria-sort]="ariaSort('hypotheticalNetTotal')">
+                    <button
+                      class="sort-button"
+                      type="button"
+                      [attr.aria-label]="
+                        language.text('sortBy') +
+                        ': ' +
+                        language.text('hypotheticalCost') +
+                        ' · ' +
+                        language.text('net')
+                      "
+                      (click)="toggleSort('hypotheticalNetTotal')"
+                    >
+                      <span
+                        >{{ language.text('hypotheticalCost') }} · {{ language.text('net') }}</span
+                      >
+                      <span class="sort-indicator" aria-hidden="true">{{
+                        sortIndicator('hypotheticalNetTotal')
+                      }}</span>
+                    </button>
                   </th>
-                  <th scope="col">
-                    {{ language.text('hypotheticalCost') }} · {{ language.text('gross') }}
+                  <th scope="col" [attr.aria-sort]="ariaSort('hypotheticalGrossTotal')">
+                    <button
+                      class="sort-button"
+                      type="button"
+                      [attr.aria-label]="
+                        language.text('sortBy') +
+                        ': ' +
+                        language.text('hypotheticalCost') +
+                        ' · ' +
+                        language.text('gross')
+                      "
+                      (click)="toggleSort('hypotheticalGrossTotal')"
+                    >
+                      <span
+                        >{{ language.text('hypotheticalCost') }} ·
+                        {{ language.text('gross') }}</span
+                      >
+                      <span class="sort-indicator" aria-hidden="true">{{
+                        sortIndicator('hypotheticalGrossTotal')
+                      }}</span>
+                    </button>
                   </th>
-                  <th scope="col">{{ language.text('netSavings') }}</th>
-                  <th scope="col">{{ language.text('grossSavings') }}</th>
+                  <th scope="col" [attr.aria-sort]="ariaSort('netSavings')">
+                    <button
+                      class="sort-button"
+                      type="button"
+                      [attr.aria-label]="
+                        language.text('sortBy') + ': ' + language.text('netSavings')
+                      "
+                      (click)="toggleSort('netSavings')"
+                    >
+                      <span>{{ language.text('netSavings') }}</span>
+                      <span class="sort-indicator" aria-hidden="true">{{
+                        sortIndicator('netSavings')
+                      }}</span>
+                    </button>
+                  </th>
+                  <th scope="col" [attr.aria-sort]="ariaSort('grossSavings')">
+                    <button
+                      class="sort-button"
+                      type="button"
+                      [attr.aria-label]="
+                        language.text('sortBy') + ': ' + language.text('grossSavings')
+                      "
+                      (click)="toggleSort('grossSavings')"
+                    >
+                      <span>{{ language.text('grossSavings') }}</span>
+                      <span class="sort-indicator" aria-hidden="true">{{
+                        sortIndicator('grossSavings')
+                      }}</span>
+                    </button>
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -201,7 +266,7 @@
                   <td>—</td>
                   <td>—</td>
                 </tr>
-                @for (program of data.programs; track program.programId) {
+                @for (program of sortedComparisonPrograms(); track program.programId) {
                   <tr>
                     <td>
                       <label class="program-choice">
