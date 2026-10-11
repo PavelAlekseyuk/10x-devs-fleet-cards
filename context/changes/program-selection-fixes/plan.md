@@ -228,12 +228,12 @@ The migration deletes all transactions (append-only rule intentionally bypassed 
 
 #### Automated
 
-- [x] 3.1 Angular tests pass: `npm test` (from `web/`)
-- [x] 3.2 Build passes: `npm run build` (from `web/`)
-- [x] 3.3 Literal-colour check reports no matches
+- [x] 3.1 Angular tests pass: `npm test` (from `web/`) — 749013c
+- [x] 3.2 Build passes: `npm run build` (from `web/`) — 749013c
+- [x] 3.3 Literal-colour check reports no matches — 749013c
 
 #### Manual
 
-- [x] 3.4 Each of the four headers sorts ascending, then descending, then restores default order
-- [x] 3.5 Baseline row stays on top; selecting a program after sorting selects the correct program
-- [x] 3.6 Keyboard and screen-reader behaviour of the sortable headers is acceptable
+- [x] 3.4 Each of the four headers sorts ascending, then descending, then restores default order — 749013c
+- [x] 3.5 Baseline row stays on top; selecting a program after sorting selects the correct program — 749013c
+- [x] 3.6 Keyboard and screen-reader behaviour of the sortable headers is acceptable — 749013c
