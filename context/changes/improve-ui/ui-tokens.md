@@ -1,33 +1,33 @@
 # UI tokens
 
-Semantic tokens defined in `web/src/styles.scss` (`:root`). Raw values reuse the existing forest-green, warm-neutral and coral palette; no new palette is introduced. Views migrate to these tokens in Phase 3.
+Semantic tokens defined in `web/src/styles.scss` (`:root`). The portal-wide palette is green-led, with white surfaces, lime and yellow status fills, and a reserved red destructive/error exception. Views migrate to these tokens in Phase 3.
 
 ## Colors
 
-| Token | Value | Source |
+| Token | Value | Role |
 | --- | --- | --- |
-| `--ui-color-foreground` | `#17231f` | Global `:root` color in `styles.scss` |
-| `--ui-color-foreground-strong` | `#24372f` | Headings/sidebar hover in view and shell styles |
-| `--ui-color-foreground-soft` | `#344b40` | Labels in card/report/vehicle styles |
-| `--ui-color-muted` | `#64736a` | Messages/secondary text in `app.scss`, views |
-| `--ui-color-muted-subtle` | `var(--ui-color-muted)` | Eyebrow/record-count text; aliases the existing muted color for stronger contrast |
-| `--ui-color-primary` | `#e86c54` | Coral primary button, active nav border (`app.scss`, login) |
-| `--ui-color-primary-hover` | `color-mix(in srgb, #e86c54 88%, #16241f)` | Derived: coral darkened with existing sidebar green |
-| `--ui-color-primary-foreground` | `#fff` | Primary button text |
-| `--ui-color-accent` | `#34755f` | Badge/link green in card management |
-| `--ui-color-sidebar` | `#16241f` | Sidebar/login visual background |
-| `--ui-color-background` | `#f6f3ed` | Global and shell background |
-| `--ui-color-surface` | `#fff` | Panels, inputs |
-| `--ui-color-surface-muted` | `#edf1ec` | Hover/muted fills in card management |
-| `--ui-color-border` | `#cbd4cc` | Input borders (transaction report) |
-| `--ui-color-border-subtle` | `#eef0eb` | Row dividers |
-| `--ui-color-destructive` | `#9b4238` | Login error text |
-| `--ui-color-destructive-background` | `#fbe5df` | Login error background |
-| `--ui-color-status-active` | `#34755f` | Active badge text |
-| `--ui-color-status-active-background` | `#e2f2e8` | Active badge background |
-| `--ui-color-status-warning` | `#9b6632` | Warning badge text |
-| `--ui-color-status-warning-background` | `#f8ead4` | Warning badge background |
-| `--ui-color-focus` | `#5a9d89` | Login input focus outline |
+| `--ui-color-foreground` | `#173126` | Default text; also the global root foreground |
+| `--ui-color-foreground-strong` | `#17432f` | High-emphasis headings and labels |
+| `--ui-color-foreground-soft` | `#365748` | Secondary labels and supporting text |
+| `--ui-color-muted` | `#53685d` | Secondary messages and metadata |
+| `--ui-color-muted-subtle` | `var(--ui-color-muted)` | Eyebrows and record counts; aliases muted text to retain readable contrast |
+| `--ui-color-primary` | `#007f00` | Green primary actions and navigation emphasis |
+| `--ui-color-primary-hover` | `color-mix(in srgb, #007f00 88%, #173126)` | Darker green hover state derived from the primary and foreground |
+| `--ui-color-primary-foreground` | `#ffffff` | Text on the green primary action |
+| `--ui-color-accent` | `#006b3c` | Accessible green links, badges, and accents |
+| `--ui-color-sidebar` | `#00512f` | Green shell and login background |
+| `--ui-color-background` | `#ffffff` | Global page background and root background |
+| `--ui-color-surface` | `#ffffff` | Panels and inputs |
+| `--ui-color-surface-muted` | `#f1f6ed` | Pale green hover and muted fills |
+| `--ui-color-border` | `#74877a` | Control boundaries with clear contrast against white |
+| `--ui-color-border-subtle` | `#e2e9e2` | Low-emphasis row dividers |
+| `--ui-color-destructive` | `#9b4238` | Red destructive and error text; red is intentionally reserved for these states |
+| `--ui-color-destructive-background` | `#fbe5df` | Pale red destructive/error background |
+| `--ui-color-status-active` | `#006b3c` | Green active badge text |
+| `--ui-color-status-active-background` | `#e8f5bf` | Lime-tinted active badge background |
+| `--ui-color-status-warning` | `#705000` | Dark yellow-brown warning text |
+| `--ui-color-status-warning-background` | `#fff2b3` | Yellow warning badge background |
+| `--ui-color-focus` | `#007f00` | High-contrast green keyboard focus outline |
 
 ## Spacing, radius, type
 
@@ -45,7 +45,7 @@ Names referenced by `button.component.scss` and `status-badge.component.scss`:
 | Alias | Resolves to |
 | --- | --- |
 | `--ui-button-primary-background` | `--ui-color-primary` |
-| `--ui-button-primary-foreground` | `--ui-color-foreground` |
+| `--ui-button-primary-foreground` | `--ui-color-primary-foreground` |
 | `--ui-button-primary-hover-background` | `--ui-color-primary-hover` |
 | `--ui-button-quiet-background` | `--ui-color-surface` |
 | `--ui-button-quiet-foreground` | `--ui-color-foreground-soft` |
@@ -56,3 +56,15 @@ Names referenced by `button.component.scss` and `status-badge.component.scss`:
 | `--ui-focus-ring` | `--ui-color-focus` |
 | `--ui-status-active-foreground` / `-background` | `--ui-color-status-active` / `-background` |
 | `--ui-status-warning-foreground` / `-background` | `--ui-color-status-warning` / `-background` |
+
+## Asking for a style update
+
+Use `web/src/styles.scss` as the source of truth for token names and current values; use this catalogue as the readable index of what those tokens are for. Find a semantic role that matches the part you want to change: for example, foreground and muted colors affect text emphasis, background and surface colors distinguish page and panel areas, status colors communicate state, and spacing, radius, and font tokens shape layout and typography. Check the token's source or alias here, then confirm its current definition in `styles.scss`.
+
+You do not need to prescribe CSS or implementation details. Describe the screen or component, the overall impression you want, and which existing token roles should move in what direction. A screenshot or reference URL is optional; say what to take from it. State what must remain unchanged, and ask that text and controls keep accessible contrast and visible focus.
+
+Example request:
+
+> On the **[screen/component]**, aim for **[overall impression]**. Optionally use **[screenshot or URL]** as a visual reference, especially for **[what to take from it]**. Adjust the relevant existing `--ui-*` token roles toward **[desired direction, such as warmer surfaces or stronger text emphasis]**. Keep **[screens, components, or details]** unchanged, and preserve accessible text/control contrast and visible keyboard focus. Please propose the scoped token changes before applying them.
+
+The green-led palette, with lime and yellow accents and red reserved for destructive/error feedback, applies portal-wide through the semantic `--ui-*` tokens. Keep style requests scoped to the intended screen or component and ask for accessible text/control contrast and visible focus; brighter accents should not be used for small text unless their pairing meets the contrast requirement.

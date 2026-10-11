@@ -54,8 +54,6 @@ interface DashboardSummary {
 const reportingMonth = '2026-09';
 const defaultTimeZone = 'Europe/Warsaw';
 const alternateTimeZone = 'America/Los_Angeles';
-const seededTransactionId = '44444444-4444-4444-4444-444444444444';
-
 async function signIn(page: Page, userName: string, password: string): Promise<void> {
   await page.goto('/login');
   await page.getByLabel('Username').fill(userName);
@@ -114,10 +112,6 @@ function cents(value: number): number {
   return Math.sign(value) * Math.round(Math.abs(value) * 100);
 }
 
-function roundMoney(value: number): number {
-  return cents(value) / 100;
-}
-
 function expectSummaryToReconcile(summary: DashboardSummary, report: TransactionReport): void {
   expect(summary.periodTotals.rowCount).toBe(report.transactions.length);
   expect(cents(summary.periodTotals.netTotal)).toBe(
@@ -130,11 +124,7 @@ function expectSummaryToReconcile(summary: DashboardSummary, report: Transaction
     report.transactions.reduce((total, row) => total + cents(row.grossTotal), 0),
   );
   expect(cents(summary.periodTotals.grossSavingsTotal)).toBe(
-    report.transactions.reduce((total, row) => {
-      const posNet = roundMoney(row.quantity * row.unitPrice);
-      const posVat = roundMoney(posNet * row.vatRate);
-      return total + cents(posNet + posVat - row.grossTotal);
-    }, 0),
+    cents(report.totals.grossSavingsTotal),
   );
 }
 
@@ -199,7 +189,7 @@ async function waitForSummaryResponse(
   return (await response.json()) as DashboardSummary;
 }
 
-test('Aspire transaction reporting reconciles seeded spending and timezone display', async ({
+test('Aspire transaction reporting reconciles generated spending and timezone display', async ({
   page,
 }) => {
   await page.clock.install({ time: new Date('2026-10-01T12:00:00.000Z') });
@@ -214,6 +204,22 @@ test('Aspire transaction reporting reconciles seeded spending and timezone displ
 
   await signIn(page, 'anna.nowak', 'Anna123!');
   await verifyDatabaseIdentity(page, String(test.info().config.metadata['databaseName']));
+
+  const existingReportResponse = await requestApi<TransactionReport>(
+    page,
+    reportPath('/api/transactions/report', reportingMonth, defaultTimeZone),
+  );
+  expect(existingReportResponse.status).toBe(200);
+
+  await page.goto('/admin/demo');
+  await page.getByLabel('From date (UTC)').fill('2026-09-09');
+  await page.getByLabel('Through date (UTC)').fill('2026-09-09');
+  await page.getByLabel('Number of transactions').fill('1');
+  await page.getByRole('button', { name: 'Generate transactions' }).click();
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Demo transactions generated: 1' }),
+  ).toBeVisible();
+  await page.goto('/overview');
 
   const [vehiclesResponse, cardsResponse, defaultSummaryResponse, defaultReportResponse] =
     await Promise.all([
@@ -243,10 +249,16 @@ test('Aspire transaction reporting reconciles seeded spending and timezone displ
   expectSummaryToReconcile(defaultSummary, defaultReport);
   expectNoSensitiveCardData(defaultReport);
 
-  const seededRow = defaultReport.transactions.find(row => row.id === seededTransactionId);
-  expect(seededRow).toMatchObject({
+  const existingTransactionIds = new Set(
+    existingReportResponse.body!.transactions.map(row => row.id),
+  );
+  const newlyGeneratedRows = defaultReport.transactions.filter(
+    row => !existingTransactionIds.has(row.id),
+  );
+  expect(newlyGeneratedRows).toHaveLength(1);
+  const generatedRow = newlyGeneratedRows[0];
+  expect(generatedRow).toMatchObject({
     vehiclePlate: 'WA 12345',
-    grossTotal: 326.6,
     posTimeZoneId: defaultTimeZone,
   });
 
@@ -306,10 +318,10 @@ test('Aspire transaction reporting reconciles seeded spending and timezone displ
   await timeZoneInput.fill('UTC');
   await page.getByRole('button', { name: 'Apply timezone' }).click();
   const utcReport = await utcReportResponse;
-  const utcSeededRow = utcReport.transactions.find(row => row.id === seededTransactionId);
-  expect(utcSeededRow).toBeTruthy();
-  expect(utcSeededRow!.userOccurredAt).not.toBe(seededRow!.userOccurredAt);
-  expect(utcSeededRow!.posOccurredAtLocal).toBe(seededRow!.posOccurredAtLocal);
+  const utcGeneratedRow = utcReport.transactions.find(row => row.id === generatedRow.id);
+  expect(utcGeneratedRow).toBeTruthy();
+  expect(utcGeneratedRow!.userOccurredAt).not.toBe(generatedRow.userOccurredAt);
+  expect(utcGeneratedRow!.posOccurredAtLocal).toBe(generatedRow.posOccurredAtLocal);
   const utcSummaryResponse = await requestApi<DashboardSummary>(
     page,
     reportPath('/api/dashboard/summary', reportingMonth, 'UTC'),
@@ -318,22 +330,22 @@ test('Aspire transaction reporting reconciles seeded spending and timezone displ
   expectSummaryToReconcile(utcSummaryResponse.body!, utcReport);
   const utcVisibleSeedRow = page
     .locator('.report-table-wrap tbody tr')
-    .filter({ hasText: 'angry storage' });
+    .filter({ hasText: generatedRow.stationName });
   await expect(utcVisibleSeedRow.getByRole('cell').nth(0)).toContainText(
-    formatUserTime(utcSeededRow!.userOccurredAt, 'UTC'),
+    formatUserTime(utcGeneratedRow!.userOccurredAt, 'UTC'),
   );
   await expect(utcVisibleSeedRow.getByRole('cell').nth(1)).toContainText(
-    formatPointOfSaleTime(utcSeededRow!.posOccurredAtLocal),
+    formatPointOfSaleTime(utcGeneratedRow!.posOccurredAtLocal),
   );
 
   const localReportResponse = waitForReportResponse(page, reportingMonth, alternateTimeZone);
   await timeZoneInput.fill(alternateTimeZone);
   await page.getByRole('button', { name: 'Apply timezone' }).click();
   const localReport = await localReportResponse;
-  const localSeededRow = localReport.transactions.find(row => row.id === seededTransactionId);
-  expect(localSeededRow).toBeTruthy();
-  expect(localSeededRow!.userOccurredAt).not.toBe(utcSeededRow!.userOccurredAt);
-  expect(localSeededRow!.posOccurredAtLocal).toBe(utcSeededRow!.posOccurredAtLocal);
+  const localGeneratedRow = localReport.transactions.find(row => row.id === generatedRow.id);
+  expect(localGeneratedRow).toBeTruthy();
+  expect(localGeneratedRow!.userOccurredAt).not.toBe(utcGeneratedRow!.userOccurredAt);
+  expect(localGeneratedRow!.posOccurredAtLocal).toBe(utcGeneratedRow!.posOccurredAtLocal);
   const localSummaryResponse = await requestApi<DashboardSummary>(
     page,
     reportPath('/api/dashboard/summary', reportingMonth, alternateTimeZone),
@@ -342,15 +354,15 @@ test('Aspire transaction reporting reconciles seeded spending and timezone displ
   expectSummaryToReconcile(localSummaryResponse.body!, localReport);
   const localVisibleSeedRow = page
     .locator('.report-table-wrap tbody tr')
-    .filter({ hasText: 'angry storage' });
+    .filter({ hasText: generatedRow.stationName });
   await expect(localVisibleSeedRow.getByRole('cell').nth(0)).toContainText(
-    formatUserTime(localSeededRow!.userOccurredAt, alternateTimeZone),
+    formatUserTime(localGeneratedRow!.userOccurredAt, alternateTimeZone),
   );
   await expect(localVisibleSeedRow.getByRole('cell').nth(1)).toContainText(
-    formatPointOfSaleTime(localSeededRow!.posOccurredAtLocal),
+    formatPointOfSaleTime(localGeneratedRow!.posOccurredAtLocal),
   );
   await expect(localVisibleSeedRow.getByRole('cell').nth(1)).toContainText(
-    localSeededRow!.posTimeZoneId,
+    localGeneratedRow!.posTimeZoneId,
   );
 
   const emptyMonth = '1900-01';

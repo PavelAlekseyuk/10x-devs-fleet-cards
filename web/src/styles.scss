@@ -1,34 +1,33 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
-:root { color: #17231f; background: #f6f3ed; font-family: 'DM Sans', sans-serif; font-synthesis: none; text-rendering: optimizeLegibility; }
+:root { color: var(--ui-color-foreground); background: var(--ui-color-background); font-family: 'DM Sans', sans-serif; font-synthesis: none; text-rendering: optimizeLegibility; }
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; }
 button, a { font: inherit; }
 
-/* Semantic UI tokens. Provenance: raw values reuse the forest-green, warm-neutral and coral
-   palette from existing view styles; see context/changes/improve-ui/ui-tokens.md. */
+/* Semantic UI tokens. See context/changes/improve-ui/ui-tokens.md for palette roles and values. */
 :root {
-  --ui-color-foreground: #17231f;
-  --ui-color-foreground-strong: #24372f;
-  --ui-color-foreground-soft: #344b40;
-  --ui-color-muted: #64736a;
+  --ui-color-foreground: #173126;
+  --ui-color-foreground-strong: #17432f;
+  --ui-color-foreground-soft: #365748;
+  --ui-color-muted: #53685d;
   --ui-color-muted-subtle: var(--ui-color-muted);
-  --ui-color-primary: #e86c54;
-  --ui-color-primary-hover: color-mix(in srgb, #e86c54 88%, #16241f);
-  --ui-color-primary-foreground: #fff;
-  --ui-color-accent: #34755f;
-  --ui-color-sidebar: #16241f;
-  --ui-color-background: #f6f3ed;
-  --ui-color-surface: #fff;
-  --ui-color-surface-muted: #edf1ec;
-  --ui-color-border: #cbd4cc;
-  --ui-color-border-subtle: #eef0eb;
+  --ui-color-primary: #007f00;
+  --ui-color-primary-hover: color-mix(in srgb, #007f00 88%, #173126);
+  --ui-color-primary-foreground: #ffffff;
+  --ui-color-accent: #006b3c;
+  --ui-color-sidebar: #00512f;
+  --ui-color-background: #ffffff;
+  --ui-color-surface: #ffffff;
+  --ui-color-surface-muted: #f1f6ed;
+  --ui-color-border: #74877a;
+  --ui-color-border-subtle: #e2e9e2;
   --ui-color-destructive: #9b4238;
   --ui-color-destructive-background: #fbe5df;
-  --ui-color-status-active: #34755f;
-  --ui-color-status-active-background: #e2f2e8;
-  --ui-color-status-warning: #9b6632;
-  --ui-color-status-warning-background: #f8ead4;
-  --ui-color-focus: #5a9d89;
+  --ui-color-status-active: #006b3c;
+  --ui-color-status-active-background: #e8f5bf;
+  --ui-color-status-warning: #705000;
+  --ui-color-status-warning-background: #fff2b3;
+  --ui-color-focus: #007f00;
 
   --ui-space-1: 4px;
   --ui-space-2: 8px;
@@ -47,7 +46,7 @@ button, a { font: inherit; }
   --ui-font-size-lg: 18px;
 
   --ui-button-primary-background: var(--ui-color-primary);
-  --ui-button-primary-foreground: var(--ui-color-foreground);
+  --ui-button-primary-foreground: var(--ui-color-primary-foreground);
   --ui-button-primary-hover-background: var(--ui-color-primary-hover);
   --ui-button-quiet-background: var(--ui-color-surface);
   --ui-button-quiet-foreground: var(--ui-color-foreground-soft);
