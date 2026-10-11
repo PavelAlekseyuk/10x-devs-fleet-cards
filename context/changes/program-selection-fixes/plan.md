@@ -62,9 +62,11 @@ Correct names and the default assignment in seed data, the in-memory seeded sour
 
 #### 3. Tests
 
-**File**: `tests/FleetCards.Api.Tests/FleetCardsMigrationTests.cs`, `tests/FleetCards.Api.Tests/ProgramApiTests.cs`, `tests/FleetCards.Application.Tests/*`
+**File**: `tests/FleetCards.Api.Tests/FleetCardsMigrationTests.cs`, `tests/FleetCards.Api.Tests/ProgramApiTests.cs`, `tests/FleetCards.Application.Tests/ProgramResolutionTests.cs`, `tests/FleetCards.Application.Tests/FleetCardServiceTests.cs`
 
-**Intent**: Cover the migration (names swapped, assignment re-pointed, transactions cleared) and the default active program resolving to 0%.
+**Intent**: Cover the migration (names swapped, assignment re-pointed, transactions cleared), the default active program resolving to 0%, and generated transactions applying the resolved percent at their occurrence time.
+
+**Contract**: Generated transactions assert `discount == round(unitPrice * resolvedPercent, 4)`. A zero-percent Nebula Basic rule therefore produces a zero discount; tests retain the existing deterministic period and total assertions without requiring a positive discount.
 
 ### Success Criteria:
 
@@ -164,6 +166,7 @@ Allow sorting program rows in the comparison table by the four numeric columns.
 
 - Migration test (name swap, assignment, transaction deletion)
 - Program resolution default returns 0% for the seeded client
+- Generated transactions use the resolved percent at `OccurredAt`, permitting a zero discount for the default Nebula Basic program while retaining deterministic period and total checks
 - `formatPercent` sign cases: negative, positive, zero
 - Sort cycle, direction, tie handling
 
@@ -199,14 +202,14 @@ The migration deletes all transactions (append-only rule intentionally bypassed 
 
 #### Automated
 
-- [ ] 1.1 Solution builds: `dotnet build`
-- [ ] 1.2 Tests pass: `dotnet test`
-- [ ] 1.3 Migration test asserts swapped names, default assignment on Nebula Basic and empty transactions after upgrade
+- [x] 1.1 Solution builds: `dotnet build`
+- [x] 1.2 Tests pass: `dotnet test`
+- [x] 1.3 Migration test asserts swapped names, default assignment on Nebula Basic and empty transactions after upgrade
 
 #### Manual
 
-- [ ] 1.4 After running AppHost on an existing database, the Programs page shows "Nebula Basic" as active
-- [ ] 1.5 After regenerating demo transactions, comparison baseline equals the "Nebula Basic" row (zero savings)
+- [x] 1.4 After running AppHost on an existing database, the Programs page shows "Nebula Basic" as active
+- [x] 1.5 After regenerating demo transactions, comparison baseline equals the "Nebula Basic" row (zero savings)
 
 ### Phase 2: Frontend — discount and surcharge signs
 

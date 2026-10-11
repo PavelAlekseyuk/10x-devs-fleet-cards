@@ -54,7 +54,7 @@ namespace FleetCards.Infrastructure.Migrations
                         {
                             Id = new Guid("aaaaaaaa-0000-0000-0000-000000000001"),
                             ClientId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-                            ProgramId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555556"),
                             StartsAt = new DateTimeOffset(new DateTime(2026, 9, 9, 12, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
                         });
                 });
@@ -296,13 +296,13 @@ namespace FleetCards.Infrastructure.Migrations
                         {
                             Id = new Guid("55555555-5555-5555-5555-555555555555"),
                             ActiveFrom = new DateTimeOffset(new DateTime(2026, 3, 21, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            Name = "Nebula Basic"
+                            Name = "Orion Diesel"
                         },
                         new
                         {
                             Id = new Guid("55555555-5555-5555-5555-555555555556"),
                             ActiveFrom = new DateTimeOffset(new DateTime(2026, 3, 21, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            Name = "Orion Diesel"
+                            Name = "Nebula Basic"
                         },
                         new
                         {
@@ -411,18 +411,6 @@ namespace FleetCards.Infrastructure.Migrations
                         new
                         {
                             ProgramId = new Guid("55555555-5555-5555-5555-555555555557"),
-                            FuelType = "Diesel",
-                            Percent = -0.03m
-                        },
-                        new
-                        {
-                            ProgramId = new Guid("55555555-5555-5555-5555-555555555557"),
-                            FuelType = "Diesel+",
-                            Percent = -0.03m
-                        },
-                        new
-                        {
-                            ProgramId = new Guid("55555555-5555-5555-5555-555555555557"),
                             FuelType = "95",
                             Percent = 0.09m
                         },
@@ -443,6 +431,18 @@ namespace FleetCards.Infrastructure.Migrations
                             ProgramId = new Guid("55555555-5555-5555-5555-555555555557"),
                             FuelType = "98+",
                             Percent = 0.09m
+                        },
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555557"),
+                            FuelType = "Diesel",
+                            Percent = -0.03m
+                        },
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555557"),
+                            FuelType = "Diesel+",
+                            Percent = -0.03m
                         },
                         new
                         {

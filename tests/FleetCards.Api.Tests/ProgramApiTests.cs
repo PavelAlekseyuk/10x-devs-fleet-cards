@@ -53,6 +53,14 @@ public sealed class ProgramApiTests : IClassFixture<WebApplicationFactory<Progra
                 .Select(program => program.ProgramId),
             comparison.Programs.Select(program => program.ProgramId)
         );
+        var nebulaBasic = Assert.Single(
+            comparison.Programs,
+            program => program.ProgramName == "Nebula Basic"
+        );
+        Assert.Equal(comparison.Baseline.NetTotal, nebulaBasic.HypotheticalNetTotal);
+        Assert.Equal(comparison.Baseline.GrossTotal, nebulaBasic.HypotheticalGrossTotal);
+        Assert.Equal(0m, nebulaBasic.NetSavings);
+        Assert.Equal(0m, nebulaBasic.GrossSavings);
     }
 
     [Fact]
@@ -81,6 +89,26 @@ public sealed class ProgramApiTests : IClassFixture<WebApplicationFactory<Progra
         Assert.Equal(4, catalog.Programs.Count);
         Assert.All(catalog.Programs, program => Assert.Equal(6, program.Rules!.Count));
         Assert.NotNull(catalog.CurrentAssignment);
+        var orionDiesel = Assert.Single(
+            catalog.Programs,
+            program => program.Id == Guid.Parse("55555555-5555-5555-5555-555555555555")
+        );
+        var nebulaBasic = Assert.Single(
+            catalog.Programs,
+            program => program.Id == Guid.Parse("55555555-5555-5555-5555-555555555556")
+        );
+        Assert.Equal("Orion Diesel", orionDiesel.Name);
+        Assert.Equal("Nebula Basic", nebulaBasic.Name);
+        Assert.Equal(
+            0.10m,
+            Assert.Single(orionDiesel.Rules!, rule => rule.FuelType == "Diesel").Percent
+        );
+        Assert.Equal(
+            -0.02m,
+            Assert.Single(orionDiesel.Rules!, rule => rule.FuelType == "95").Percent
+        );
+        Assert.All(nebulaBasic.Rules!, rule => Assert.Equal(0m, rule.Percent));
+        Assert.Equal(nebulaBasic.Id, catalog.CurrentAssignment.ProgramId);
         var history = (
             await historyResponse.Content.ReadFromJsonAsync<FleetCardProgramAssignmentResponse[]>()
         )!;
@@ -159,8 +187,8 @@ public sealed class ProgramApiTests : IClassFixture<WebApplicationFactory<Progra
         using var client = await SignInAsync(host, "anna.nowak", "Anna123!");
         var firstStart = DateTimeOffset.UtcNow.AddHours(1);
         var replacementStart = DateTimeOffset.UtcNow.AddHours(2);
-        var nebulaProgramId = Guid.Parse("55555555-5555-5555-5555-555555555555");
-        var orionProgramId = Guid.Parse("55555555-5555-5555-5555-555555555556");
+        var nebulaProgramId = Guid.Parse("55555555-5555-5555-5555-555555555556");
+        var orionProgramId = Guid.Parse("55555555-5555-5555-5555-555555555555");
 
         using var firstSchedule = await client.PostAsJsonAsync(
             "/api/programs/assignments",
