@@ -151,19 +151,19 @@ No data or runtime migration is required. Reusing the existing favicon path may 
 
 #### Automated
 
-- [x] 1.1 `cd web; npm run build` succeeds and includes the updated index and public favicon in the production output.
-- [x] 1.2 `cd web; npm run test:e2e -- e2e/site-metadata.spec.ts` passes the title and favicon-response assertions.
+- [x] 1.1 `cd web; npm run build` succeeds and includes the updated index and public favicon in the production output. — 22e7cec
+- [x] 1.2 `cd web; npm run test:e2e -- e2e/site-metadata.spec.ts` passes the title and favicon-response assertions. — 22e7cec
 
 #### Manual
 
-- [x] 1.3 Inspect the icon at 16x16, 32x32, and 48x48: the pump and canopy remain recognizable, colors are distinguishable, and the mark is original rather than a BP logo.
-- [x] 1.4 Open the app in a browser and confirm the tab shows “Beznynowicz” and the new icon; hard-refresh if the browser displays a cached favicon.
+- [x] 1.3 Inspect the icon at 16x16, 32x32, and 48x48: the pump and canopy remain recognizable, colors are distinguishable, and the mark is original rather than a BP logo. — 22e7cec
+- [x] 1.4 Open the app in a browser and confirm the tab shows “Beznynowicz” and the new icon; hard-refresh if the browser displays a cached favicon. — 22e7cec
 
 ### Phase 2: Document the Style and Token Handoff
 
 #### Automated
 
-- [ ] 2.1 `git diff --check` reports no whitespace errors in the planned changes.
+- [x] 2.1 `git diff --check` reports no whitespace errors in the planned changes.
 
 #### Manual
 
