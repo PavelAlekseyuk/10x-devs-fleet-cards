@@ -42,7 +42,7 @@ public sealed class ProgramApiTests : IClassFixture<WebApplicationFactory<Progra
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var comparison = (await response.Content.ReadFromJsonAsync<ProgramComparisonResponse>())!;
         Assert.Equal(
-            new ProgramComparisonBaseline(265.53m, 61.07m, 326.60m),
+            new ProgramComparisonBaseline(273.11m, 62.82m, 335.93m),
             comparison.Baseline
         );
         Assert.Equal(4, comparison.Programs.Count);

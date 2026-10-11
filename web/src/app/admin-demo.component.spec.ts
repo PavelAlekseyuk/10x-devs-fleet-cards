@@ -40,6 +40,7 @@ describe('AdminDemoComponent', () => {
     const fixture = createFixture();
     await fixture.whenStable();
     const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector<HTMLInputElement>('input[name="count"]')?.value).toBe('10');
     setInput(element, 'from', '2026-07-01');
     setInput(element, 'to', '2026-07-03');
     setInput(element, 'count', '12');

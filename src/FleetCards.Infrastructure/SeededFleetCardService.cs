@@ -69,11 +69,11 @@ public sealed class SeededFleetCardService(
             FuelType = "Diesel",
             Quantity = 42.081m,
             UnitPrice = 6.49m,
-            Discount = 0.18m,
-            NetTotal = 265.53m,
+            Discount = 0m,
+            NetTotal = 273.11m,
             VatRate = MockFuelTransactionGenerator.DefaultVatRate,
-            VatAmount = 61.07m,
-            GrossTotal = 326.60m,
+            VatAmount = 62.82m,
+            GrossTotal = 335.93m,
             Status = TransactionStatus.Completed,
         },
     ];
@@ -172,8 +172,8 @@ public sealed class SeededFleetCardService(
                 .Where(card =>
                     card.State == CardState.Active && vehicleById.ContainsKey(card.AssignedCarId)
                 )
-                .OrderBy(card => card.Id)
                 .ToArray();
+            Random.Shared.Shuffle(eligibleCards);
         }
 
         if (eligibleCards.Length == 0)

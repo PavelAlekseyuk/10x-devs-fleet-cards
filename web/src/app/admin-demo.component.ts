@@ -22,7 +22,7 @@ export class AdminDemoComponent {
   protected readonly language = inject(LanguageService);
   protected readonly fromDate = signal(localDateValue(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)));
   protected readonly toDate = signal(localDateValue(new Date()));
-  protected readonly count = signal(20);
+  protected readonly count = signal(10);
   protected readonly invalid = signal(false);
   protected readonly saving = signal(false);
   protected readonly error = signal(false);

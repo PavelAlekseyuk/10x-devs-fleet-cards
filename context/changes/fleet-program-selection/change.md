@@ -1,7 +1,7 @@
 ---
 change_id: fleet-program-selection
 title: Fleet program selection
-status: implemented
+status: impl_reviewed
 created: 2026-10-05
 updated: 2026-10-11
 archived_at: null

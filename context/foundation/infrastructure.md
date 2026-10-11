@@ -132,6 +132,10 @@ production access, and no rehearsed recovery path because convenient early decis
 - **Rollback**: On a slot-capable plan, deploy to staging and run `az webapp deployment slot swap` only
   after verification; swap back to reverse an application release. Without a slot, redeploy the previous
   published artifact. Database migrations do not roll back automatically.
+- **Migration recovery**: Before applying `AddFleetProgramSelection` to a non-disposable database, take
+  and verify a restorable database backup. Its `Down` method does not restore prior transaction discounts
+  or totals; rollback requires restoring the pre-migration database backup before deploying the previous
+  application version.
 - **Approval**: A human approves production publication, slot swaps, primary-secret rotation, database
   deletion, firewall changes, and migration execution. An agent may run builds, tests, read-only status
   queries, and deployment to a non-production target with a scoped identity.

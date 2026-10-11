@@ -57,10 +57,10 @@ public sealed class TransactionReportApiTests : IClassFixture<WebApplicationFact
             )!;
             var row = Assert.Single(report.Transactions);
 
-            Assert.Equal(326.60m, report.Totals.GrossTotal);
-            Assert.Equal(265.53m, report.Totals.NetTotal);
-            Assert.Equal(61.07m, report.Totals.VatTotal);
-            Assert.Equal(9.33m, report.Totals.GrossSavingsTotal);
+            Assert.Equal(335.93m, report.Totals.GrossTotal);
+            Assert.Equal(273.11m, report.Totals.NetTotal);
+            Assert.Equal(62.82m, report.Totals.VatTotal);
+            Assert.Equal(0m, report.Totals.GrossSavingsTotal);
             Assert.Equal(report.Totals, summary.PeriodTotals);
             Assert.Equal(
                 report.Totals.GrossTotal,

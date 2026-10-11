@@ -102,8 +102,8 @@ public sealed class EfFleetCardService(
         ).ToArrayAsync(cancellationToken);
         var eligibleCards = cards
             .Where(card => vehicleById.ContainsKey(card.AssignedCarId))
-            .OrderBy(card => card.Id)
             .ToArray();
+        Random.Shared.Shuffle(eligibleCards);
         if (eligibleCards.Length == 0)
         {
             return 0;

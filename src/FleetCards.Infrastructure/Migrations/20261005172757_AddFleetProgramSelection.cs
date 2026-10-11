@@ -156,6 +156,8 @@ public partial class AddFleetProgramSelection : Migration
             }
         );
 
+        // Forward-only data transformation: Down reverts schema/catalog changes but cannot restore
+        // prior transaction discounts or totals. Back up the database before applying this migration.
         migrationBuilder.UpdateData(
             table: "Transactions",
             keyColumn: "Id",
@@ -177,6 +179,8 @@ public partial class AddFleetProgramSelection : Migration
 
     protected override void Down(MigrationBuilder migrationBuilder)
     {
+        // Forward-only data transformation: Down reverts schema/catalog changes but cannot restore
+        // prior transaction discounts or totals. Back up the database before applying this migration.
         migrationBuilder.DropTable(name: "ClientProgramAssignments");
         migrationBuilder.DropTable(name: "ProgramRules");
 
