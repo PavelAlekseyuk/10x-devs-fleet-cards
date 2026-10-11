@@ -42,6 +42,9 @@ public sealed class FleetCardServiceTests
         var transactions = await context
             .Transactions.Where(transaction => transaction.CardId == card.Id)
             .ToArrayAsync();
+        var programResolutionService = new ProgramResolutionService(
+            new EfProgramResolutionDataSource(context)
+        );
         Assert.InRange(transactions.Length, 5, 15);
         var previousMonthStart = new DateTimeOffset(
             issuedAt.Year,
@@ -61,6 +64,19 @@ public sealed class FleetCardServiceTests
                 Assert.Equal("WA 12345", transaction.VehiclePlate);
                 Assert.Equal("Diesel", transaction.FuelType);
                 Assert.Equal(TransactionStatus.Completed, transaction.Status);
+                Assert.Equal(
+                    decimal.Round(
+                        transaction.UnitPrice
+                            * programResolutionService.GetPercent(
+                                Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                                transaction.FuelType,
+                                transaction.OccurredAt
+                            ),
+                        4,
+                        MidpointRounding.AwayFromZero
+                    ),
+                    transaction.Discount
+                );
                 Assert.InRange(
                     transaction.OccurredAt,
                     previousMonthStart,
@@ -533,7 +549,17 @@ public sealed class FleetCardServiceTests
     private static EfFleetCardService CreateService(
         FleetCardsDbContext context,
         ICardProvider? cardProvider = null
-    ) => new(context, cardProvider ?? new TestCardProvider(), new MockFuelTransactionGenerator());
+    ) =>
+        new(
+            context,
+            cardProvider ?? new TestCardProvider(),
+            new MockFuelTransactionGenerator(
+                programResolutionService: new ProgramResolutionService(
+                    new EfProgramResolutionDataSource(context)
+                )
+            ),
+            new SeededFleetVehicleService()
+        );
 
     private static object ToStableValues(FuelTransaction transaction) =>
         new

@@ -14,6 +14,9 @@ public sealed class FleetCardsDbContext(DbContextOptions<FleetCardsDbContext> op
     public DbSet<FleetCardAssignmentEvent> CardAssignmentEvents => Set<FleetCardAssignmentEvent>();
     public DbSet<FuelTransaction> Transactions => Set<FuelTransaction>();
     public DbSet<FleetCardProgram> Programs => Set<FleetCardProgram>();
+    public DbSet<FleetCardProgramRule> ProgramRules => Set<FleetCardProgramRule>();
+    public DbSet<ClientProgramAssignment> ClientProgramAssignments =>
+        Set<ClientProgramAssignment>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -205,6 +208,40 @@ public sealed class FleetCardsDbContext(DbContextOptions<FleetCardsDbContext> op
         {
             entity.HasKey(program => program.Id);
             entity.Property(program => program.Name).HasMaxLength(200).IsRequired();
+            entity.ToTable("Programs");
+        });
+
+        modelBuilder.Entity<FleetCardProgramRule>(entity =>
+        {
+            entity.HasKey(rule => new { rule.ProgramId, rule.FuelType });
+            entity.Property(rule => rule.FuelType).HasMaxLength(20).IsRequired();
+            entity.Property(rule => rule.Percent).HasPrecision(9, 4).IsRequired();
+            entity
+                .HasOne<FleetCardProgram>()
+                .WithMany()
+                .HasForeignKey(rule => rule.ProgramId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.ToTable("ProgramRules");
+        });
+
+        modelBuilder.Entity<ClientProgramAssignment>(entity =>
+        {
+            entity.HasKey(assignment => assignment.Id);
+            entity.Property(assignment => assignment.StartsAt).IsRequired();
+            entity
+                .HasIndex(assignment => new { assignment.ClientId, assignment.StartsAt })
+                .IsUnique();
+            entity
+                .HasOne<FleetClient>()
+                .WithMany()
+                .HasForeignKey(assignment => assignment.ClientId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity
+                .HasOne<FleetCardProgram>()
+                .WithMany()
+                .HasForeignKey(assignment => assignment.ProgramId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.ToTable("ClientProgramAssignments");
         });
 
         AddSeedData(modelBuilder);
@@ -325,11 +362,11 @@ public sealed class FleetCardsDbContext(DbContextOptions<FleetCardsDbContext> op
                     FuelType = "Diesel",
                     Quantity = 42.081m,
                     UnitPrice = 6.49m,
-                    Discount = 0.18m,
-                    NetTotal = 265.53m,
+                    Discount = 0m,
+                    NetTotal = 273.11m,
                     VatRate = 0.23m,
-                    VatAmount = 61.07m,
-                    GrossTotal = 326.60m,
+                    VatAmount = 62.82m,
+                    GrossTotal = 335.93m,
                     Status = TransactionStatus.Completed,
                 }
             );
@@ -339,8 +376,187 @@ public sealed class FleetCardsDbContext(DbContextOptions<FleetCardsDbContext> op
                 new FleetCardProgram
                 {
                     Id = Guid.Parse("55555555-5555-5555-5555-555555555555"),
-                    Name = "Baltic Standard",
+                    Name = "Nebula Basic",
                     ActiveFrom = new DateTimeOffset(2026, 3, 21, 0, 0, 0, TimeSpan.Zero),
+                },
+                new FleetCardProgram
+                {
+                    Id = Guid.Parse("55555555-5555-5555-5555-555555555556"),
+                    Name = "Orion Diesel",
+                    ActiveFrom = new DateTimeOffset(2026, 3, 21, 0, 0, 0, TimeSpan.Zero),
+                },
+                new FleetCardProgram
+                {
+                    Id = Guid.Parse("55555555-5555-5555-5555-555555555557"),
+                    Name = "Andromeda Petrol",
+                    ActiveFrom = new DateTimeOffset(2026, 3, 21, 0, 0, 0, TimeSpan.Zero),
+                },
+                new FleetCardProgram
+                {
+                    Id = Guid.Parse("55555555-5555-5555-5555-555555555558"),
+                    Name = "Voyager Balanced",
+                    ActiveFrom = new DateTimeOffset(2026, 3, 21, 0, 0, 0, TimeSpan.Zero),
+                }
+            );
+
+        modelBuilder
+            .Entity<FleetCardProgramRule>()
+            .HasData(
+                new FleetCardProgramRule
+                {
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555556"),
+                    FuelType = "Diesel",
+                    Percent = 0m,
+                },
+                new FleetCardProgramRule
+                {
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555556"),
+                    FuelType = "Diesel+",
+                    Percent = 0m,
+                },
+                new FleetCardProgramRule
+                {
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555556"),
+                    FuelType = "95",
+                    Percent = 0m,
+                },
+                new FleetCardProgramRule
+                {
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555556"),
+                    FuelType = "98",
+                    Percent = 0m,
+                },
+                new FleetCardProgramRule
+                {
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555556"),
+                    FuelType = "95+",
+                    Percent = 0m,
+                },
+                new FleetCardProgramRule
+                {
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555556"),
+                    FuelType = "98+",
+                    Percent = 0m,
+                },
+                new FleetCardProgramRule
+                {
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555555"),
+                    FuelType = "Diesel",
+                    Percent = 0.10m,
+                },
+                new FleetCardProgramRule
+                {
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555555"),
+                    FuelType = "Diesel+",
+                    Percent = 0.10m,
+                },
+                new FleetCardProgramRule
+                {
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555555"),
+                    FuelType = "95",
+                    Percent = -0.02m,
+                },
+                new FleetCardProgramRule
+                {
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555555"),
+                    FuelType = "98",
+                    Percent = -0.02m,
+                },
+                new FleetCardProgramRule
+                {
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555555"),
+                    FuelType = "95+",
+                    Percent = -0.02m,
+                },
+                new FleetCardProgramRule
+                {
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555555"),
+                    FuelType = "98+",
+                    Percent = -0.02m,
+                },
+                new FleetCardProgramRule
+                {
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555557"),
+                    FuelType = "95",
+                    Percent = 0.09m,
+                },
+                new FleetCardProgramRule
+                {
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555557"),
+                    FuelType = "98",
+                    Percent = 0.09m,
+                },
+                new FleetCardProgramRule
+                {
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555557"),
+                    FuelType = "95+",
+                    Percent = 0.09m,
+                },
+                new FleetCardProgramRule
+                {
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555557"),
+                    FuelType = "98+",
+                    Percent = 0.09m,
+                },
+                new FleetCardProgramRule
+                {
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555557"),
+                    FuelType = "Diesel",
+                    Percent = -0.03m,
+                },
+                new FleetCardProgramRule
+                {
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555557"),
+                    FuelType = "Diesel+",
+                    Percent = -0.03m,
+                },
+                new FleetCardProgramRule
+                {
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555558"),
+                    FuelType = "Diesel",
+                    Percent = 0.03m,
+                },
+                new FleetCardProgramRule
+                {
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555558"),
+                    FuelType = "Diesel+",
+                    Percent = 0.03m,
+                },
+                new FleetCardProgramRule
+                {
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555558"),
+                    FuelType = "95",
+                    Percent = 0.02m,
+                },
+                new FleetCardProgramRule
+                {
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555558"),
+                    FuelType = "98",
+                    Percent = 0.02m,
+                },
+                new FleetCardProgramRule
+                {
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555558"),
+                    FuelType = "95+",
+                    Percent = 0.02m,
+                },
+                new FleetCardProgramRule
+                {
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555558"),
+                    FuelType = "98+",
+                    Percent = 0.02m,
+                }
+            );
+
+        modelBuilder
+            .Entity<ClientProgramAssignment>()
+            .HasData(
+                new ClientProgramAssignment
+                {
+                    Id = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000001"),
+                    ClientId = clientId,
+                    ProgramId = Guid.Parse("55555555-5555-5555-5555-555555555555"),
+                    StartsAt = new DateTimeOffset(2026, 9, 9, 12, 0, 0, TimeSpan.Zero),
                 }
             );
     }

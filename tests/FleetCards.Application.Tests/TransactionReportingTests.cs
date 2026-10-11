@@ -305,7 +305,8 @@ public sealed class TransactionReportingTests
         var seededReadService = new SeededFleetCardsReadService(
             new TransactionFactsFleetCardService([purchase, refund]),
             new SeededFleetVehicleService(),
-            reportingService
+            reportingService,
+            new SeededProgramResolutionDataSource()
         );
         var october = reportingService.ResolvePeriod(new TransactionReportRequest(2026, 10));
 
@@ -525,9 +526,9 @@ public sealed class TransactionReportingTests
         Assert.Equal(1, seeded.Version);
         Assert.Null(seeded.CorrectsTransactionId);
         Assert.Equal(42.081m, seeded.Quantity);
-        Assert.Equal(265.53m, seeded.NetTotal);
-        Assert.Equal(61.07m, seeded.VatAmount);
-        Assert.Equal(326.60m, seeded.GrossTotal);
+        Assert.Equal(273.11m, seeded.NetTotal);
+        Assert.Equal(62.82m, seeded.VatAmount);
+        Assert.Equal(335.93m, seeded.GrossTotal);
         Assert.Equal(
             seeded.NetTotal,
             TransactionReportingService.CalculateNetTotal(
@@ -545,7 +546,7 @@ public sealed class TransactionReportingTests
             reportingService.ResolvePeriod(new TransactionReportRequest(2026, 9)),
             [seeded]
         );
-        Assert.Equal(9.33m, seededReport.Totals.GrossSavingsTotal);
+        Assert.Equal(0m, seededReport.Totals.GrossSavingsTotal);
         Assert.Equal(VehicleId, seeded.VehicleId);
         Assert.Equal("WA 12345", seeded.VehiclePlate);
         Assert.Equal("Europe/Warsaw", seeded.PosTimeZoneId);

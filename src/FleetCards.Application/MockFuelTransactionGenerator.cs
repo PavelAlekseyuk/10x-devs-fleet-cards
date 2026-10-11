@@ -1,6 +1,7 @@
 using System.Buffers.Binary;
 using System.Security.Cryptography;
 using System.Text;
+using FleetCards.Contracts;
 using FleetCards.Domain;
 
 namespace FleetCards.Application;
@@ -23,8 +24,12 @@ public sealed class MockFuelTransactionGenerator
     ];
 
     private readonly decimal vatRate;
+    private readonly IProgramResolutionService? programResolutionService;
 
-    public MockFuelTransactionGenerator(decimal vatRate = DefaultVatRate)
+    public MockFuelTransactionGenerator(
+        decimal vatRate = DefaultVatRate,
+        IProgramResolutionService? programResolutionService = null
+    )
     {
         if (vatRate is < 0 or > 1)
         {
@@ -32,43 +37,103 @@ public sealed class MockFuelTransactionGenerator
         }
 
         this.vatRate = vatRate;
+        this.programResolutionService = programResolutionService;
     }
 
     public IReadOnlyList<FuelTransaction> Generate(
         Guid cardId,
         FleetCar vehicle,
-        DateTimeOffset issuedAt
+        DateTimeOffset issuedAt,
+        TransactionReportPeriod? period = null
     )
     {
         var issuedAtUtc = issuedAt.ToUniversalTime();
-        var issuedAtLocal = TimeZoneInfo.ConvertTime(issuedAtUtc, PointOfSaleTimeZone);
-        var currentLocalMonthStart = new DateTime(
-            issuedAtLocal.Year,
-            issuedAtLocal.Month,
-            1,
-            0,
-            0,
-            0,
-            DateTimeKind.Unspecified
-        );
-        var previousLocalMonthStart = currentLocalMonthStart.AddMonths(-1);
-        var previousMonthStart = new DateTimeOffset(
-            TimeZoneInfo.ConvertTimeToUtc(previousLocalMonthStart, PointOfSaleTimeZone)
-        );
-        var currentMonthStart = new DateTimeOffset(
-            TimeZoneInfo.ConvertTimeToUtc(currentLocalMonthStart, PointOfSaleTimeZone)
-        );
+        var (periodStart, periodEnd) = period is null
+            ? GetPreviousPointOfSaleMonth(issuedAtUtc)
+            : (period.StartUtc.ToUniversalTime(), period.EndUtc.ToUniversalTime());
+        if (periodEnd <= periodStart)
+        {
+            throw new ArgumentException("The transaction period must have a positive duration.");
+        }
+
         var random = CreateRandom(cardId, vehicle.Id, issuedAtUtc);
         var count = random.Next(5, 16);
+        return Generate(
+            cardId,
+            vehicle,
+            issuedAtUtc,
+            periodStart,
+            periodEnd,
+            count,
+            random,
+            minutePrecision: period is null
+        );
+    }
+
+    public IReadOnlyList<FuelTransaction> Generate(
+        Guid cardId,
+        FleetCar vehicle,
+        DateTimeOffset issuedAt,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        int count
+    )
+    {
+        if (count <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(count));
+        }
+
+        var periodStart = from.ToUniversalTime();
+        var periodEnd = to.ToUniversalTime();
+        if (periodEnd <= periodStart)
+        {
+            throw new ArgumentException("The transaction period must have a positive duration.");
+        }
+
+        var issuedAtUtc = issuedAt.ToUniversalTime();
+        return Generate(
+            cardId,
+            vehicle,
+            issuedAtUtc,
+            periodStart,
+            periodEnd,
+            count,
+            CreateRandom(cardId, vehicle.Id, issuedAtUtc),
+            minutePrecision: false
+        );
+    }
+
+    private IReadOnlyList<FuelTransaction> Generate(
+        Guid cardId,
+        FleetCar vehicle,
+        DateTimeOffset issuedAtUtc,
+        DateTimeOffset periodStart,
+        DateTimeOffset periodEnd,
+        int count,
+        StableRandom random,
+        bool minutePrecision
+    )
+    {
         var transactions = new FuelTransaction[count];
-        var monthDurationMinutes = (int)(currentMonthStart - previousMonthStart).TotalMinutes;
 
         for (var index = 0; index < count; index++)
         {
             var quantity = random.Next(15_000, 55_001) / 1_000m;
             var unitPrice = random.Next(450, 801) / 100m;
-            var discount = random.Next(5, 31) / 100m;
-            var occurredAt = previousMonthStart.AddMinutes(random.Next(0, monthDurationMinutes));
+            var occurredAt = minutePrecision
+                ? periodStart.AddMinutes(
+                    random.Next(0, (int)(periodEnd - periodStart).TotalMinutes)
+                )
+                : periodStart.AddTicks(random.NextInt64((periodEnd - periodStart).Ticks));
+            var percent =
+                programResolutionService?.GetPercent(vehicle.ClientId, vehicle.FuelType, occurredAt)
+                ?? 0m;
+            var discount = decimal.Round(
+                unitPrice * percent,
+                4,
+                MidpointRounding.AwayFromZero
+            );
             var netTotal = TransactionReportingService.CalculateNetTotal(
                 quantity,
                 unitPrice,
@@ -101,6 +166,32 @@ public sealed class MockFuelTransactionGenerator
         }
 
         return transactions;
+    }
+
+    private static (DateTimeOffset Start, DateTimeOffset End) GetPreviousPointOfSaleMonth(
+        DateTimeOffset issuedAtUtc
+    )
+    {
+        var issuedAtLocal = TimeZoneInfo.ConvertTime(issuedAtUtc, PointOfSaleTimeZone);
+        var currentLocalMonthStart = new DateTime(
+            issuedAtLocal.Year,
+            issuedAtLocal.Month,
+            1,
+            0,
+            0,
+            0,
+            DateTimeKind.Unspecified
+        );
+        var previousLocalMonthStart = currentLocalMonthStart.AddMonths(-1);
+
+        return (
+            new DateTimeOffset(
+                TimeZoneInfo.ConvertTimeToUtc(previousLocalMonthStart, PointOfSaleTimeZone)
+            ),
+            new DateTimeOffset(
+                TimeZoneInfo.ConvertTimeToUtc(currentLocalMonthStart, PointOfSaleTimeZone)
+            )
+        );
     }
 
     private static StableRandom CreateRandom(
@@ -140,6 +231,14 @@ public sealed class MockFuelTransactionGenerator
             state ^= state >> 17;
             state ^= state << 5;
             return minimum + (int)(state % (uint)(exclusiveMaximum - minimum));
+        }
+
+        public long NextInt64(long exclusiveMaximum)
+        {
+            var high = (uint)Next(0, int.MaxValue);
+            var low = (uint)Next(0, int.MaxValue);
+            var value = ((ulong)high << 32) | low;
+            return (long)(value % (ulong)exclusiveMaximum);
         }
     }
 }

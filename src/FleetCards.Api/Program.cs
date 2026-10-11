@@ -497,6 +497,63 @@ app.MapGet(
     .WithName("GetCardStateHistory")
     .WithTags("Cards");
 
+app.MapPost(
+        "/api/admin/demo-transactions",
+        async (
+            GenerateDemoTransactionsRequest request,
+            HttpContext context,
+            IDemoTransactionService service,
+            CancellationToken cancellationToken
+        ) =>
+        {
+            if (!CsrfProtection.IsValid(context))
+            {
+                return (IResult)Results.StatusCode(StatusCodes.Status403Forbidden);
+            }
+
+            var errors = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
+            if (request.From is null)
+            {
+                errors[nameof(request.From)] = ["A valid from timestamp is required."];
+            }
+
+            if (request.To is null)
+            {
+                errors[nameof(request.To)] = ["A valid to timestamp is required."];
+            }
+
+            if (request.From is not null && request.To is not null && request.To <= request.From)
+            {
+                errors[nameof(request.To)] = ["The to timestamp must be later than from."];
+            }
+
+            if (request.Count is null or < 1 or > 1000)
+            {
+                errors[nameof(request.Count)] = ["Count must be between 1 and 1000."];
+            }
+
+            if (errors.Count > 0)
+            {
+                return (IResult)Results.ValidationProblem(errors);
+            }
+
+            var generatedCount = await service.GenerateDemoTransactionsAsync(
+                request.From!.Value,
+                request.To!.Value,
+                request.Count!.Value,
+                context.User.Identity?.Name ?? "unknown",
+                context.TraceIdentifier,
+                cancellationToken
+            );
+            return generatedCount == 0
+                ? (IResult)Results.Conflict()
+                : Results.Ok(new DemoTransactionGenerationResponse(generatedCount));
+        }
+    )
+    .RequireAuthorization("ReadWrite")
+    .WithName("GenerateDemoTransactions")
+    .WithTags("Admin");
+
 app.MapGet(
         "/api/transactions/report",
         async (
@@ -569,9 +626,159 @@ app.MapGet(
     .WithName("GetDashboardSummary")
     .WithTags("Dashboard");
 
-app.MapGet("/api/programs", (IFleetCardsReadService service) => service.GetPrograms())
+app.MapGet(
+        "/api/programs",
+        async (
+            IFleetCardsReadService service,
+            IProgramAssignmentService assignmentsService,
+            CancellationToken cancellationToken
+        ) =>
+        {
+            var programs = service.GetPrograms();
+            var assignments = await assignmentsService.GetAssignmentsAsync(cancellationToken);
+            var now = DateTimeOffset.UtcNow;
+            var currentAssignment = assignments.SingleOrDefault(assignment =>
+                assignment.StartsAt <= now
+                && (assignment.EndsAt is null || assignment.EndsAt > now)
+            );
+            return Results.Ok(new FleetCardProgramsResponse(programs, currentAssignment));
+        }
+    )
     .RequireAuthorization("ReadWrite")
     .WithName("GetPrograms")
+    .WithTags("Programs");
+
+app.MapGet(
+        "/api/programs/assignments",
+        async (IProgramAssignmentService service, CancellationToken cancellationToken) =>
+            Results.Ok(await service.GetAssignmentsAsync(cancellationToken))
+    )
+    .RequireAuthorization("ReadWrite")
+    .WithName("GetProgramAssignments")
+    .WithTags("Programs");
+
+app.MapPost(
+        "/api/programs/assignments",
+        async (
+            ScheduleProgramAssignmentRequest request,
+            HttpContext context,
+            IProgramAssignmentService service,
+            CancellationToken cancellationToken
+        ) =>
+        {
+            if (!CsrfProtection.IsValid(context))
+            {
+                return (IResult)Results.StatusCode(StatusCodes.Status403Forbidden);
+            }
+
+            var errors = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
+            if (request.ProgramId is null || request.ProgramId == Guid.Empty)
+            {
+                errors[nameof(request.ProgramId)] = ["A valid programId is required."];
+            }
+
+            if (request.StartsAt is null)
+            {
+                errors[nameof(request.StartsAt)] = ["A valid startsAt timestamp is required."];
+            }
+
+            if (errors.Count > 0)
+            {
+                return (IResult)Results.ValidationProblem(errors);
+            }
+
+            var result = await service.ScheduleSwitchAsync(
+                request.ProgramId!.Value,
+                request.StartsAt!.Value,
+                context.User.Identity?.Name ?? "unknown",
+                context.TraceIdentifier,
+                cancellationToken
+            );
+            return MapProgramAssignmentCommandResult(result);
+        }
+    )
+    .RequireAuthorization("ReadWrite")
+    .WithName("ScheduleProgramAssignment")
+    .WithTags("Programs");
+
+app.MapPost(
+        "/api/programs/assignments/end",
+        async (
+            EndProgramAssignmentRequest request,
+            HttpContext context,
+            IProgramAssignmentService service,
+            CancellationToken cancellationToken
+        ) =>
+        {
+            if (!CsrfProtection.IsValid(context))
+            {
+                return (IResult)Results.StatusCode(StatusCodes.Status403Forbidden);
+            }
+
+            if (request.EndsAt is null)
+            {
+                return Results.ValidationProblem(
+                    new Dictionary<string, string[]>
+                    {
+                        [nameof(request.EndsAt)] = ["A valid endsAt timestamp is required."],
+                    }
+                );
+            }
+
+            var result = await service.EndAsync(
+                request.EndsAt.Value,
+                context.User.Identity?.Name ?? "unknown",
+                context.TraceIdentifier,
+                cancellationToken
+            );
+            return MapProgramAssignmentCommandResult(result);
+        }
+    )
+    .RequireAuthorization("ReadWrite")
+    .WithName("EndProgramAssignment")
+    .WithTags("Programs");
+
+app.MapGet(
+        "/api/programs/comparison",
+        async (
+            DateTimeOffset? from,
+            DateTimeOffset? to,
+            ProgramComparisonService service,
+            CancellationToken cancellationToken
+        ) =>
+        {
+            if (from is null || to is null)
+            {
+                var errors = new Dictionary<string, string[]>();
+                if (from is null)
+                {
+                    errors["from"] = ["A valid from timestamp is required."];
+                }
+
+                if (to is null)
+                {
+                    errors["to"] = ["A valid to timestamp is required."];
+                }
+
+                return Results.ValidationProblem(errors);
+            }
+
+            try
+            {
+                return Results.Ok(
+                    await service.GetComparisonAsync(from.Value, to.Value, cancellationToken)
+                );
+            }
+            catch (ArgumentException exception)
+            {
+                return Results.ValidationProblem(
+                    new Dictionary<string, string[]> { ["from"] = [exception.Message] }
+                );
+            }
+        }
+    )
+    .RequireAuthorization("ReadWrite")
+    .WithName("GetProgramComparison")
     .WithTags("Programs");
 
 app.MapDefaultEndpoints();
@@ -622,6 +829,17 @@ static IResult MapCardCommandResult(CardCommandResult result) =>
             title: "Card lifecycle conflict",
             detail: "The requested operation is not valid for the card or vehicle state."
         ),
+        _ => Results.Problem(statusCode: StatusCodes.Status500InternalServerError),
+    };
+
+static IResult MapProgramAssignmentCommandResult(ProgramAssignmentCommandResult result) =>
+    result.Error switch
+    {
+        ProgramAssignmentCommandError.None => Results.NoContent(),
+        ProgramAssignmentCommandError.Validation => Results.ValidationProblem(
+            result.ValidationErrors!.ToDictionary(error => error.Key, error => error.Value)
+        ),
+        ProgramAssignmentCommandError.NotFound => Results.NotFound(),
         _ => Results.Problem(statusCode: StatusCodes.Status500InternalServerError),
     };
 

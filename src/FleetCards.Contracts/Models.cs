@@ -77,6 +77,14 @@ public sealed record FuelTransactionResponse(
 
 public sealed record TransactionReportRequest(int Year, int Month, string? TimeZoneId = null);
 
+public sealed record GenerateDemoTransactionsRequest(
+    DateTimeOffset? From,
+    DateTimeOffset? To,
+    int? Count
+);
+
+public sealed record DemoTransactionGenerationResponse(int GeneratedCount);
+
 public sealed record TransactionReportPeriod(
     int Year,
     int Month,
@@ -139,5 +147,46 @@ public sealed record FleetCardProgramResponse(
     Guid Id,
     string Name,
     DateTimeOffset ActiveFrom,
-    DateTimeOffset? ActiveTo
+    DateTimeOffset? ActiveTo,
+    IReadOnlyList<FleetCardProgramRuleResponse>? Rules = null
+);
+
+public sealed record FleetCardProgramRuleResponse(string FuelType, decimal Percent);
+
+public sealed record FleetCardProgramAssignmentResponse(
+    Guid Id,
+    Guid ProgramId,
+    DateTimeOffset StartsAt,
+    DateTimeOffset? EndsAt
+);
+
+public sealed record FleetCardProgramsResponse(
+    IReadOnlyList<FleetCardProgramResponse> Programs,
+    FleetCardProgramAssignmentResponse? CurrentAssignment
+);
+
+public sealed record ScheduleProgramAssignmentRequest(Guid? ProgramId, DateTimeOffset? StartsAt);
+
+public sealed record EndProgramAssignmentRequest(DateTimeOffset? EndsAt);
+
+public sealed record ProgramComparisonBaseline(
+    decimal NetTotal,
+    decimal VatTotal,
+    decimal GrossTotal
+);
+
+public sealed record ProgramComparisonProgramResponse(
+    Guid ProgramId,
+    string ProgramName,
+    decimal HypotheticalNetTotal,
+    decimal HypotheticalGrossTotal,
+    decimal NetSavings,
+    decimal GrossSavings
+);
+
+public sealed record ProgramComparisonResponse(
+    DateTimeOffset FromUtc,
+    DateTimeOffset ToUtc,
+    ProgramComparisonBaseline Baseline,
+    IReadOnlyList<ProgramComparisonProgramResponse> Programs
 );

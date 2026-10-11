@@ -1,0 +1,66 @@
+<section class="admin-demo-view" aria-labelledby="admin-demo-heading">
+  <div class="admin-demo-heading">
+    <div>
+      <p class="eyebrow">{{ language.text('demoData') }}</p>
+      <h2 id="admin-demo-heading">{{ language.text('demoData') }}</h2>
+      <p class="muted">{{ language.text('adminDemoDescription') }}</p>
+    </div>
+  </div>
+
+  @if (invalid()) {
+    <p class="message error-message" role="alert">{{ language.text('adminDemoValidationError') }}</p>
+  }
+  @if (error()) {
+    <p class="message error-message" role="alert">{{ language.text('adminDemoFailure') }}</p>
+  }
+  @if (generatedCount() !== null) {
+    <p class="message success-message" role="status">
+      {{ language.text('adminDemoSuccess') }} {{ generatedCount() }}
+    </p>
+  }
+
+  <form class="admin-demo-form" (submit)="submit($event)" novalidate>
+    <label>
+      <span>{{ language.text('adminDemoFrom') }}</span>
+      <input
+        name="from"
+        type="date"
+        required
+        [value]="fromDate()"
+        [attr.aria-invalid]="invalid()"
+        (change)="onInputChange($event)"
+      />
+    </label>
+    <label>
+      <span>{{ language.text('adminDemoTo') }}</span>
+      <input
+        name="to"
+        type="date"
+        required
+        [value]="toDate()"
+        [attr.aria-invalid]="invalid()"
+        (change)="onInputChange($event)"
+      />
+    </label>
+    <p class="date-range-hint">{{ language.text('adminDemoDateRangeHint') }}</p>
+    <label>
+      <span>{{ language.text('adminDemoCount') }}</span>
+      <input
+        name="count"
+        type="number"
+        min="1"
+        max="1000"
+        step="1"
+        required
+        [value]="count()"
+        [attr.aria-invalid]="invalid()"
+        (input)="onInputChange($event)"
+      />
+    </label>
+    <div class="form-actions">
+      <app-button type="submit" [disabled]="saving()">
+        {{ language.text(saving() ? 'adminDemoSaving' : 'adminDemoSubmit') }}
+      </app-button>
+    </div>
+  </form>
+</section>

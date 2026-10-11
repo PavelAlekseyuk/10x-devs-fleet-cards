@@ -21,14 +21,29 @@ public static class FleetCardsInfrastructure
         services.AddSingleton<ITransactionReportingService>(
             new TransactionReportingService(timeZoneId)
         );
+        services.AddScoped<ProgramComparisonService>();
         if (!string.IsNullOrWhiteSpace(connectionString))
         {
             services.AddDbContext<FleetCardsDbContext>(options =>
                 options.UseSqlServer(connectionString)
             );
             services.AddSingleton<ICardProvider, MockCardProvider>();
-            services.AddSingleton(new MockFuelTransactionGenerator(vatRate));
-            services.AddScoped<IFleetCardService, EfFleetCardService>();
+            services.AddScoped<IProgramResolutionDataSource, EfProgramResolutionDataSource>();
+            services.AddScoped<IProgramResolutionService, ProgramResolutionService>();
+            services.AddScoped<IProgramAssignmentService, EfProgramAssignmentService>();
+            services.AddScoped<MockFuelTransactionGenerator>(serviceProvider =>
+                new MockFuelTransactionGenerator(
+                    vatRate,
+                    serviceProvider.GetRequiredService<IProgramResolutionService>()
+                )
+            );
+            services.AddScoped<EfFleetCardService>();
+            services.AddScoped<IFleetCardService>(serviceProvider =>
+                serviceProvider.GetRequiredService<EfFleetCardService>()
+            );
+            services.AddScoped<IDemoTransactionService>(serviceProvider =>
+                serviceProvider.GetRequiredService<EfFleetCardService>()
+            );
             services.AddScoped<IFleetCardsReadService, EfFleetCardsReadService>();
             services.AddScoped<IFleetVehicleService, EfFleetVehicleService>();
             services.AddScoped<IAuthenticationService, EfAuthenticationService>();
@@ -40,8 +55,22 @@ public static class FleetCardsInfrastructure
             serviceProvider.GetRequiredService<SeededFleetVehicleService>()
         );
         services.AddSingleton<ICardProvider, MockCardProvider>();
-        services.AddSingleton(new MockFuelTransactionGenerator(vatRate));
-        services.AddSingleton<IFleetCardService, SeededFleetCardService>();
+        services.AddSingleton<IProgramResolutionDataSource, SeededProgramResolutionDataSource>();
+        services.AddSingleton<IProgramResolutionService, ProgramResolutionService>();
+        services.AddSingleton<IProgramAssignmentService, SeededProgramAssignmentService>();
+        services.AddSingleton<MockFuelTransactionGenerator>(serviceProvider =>
+            new MockFuelTransactionGenerator(
+                vatRate,
+                serviceProvider.GetRequiredService<IProgramResolutionService>()
+            )
+        );
+        services.AddSingleton<SeededFleetCardService>();
+        services.AddSingleton<IFleetCardService>(serviceProvider =>
+            serviceProvider.GetRequiredService<SeededFleetCardService>()
+        );
+        services.AddSingleton<IDemoTransactionService>(serviceProvider =>
+            serviceProvider.GetRequiredService<SeededFleetCardService>()
+        );
         services.AddScoped<IFleetCardsReadService, SeededFleetCardsReadService>();
         services.AddSingleton<IAuthenticationService, SeededAuthenticationService>();
         return services;

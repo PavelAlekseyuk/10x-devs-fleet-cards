@@ -22,6 +22,43 @@ namespace FleetCards.Infrastructure.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("FleetCards.Domain.ClientProgramAssignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ClientId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset?>("EndsAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("ProgramId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTimeOffset>("StartsAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProgramId");
+
+                    b.HasIndex("ClientId", "StartsAt")
+                        .IsUnique();
+
+                    b.ToTable("ClientProgramAssignments", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("aaaaaaaa-0000-0000-0000-000000000001"),
+                            ClientId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            StartsAt = new DateTimeOffset(new DateTime(2026, 9, 9, 12, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0))
+                        });
+                });
+
             modelBuilder.Entity("FleetCards.Domain.FleetAuditEvent", b =>
                 {
                     b.Property<Guid>("Id")
@@ -252,14 +289,196 @@ namespace FleetCards.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Programs");
+                    b.ToTable("Programs", (string)null);
 
                     b.HasData(
                         new
                         {
                             Id = new Guid("55555555-5555-5555-5555-555555555555"),
                             ActiveFrom = new DateTimeOffset(new DateTime(2026, 3, 21, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            Name = "Baltic Standard"
+                            Name = "Nebula Basic"
+                        },
+                        new
+                        {
+                            Id = new Guid("55555555-5555-5555-5555-555555555556"),
+                            ActiveFrom = new DateTimeOffset(new DateTime(2026, 3, 21, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Name = "Orion Diesel"
+                        },
+                        new
+                        {
+                            Id = new Guid("55555555-5555-5555-5555-555555555557"),
+                            ActiveFrom = new DateTimeOffset(new DateTime(2026, 3, 21, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Name = "Andromeda Petrol"
+                        },
+                        new
+                        {
+                            Id = new Guid("55555555-5555-5555-5555-555555555558"),
+                            ActiveFrom = new DateTimeOffset(new DateTime(2026, 3, 21, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Name = "Voyager Balanced"
+                        });
+                });
+
+            modelBuilder.Entity("FleetCards.Domain.FleetCardProgramRule", b =>
+                {
+                    b.Property<Guid>("ProgramId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("FuelType")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal>("Percent")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)");
+
+                    b.HasKey("ProgramId", "FuelType");
+
+                    b.ToTable("ProgramRules", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555556"),
+                            FuelType = "Diesel",
+                            Percent = 0m
+                        },
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555556"),
+                            FuelType = "Diesel+",
+                            Percent = 0m
+                        },
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555556"),
+                            FuelType = "95",
+                            Percent = 0m
+                        },
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555556"),
+                            FuelType = "98",
+                            Percent = 0m
+                        },
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555556"),
+                            FuelType = "95+",
+                            Percent = 0m
+                        },
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555556"),
+                            FuelType = "98+",
+                            Percent = 0m
+                        },
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            FuelType = "Diesel",
+                            Percent = 0.10m
+                        },
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            FuelType = "Diesel+",
+                            Percent = 0.10m
+                        },
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            FuelType = "95",
+                            Percent = -0.02m
+                        },
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            FuelType = "98",
+                            Percent = -0.02m
+                        },
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            FuelType = "95+",
+                            Percent = -0.02m
+                        },
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555555"),
+                            FuelType = "98+",
+                            Percent = -0.02m
+                        },
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555557"),
+                            FuelType = "Diesel",
+                            Percent = -0.03m
+                        },
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555557"),
+                            FuelType = "Diesel+",
+                            Percent = -0.03m
+                        },
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555557"),
+                            FuelType = "95",
+                            Percent = 0.09m
+                        },
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555557"),
+                            FuelType = "98",
+                            Percent = 0.09m
+                        },
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555557"),
+                            FuelType = "95+",
+                            Percent = 0.09m
+                        },
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555557"),
+                            FuelType = "98+",
+                            Percent = 0.09m
+                        },
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555558"),
+                            FuelType = "Diesel",
+                            Percent = 0.03m
+                        },
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555558"),
+                            FuelType = "Diesel+",
+                            Percent = 0.03m
+                        },
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555558"),
+                            FuelType = "95",
+                            Percent = 0.02m
+                        },
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555558"),
+                            FuelType = "98",
+                            Percent = 0.02m
+                        },
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555558"),
+                            FuelType = "95+",
+                            Percent = 0.02m
+                        },
+                        new
+                        {
+                            ProgramId = new Guid("55555555-5555-5555-5555-555555555558"),
+                            FuelType = "98+",
+                            Percent = 0.02m
                         });
                 });
 
@@ -458,11 +677,11 @@ namespace FleetCards.Infrastructure.Migrations
                         {
                             Id = new Guid("44444444-4444-4444-4444-444444444444"),
                             CardId = new Guid("22222222-2222-2222-2222-222222222222"),
-                            Discount = 0.18m,
+                            Discount = 0m,
                             FuelType = "Diesel",
-                            GrossTotal = 326.60m,
+                            GrossTotal = 335.93m,
                             LineageId = new Guid("44444444-4444-4444-4444-444444444444"),
-                            NetTotal = 265.53m,
+                            NetTotal = 273.11m,
                             OccurredAt = new DateTimeOffset(new DateTime(2026, 9, 9, 12, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             PosOccurredAtLocal = new DateTimeOffset(new DateTime(2026, 9, 9, 14, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 2, 0, 0, 0)),
                             PosTimeZoneId = "Europe/Warsaw",
@@ -470,12 +689,27 @@ namespace FleetCards.Infrastructure.Migrations
                             StationName = "angry storage",
                             Status = "Completed",
                             UnitPrice = 6.49m,
-                            VatAmount = 61.07m,
+                            VatAmount = 62.82m,
                             VatRate = 0.23m,
                             VehicleId = new Guid("11111111-1111-1111-1111-111111111111"),
                             VehiclePlate = "WA 12345",
                             Version = 1
                         });
+                });
+
+            modelBuilder.Entity("FleetCards.Domain.ClientProgramAssignment", b =>
+                {
+                    b.HasOne("FleetCards.Domain.FleetClient", null)
+                        .WithMany()
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FleetCards.Domain.FleetCardProgram", null)
+                        .WithMany()
+                        .HasForeignKey("ProgramId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("FleetCards.Domain.FleetCar", b =>
@@ -513,6 +747,15 @@ namespace FleetCards.Infrastructure.Migrations
                     b.HasOne("FleetCards.Domain.FleetCar", null)
                         .WithMany()
                         .HasForeignKey("VehicleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FleetCards.Domain.FleetCardProgramRule", b =>
+                {
+                    b.HasOne("FleetCards.Domain.FleetCardProgram", null)
+                        .WithMany()
+                        .HasForeignKey("ProgramId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

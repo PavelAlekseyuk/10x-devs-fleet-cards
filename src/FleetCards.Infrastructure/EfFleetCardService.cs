@@ -10,8 +10,9 @@ namespace FleetCards.Infrastructure;
 public sealed class EfFleetCardService(
     FleetCardsDbContext dbContext,
     ICardProvider cardProvider,
-    MockFuelTransactionGenerator transactionGenerator
-) : IFleetCardService
+    MockFuelTransactionGenerator transactionGenerator,
+    IFleetVehicleService vehicleService
+) : IFleetCardService, IDemoTransactionService
 {
     public IReadOnlyList<FleetCardResponse> GetCards() =>
         dbContext
@@ -65,6 +66,102 @@ public sealed class EfFleetCardService(
                 transaction.Status.ToString()
             ))
             .ToArray();
+    }
+
+    public async Task<int> GenerateDemoTransactionsAsync(
+        DateTimeOffset from,
+        DateTimeOffset to,
+        int count,
+        string actor,
+        string correlationId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (count <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(count));
+        }
+
+        if (to <= from)
+        {
+            throw new ArgumentException("The transaction period must have a positive duration.");
+        }
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(
+            IsolationLevel.Serializable,
+            cancellationToken
+        );
+        var vehicles = await vehicleService.GetCarsAsync(
+            search: null,
+            includeArchived: false,
+            cancellationToken
+        );
+        var vehicleById = vehicles.ToDictionary(vehicle => vehicle.Id);
+        var cards = await dbContext.Cards.AsNoTracking().Where(card =>
+            card.State == CardState.Active
+        ).ToArrayAsync(cancellationToken);
+        var eligibleCards = cards
+            .Where(card => vehicleById.ContainsKey(card.AssignedCarId))
+            .ToArray();
+        Random.Shared.Shuffle(eligibleCards);
+        if (eligibleCards.Length == 0)
+        {
+            return 0;
+        }
+
+        var generatedAt = DateTimeOffset.UtcNow;
+        var transactions = new List<FuelTransaction>(count);
+        var cardsWithTransactions = Math.Min(count, eligibleCards.Length);
+        var transactionsPerCard = count / cardsWithTransactions;
+        var extraTransactions = count % cardsWithTransactions;
+        for (var index = 0; index < cardsWithTransactions; index++)
+        {
+            var card = eligibleCards[index];
+            var vehicle = vehicleById[card.AssignedCarId];
+            var cardCount = transactionsPerCard + (index < extraTransactions ? 1 : 0);
+            transactions.AddRange(
+                transactionGenerator.Generate(
+                    card.Id,
+                    new FleetCar
+                    {
+                        Id = vehicle.Id,
+                        ClientId = card.ClientId,
+                        RegistrationPlate = vehicle.RegistrationPlate,
+                        NormalizedRegistrationPlate =
+                            FleetVehicleRules.NormalizeRegistrationPlate(
+                                vehicle.RegistrationPlate
+                            ),
+                        FuelType = vehicle.FuelType,
+                        Make = vehicle.Make,
+                        Model = vehicle.Model,
+                        IsArchived = vehicle.IsArchived,
+                    },
+                    generatedAt,
+                    from,
+                    to,
+                    cardCount
+                )
+            );
+        }
+
+        dbContext.Transactions.AddRange(transactions);
+        var batchId = Guid.NewGuid();
+        dbContext.AuditEvents.Add(
+            new FleetAuditEvent
+            {
+                Id = Guid.NewGuid(),
+                Actor = actor,
+                Action = "DemoTransactionsGenerated",
+                EntityType = "FuelTransactionBatch",
+                EntityId = batchId,
+                OccurredAt = generatedAt,
+                Succeeded = true,
+                CorrelationId = correlationId,
+            }
+        );
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        return transactions.Count;
     }
 
     public async Task<CardCommandResult> IssueAsync(

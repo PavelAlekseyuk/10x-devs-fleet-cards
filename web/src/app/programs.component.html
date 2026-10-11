@@ -1,0 +1,301 @@
+<section class="programs-view" aria-labelledby="programs-heading">
+  @if (loading()) {
+    <p class="message" role="status">{{ language.text('loading') }}</p>
+  } @else if (loadError()) {
+    <div class="message error-message" role="alert">
+      <span>{{ language.text('programsLoadError') }}</span>
+      <app-button variant="text" type="button" (click)="retryLoad()">
+        {{ language.text('retry') }}
+      </app-button>
+    </div>
+  } @else {
+    <div class="programs-heading">
+      <div>
+        <p class="eyebrow">{{ language.text('clientWorkspace') }}</p>
+        <h2 id="programs-heading">{{ language.text('availablePrograms') }}</h2>
+        <p class="muted">{{ language.text('programManagementDescription') }}</p>
+      </div>
+      <app-button type="button" (click)="openChangeDialog()">
+        {{ language.text('changeProgram') }}
+      </app-button>
+    </div>
+
+    @if (changed()) {
+      <p class="message success-message" role="status">{{ language.text('programChanged') }}</p>
+    }
+    @if (programs().length === 0) {
+      <p class="message">{{ language.text('programsEmpty') }}</p>
+    } @else {
+      <section class="current-program" [attr.aria-label]="language.text('currentProgram')">
+        <div>
+          <p class="eyebrow">{{ language.text('currentProgram') }}</p>
+          <h3>{{ currentProgramName() }}</h3>
+          @if (currentAssignment(); as assignment) {
+            <p class="muted">{{ formatDateTime(assignment.startsAt) }}</p>
+          }
+        </div>
+        @if (currentAssignment()) {
+          <app-status-badge [label]="language.text('active')" />
+        }
+      </section>
+      <div class="program-list">
+        @for (program of programs(); track program.id) {
+          <article class="program-card">
+            <div class="program-card-heading">
+              <h3>{{ program.name }}</h3>
+              @if (program.id === currentAssignment()?.programId) {
+                <app-status-badge [label]="language.text('active')" />
+              }
+            </div>
+            <p class="eyebrow">{{ language.text('programRules') }}</p>
+            <ul>
+              @for (rule of program.rules; track rule.fuelType) {
+                <li>
+                  <span>{{ fuelLabel(rule.fuelType) }}</span
+                  ><strong>{{ formatPercent(rule.percent) }}</strong>
+                </li>
+              }
+            </ul>
+          </article>
+        }
+      </div>
+
+      <section class="history-panel" aria-labelledby="program-history-heading">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">{{ language.text('clientWorkspace') }}</p>
+            <h3 id="program-history-heading">{{ language.text('assignmentHistory') }}</h3>
+          </div>
+          <span class="record-count">{{ historyEntries().length }}</span>
+        </div>
+        @if (historyEntries().length === 0) {
+          <p class="message">{{ language.text('programHistoryEmpty') }}</p>
+        } @else {
+          <div class="history-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">{{ language.text('assignmentProgram') }}</th>
+                  <th scope="col">{{ language.text('assignmentStart') }}</th>
+                  <th scope="col">{{ language.text('assignmentEnd') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (entry of historyEntries(); track entry.id) {
+                  <tr [class.unassigned-row]="!entry.programId">
+                    <td>
+                      <strong>{{ programName(entry.programId) }}</strong>
+                      @if (!entry.programId) {
+                        <small>{{ language.text('noSuccessor') }}</small>
+                      }
+                    </td>
+                    <td>{{ formatDateTime(entry.startsAt) }}</td>
+                    <td>
+                      {{ entry.endsAt ? formatDateTime(entry.endsAt) : language.text('ongoing') }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    }
+  }
+
+  <dialog
+    #changeDialog
+    class="change-dialog"
+    aria-modal="true"
+    aria-labelledby="change-dialog-heading"
+    (close)="onDialogClose()"
+    (click)="onDialogClick($event)"
+  >
+    <form class="change-form" (submit)="confirmChange($event)">
+      <div class="dialog-heading">
+        <div>
+          <p class="eyebrow">{{ language.text('programs') }}</p>
+          <h2 id="change-dialog-heading">{{ language.text('changeProgramTitle') }}</h2>
+        </div>
+        <button
+          class="close-button"
+          type="button"
+          [attr.aria-label]="language.text('cancel')"
+          (click)="closeChangeDialog()"
+        >
+          ×
+        </button>
+      </div>
+
+      <section class="comparison-controls" aria-labelledby="comparison-period-heading">
+        <h3 id="comparison-period-heading">{{ language.text('comparisonPeriod') }}</h3>
+        <label>
+          <span>{{ language.text('comparisonPeriod') }}</span>
+          <select [value]="periodMode()" (change)="onPeriodModeChange($event)">
+            <option value="last-month">{{ language.text('periodLastMonth') }}</option>
+            <option value="last-30-days">{{ language.text('periodLast30Days') }}</option>
+            <option value="custom">{{ language.text('periodCustom') }}</option>
+          </select>
+        </label>
+        @if (periodMode() === 'custom') {
+          <div class="custom-period">
+            <label>
+              <span>{{ language.text('fromDate') }}</span>
+              <input
+                name="customFrom"
+                type="date"
+                [value]="customFrom()"
+                [attr.aria-invalid]="invalidPeriod()"
+                (change)="onCustomDateChange($event)"
+              />
+            </label>
+            <label>
+              <span>{{ language.text('toDate') }}</span>
+              <input
+                name="customTo"
+                type="date"
+                [value]="customTo()"
+                [attr.aria-invalid]="invalidPeriod()"
+                (change)="onCustomDateChange($event)"
+              />
+            </label>
+            <app-button variant="quiet" type="button" (click)="compareCustomPeriod()">
+              {{ language.text('comparePeriod') }}
+            </app-button>
+          </div>
+        }
+        @if (invalidPeriod()) {
+          <p class="inline-error" role="alert">{{ language.text('invalidComparisonPeriod') }}</p>
+        }
+        @if (comparisonLoading()) {
+          <p class="message" role="status">{{ language.text('comparing') }}</p>
+        } @else if (comparisonError()) {
+          <div class="message error-message" role="alert">
+            <span>{{ language.text('programComparisonError') }}</span>
+            <app-button variant="text" type="button" (click)="retryComparison()">
+              {{ language.text('retry') }}
+            </app-button>
+          </div>
+        } @else if (comparison(); as data) {
+          <p class="period-label">{{ comparePeriodLabel() }}</p>
+          <div class="comparison-table-wrap">
+            <table class="comparison-table">
+              <thead>
+                <tr>
+                  <th scope="col">{{ language.text('selectProgram') }}</th>
+                  <th scope="col">
+                    {{ language.text('hypotheticalCost') }} · {{ language.text('net') }}
+                  </th>
+                  <th scope="col">
+                    {{ language.text('hypotheticalCost') }} · {{ language.text('gross') }}
+                  </th>
+                  <th scope="col">{{ language.text('netSavings') }}</th>
+                  <th scope="col">{{ language.text('grossSavings') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="baseline-row">
+                  <th scope="row">{{ language.text('comparisonBaseline') }}</th>
+                  <td>{{ formatCurrency(data.baseline.netTotal) }}</td>
+                  <td>{{ formatCurrency(data.baseline.grossTotal) }}</td>
+                  <td>—</td>
+                  <td>—</td>
+                </tr>
+                @for (program of data.programs; track program.programId) {
+                  <tr>
+                    <td>
+                      <label class="program-choice">
+                        <input
+                          type="radio"
+                          name="programChoice"
+                          [value]="program.programId"
+                          [checked]="selectedProgramId() === program.programId"
+                          [attr.aria-label]="
+                            language.text('selectProgram') + ': ' + program.programName
+                          "
+                          (change)="onProgramChange($event)"
+                        />
+                        <span>{{ program.programName }}</span>
+                      </label>
+                    </td>
+                    <td>{{ formatCurrency(program.hypotheticalNetTotal) }}</td>
+                    <td>{{ formatCurrency(program.hypotheticalGrossTotal) }}</td>
+                    <td>{{ formatCurrency(program.netSavings) }}</td>
+                    <td>{{ formatCurrency(program.grossSavings) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+
+      <fieldset class="change-options">
+        <legend>{{ language.text('changeProgram') }}</legend>
+        <label class="action-choice">
+          <input
+            type="radio"
+            name="changeAction"
+            value="program"
+            [checked]="action() === 'program'"
+            (change)="onActionChange($event)"
+          />
+          <span>{{ language.text('selectProgram') }}</span>
+        </label>
+        <label class="action-choice">
+          <input
+            type="radio"
+            name="changeAction"
+            value="end"
+            [checked]="action() === 'end'"
+            (change)="onActionChange($event)"
+          />
+          <span>{{ language.text('scheduleEnd') }}</span>
+        </label>
+        @if (action() === 'program') {
+          <label>
+            <span>{{ language.text('selectProgram') }}</span>
+            <select [value]="selectedProgramId()" (change)="onProgramChange($event)">
+              <option value="">{{ language.text('selectProgram') }}</option>
+              @for (program of programOptions; track program.id) {
+                <option [value]="program.id">{{ program.name }}</option>
+              }
+            </select>
+          </label>
+        }
+      </fieldset>
+
+      <label class="effective-time">
+        <span>{{ language.text('effectiveDateTime') }}</span>
+        <input
+          type="datetime-local"
+          step="1"
+          required
+          [min]="minimumStartsAt()"
+          [value]="startsAtValue()"
+          [attr.aria-invalid]="invalidSchedule()"
+          (change)="onStartsAtChange($event)"
+        />
+      </label>
+      @if (invalidSchedule()) {
+        <p class="inline-error" role="alert">{{ language.text(scheduleErrorLabel()) }}</p>
+      }
+      @if (mutationError()) {
+        <p class="inline-error" role="alert">{{ language.text('programMutationError') }}</p>
+      }
+      <div class="dialog-actions">
+        <app-button
+          variant="quiet"
+          type="button"
+          [disabled]="saving()"
+          (click)="closeChangeDialog()"
+        >
+          {{ language.text('cancel') }}
+        </app-button>
+        <app-button type="submit" [disabled]="saving()">
+          {{ language.text(saving() ? 'savingProgramChange' : 'confirmChange') }}
+        </app-button>
+      </div>
+    </form>
+  </dialog>
+</section>
