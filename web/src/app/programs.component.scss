@@ -371,3 +371,29 @@ select:focus-visible {
     margin-left: calc(-1 * var(--ui-space-4));
   }
 }
+
+.comparison-table .sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-space-1);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.comparison-table .sort-button:hover {
+  color: var(--ui-color-foreground);
+}
+
+.comparison-table .sort-button:focus-visible {
+  outline: 2px solid var(--ui-focus-ring);
+  outline-offset: 2px;
+}
+
+.sort-indicator {
+  min-width: 1em;
+}

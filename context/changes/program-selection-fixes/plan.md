@@ -215,25 +215,25 @@ The migration deletes all transactions (append-only rule intentionally bypassed 
 
 #### Automated
 
-- [x] 2.1 Angular tests pass: `npm test` (from `web/`)
-- [x] 2.2 Build passes: `npm run build` (from `web/`)
-- [x] 2.3 Literal-colour check reports no matches
+- [x] 2.1 Angular tests pass: `npm test` (from `web/`) — 396360d
+- [x] 2.2 Build passes: `npm run build` (from `web/`) — 396360d
+- [x] 2.3 Literal-colour check reports no matches — 396360d
 
 #### Manual
 
-- [x] 2.4 Discounts show as negative, surcharges as positive (e.g. Andromeda Petrol petrol `-9%`)
-- [x] 2.5 Zero-percent rules show `0%`
+- [x] 2.4 Discounts show as negative, surcharges as positive (e.g. Andromeda Petrol petrol `-9%`) — 396360d
+- [x] 2.5 Zero-percent rules show `0%` — 396360d
 
 ### Phase 3: Frontend — sortable comparison table
 
 #### Automated
 
-- [ ] 3.1 Angular tests pass: `npm test` (from `web/`)
-- [ ] 3.2 Build passes: `npm run build` (from `web/`)
-- [ ] 3.3 Literal-colour check reports no matches
+- [x] 3.1 Angular tests pass: `npm test` (from `web/`)
+- [x] 3.2 Build passes: `npm run build` (from `web/`)
+- [x] 3.3 Literal-colour check reports no matches
 
 #### Manual
 
-- [ ] 3.4 Each of the four headers sorts ascending, then descending, then restores default order
-- [ ] 3.5 Baseline row stays on top; selecting a program after sorting selects the correct program
-- [ ] 3.6 Keyboard and screen-reader behaviour of the sortable headers is acceptable
+- [x] 3.4 Each of the four headers sorts ascending, then descending, then restores default order
+- [x] 3.5 Baseline row stays on top; selecting a program after sorting selects the correct program
+- [x] 3.6 Keyboard and screen-reader behaviour of the sortable headers is acceptable
