@@ -10,6 +10,7 @@ export const routes: Routes = [
 	{ path: 'cards', component: ShellComponent, data: { section: 'cards' }, canMatch: [authGuard] },
 	{ path: 'transactions', component: ShellComponent, data: { section: 'transactions' }, canMatch: [authGuard] },
 	{ path: 'programs', component: ShellComponent, data: { section: 'programs' }, canMatch: [authGuard, readWriteGuard] },
+	{ path: 'admin/demo', component: ShellComponent, data: { section: 'demoData' }, canMatch: [authGuard, readWriteGuard] },
 	{ path: '', pathMatch: 'full', redirectTo: 'overview' },
 	{ path: '**', redirectTo: 'overview' },
 ];

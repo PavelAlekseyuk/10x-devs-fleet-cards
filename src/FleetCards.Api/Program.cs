@@ -497,6 +497,63 @@ app.MapGet(
     .WithName("GetCardStateHistory")
     .WithTags("Cards");
 
+app.MapPost(
+        "/api/admin/demo-transactions",
+        async (
+            GenerateDemoTransactionsRequest request,
+            HttpContext context,
+            IDemoTransactionService service,
+            CancellationToken cancellationToken
+        ) =>
+        {
+            if (!CsrfProtection.IsValid(context))
+            {
+                return (IResult)Results.StatusCode(StatusCodes.Status403Forbidden);
+            }
+
+            var errors = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
+            if (request.From is null)
+            {
+                errors[nameof(request.From)] = ["A valid from timestamp is required."];
+            }
+
+            if (request.To is null)
+            {
+                errors[nameof(request.To)] = ["A valid to timestamp is required."];
+            }
+
+            if (request.From is not null && request.To is not null && request.To <= request.From)
+            {
+                errors[nameof(request.To)] = ["The to timestamp must be later than from."];
+            }
+
+            if (request.Count is null or < 1 or > 1000)
+            {
+                errors[nameof(request.Count)] = ["Count must be between 1 and 1000."];
+            }
+
+            if (errors.Count > 0)
+            {
+                return (IResult)Results.ValidationProblem(errors);
+            }
+
+            var generatedCount = await service.GenerateDemoTransactionsAsync(
+                request.From!.Value,
+                request.To!.Value,
+                request.Count!.Value,
+                context.User.Identity?.Name ?? "unknown",
+                context.TraceIdentifier,
+                cancellationToken
+            );
+            return generatedCount == 0
+                ? (IResult)Results.Conflict()
+                : Results.Ok(new DemoTransactionGenerationResponse(generatedCount));
+        }
+    )
+    .RequireAuthorization("ReadWrite")
+    .WithName("GenerateDemoTransactions")
+    .WithTags("Admin");
+
 app.MapGet(
         "/api/transactions/report",
         async (

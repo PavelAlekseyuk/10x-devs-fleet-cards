@@ -119,6 +119,18 @@ public interface IFleetCardService
     );
 }
 
+public interface IDemoTransactionService
+{
+    Task<int> GenerateDemoTransactionsAsync(
+        DateTimeOffset from,
+        DateTimeOffset to,
+        int count,
+        string actor,
+        string correlationId,
+        CancellationToken cancellationToken = default
+    );
+}
+
 public static class CardStateRules
 {
     public static bool TryParse(string? value, out CardState state)

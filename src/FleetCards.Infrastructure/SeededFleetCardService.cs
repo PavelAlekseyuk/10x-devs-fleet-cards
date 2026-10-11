@@ -8,7 +8,7 @@ public sealed class SeededFleetCardService(
     SeededFleetVehicleService vehicleService,
     ICardProvider cardProvider,
     MockFuelTransactionGenerator transactionGenerator
-) : IFleetCardService
+) : IFleetCardService, IDemoTransactionService
 {
     private static readonly Guid ClientId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
     private static readonly Guid SeededCardId = Guid.Parse("22222222-2222-2222-2222-222222222222");
@@ -138,6 +138,104 @@ public sealed class SeededFleetCardService(
         {
             return transactions.ToArray();
         }
+    }
+
+    public async Task<int> GenerateDemoTransactionsAsync(
+        DateTimeOffset from,
+        DateTimeOffset to,
+        int count,
+        string actor,
+        string correlationId,
+        CancellationToken cancellationToken = default
+    )
+    {
+        if (count <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(count));
+        }
+
+        if (to <= from)
+        {
+            throw new ArgumentException("The transaction period must have a positive duration.");
+        }
+
+        var vehicles = await vehicleService.GetCarsAsync(
+            search: null,
+            includeArchived: false,
+            cancellationToken
+        );
+        var vehicleById = vehicles.ToDictionary(vehicle => vehicle.Id);
+        FleetCard[] eligibleCards;
+        lock (sync)
+        {
+            eligibleCards = cards
+                .Where(card =>
+                    card.State == CardState.Active && vehicleById.ContainsKey(card.AssignedCarId)
+                )
+                .OrderBy(card => card.Id)
+                .ToArray();
+        }
+
+        if (eligibleCards.Length == 0)
+        {
+            return 0;
+        }
+
+        var generatedAt = DateTimeOffset.UtcNow;
+        var transactionsToAdd = new List<FuelTransaction>(count);
+        var cardsWithTransactions = Math.Min(count, eligibleCards.Length);
+        var transactionsPerCard = count / cardsWithTransactions;
+        var extraTransactions = count % cardsWithTransactions;
+        for (var index = 0; index < cardsWithTransactions; index++)
+        {
+            var card = eligibleCards[index];
+            var vehicle = vehicleById[card.AssignedCarId];
+            var domainVehicle = new FleetCar
+            {
+                Id = vehicle.Id,
+                ClientId = ClientId,
+                RegistrationPlate = vehicle.RegistrationPlate,
+                NormalizedRegistrationPlate = FleetVehicleRules.NormalizeRegistrationPlate(
+                    vehicle.RegistrationPlate
+                ),
+                FuelType = vehicle.FuelType,
+                Make = vehicle.Make,
+                Model = vehicle.Model,
+                IsArchived = vehicle.IsArchived,
+            };
+            var cardCount = transactionsPerCard + (index < extraTransactions ? 1 : 0);
+            transactionsToAdd.AddRange(
+                transactionGenerator.Generate(
+                    card.Id,
+                    domainVehicle,
+                    generatedAt,
+                    from,
+                    to,
+                    cardCount
+                )
+            );
+        }
+
+        var batchId = Guid.NewGuid();
+        lock (sync)
+        {
+            transactions.AddRange(transactionsToAdd);
+            auditEvents.Add(
+                new FleetAuditEvent
+                {
+                    Id = Guid.NewGuid(),
+                    Actor = actor,
+                    Action = "DemoTransactionsGenerated",
+                    EntityType = "FuelTransactionBatch",
+                    EntityId = batchId,
+                    OccurredAt = generatedAt,
+                    Succeeded = true,
+                    CorrelationId = correlationId,
+                }
+            );
+        }
+
+        return transactionsToAdd.Count;
     }
 
     public async Task<CardCommandResult> IssueAsync(

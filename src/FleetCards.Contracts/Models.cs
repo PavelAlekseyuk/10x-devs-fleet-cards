@@ -77,6 +77,14 @@ public sealed record FuelTransactionResponse(
 
 public sealed record TransactionReportRequest(int Year, int Month, string? TimeZoneId = null);
 
+public sealed record GenerateDemoTransactionsRequest(
+    DateTimeOffset? From,
+    DateTimeOffset? To,
+    int? Count
+);
+
+public sealed record DemoTransactionGenerationResponse(int GeneratedCount);
+
 public sealed record TransactionReportPeriod(
     int Year,
     int Month,

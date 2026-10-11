@@ -37,7 +37,13 @@ public static class FleetCardsInfrastructure
                     serviceProvider.GetRequiredService<IProgramResolutionService>()
                 )
             );
-            services.AddScoped<IFleetCardService, EfFleetCardService>();
+            services.AddScoped<EfFleetCardService>();
+            services.AddScoped<IFleetCardService>(serviceProvider =>
+                serviceProvider.GetRequiredService<EfFleetCardService>()
+            );
+            services.AddScoped<IDemoTransactionService>(serviceProvider =>
+                serviceProvider.GetRequiredService<EfFleetCardService>()
+            );
             services.AddScoped<IFleetCardsReadService, EfFleetCardsReadService>();
             services.AddScoped<IFleetVehicleService, EfFleetVehicleService>();
             services.AddScoped<IAuthenticationService, EfAuthenticationService>();
@@ -58,7 +64,13 @@ public static class FleetCardsInfrastructure
                 serviceProvider.GetRequiredService<IProgramResolutionService>()
             )
         );
-        services.AddSingleton<IFleetCardService, SeededFleetCardService>();
+        services.AddSingleton<SeededFleetCardService>();
+        services.AddSingleton<IFleetCardService>(serviceProvider =>
+            serviceProvider.GetRequiredService<SeededFleetCardService>()
+        );
+        services.AddSingleton<IDemoTransactionService>(serviceProvider =>
+            serviceProvider.GetRequiredService<SeededFleetCardService>()
+        );
         services.AddScoped<IFleetCardsReadService, SeededFleetCardsReadService>();
         services.AddSingleton<IAuthenticationService, SeededAuthenticationService>();
         return services;

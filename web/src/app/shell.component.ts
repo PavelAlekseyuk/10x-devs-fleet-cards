@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { CardManagementComponent } from './card-management.component';
 import { FleetVehiclesComponent } from './fleet-vehicles.component';
 import { LanguageService, TranslationKey } from './language.service';
+import { AdminDemoComponent } from './admin-demo.component';
 import { ProgramsComponent } from './programs.component';
 import { DashboardSummary, TransactionReportService } from './transaction-report.service';
 import { TransactionReportComponent } from './transaction-report.component';
@@ -14,8 +15,8 @@ import { UserSettingsService } from './user-settings.service';
 import { ButtonComponent } from './shared/ui/button.component';
 import { StatusBadgeComponent } from './shared/ui/status-badge.component';
 
-type SectionKey = 'overview' | 'cars' | 'cards' | 'transactions' | 'programs';
-interface NavigationItem { key: SectionKey; icon: string; }
+type SectionKey = 'overview' | 'cars' | 'cards' | 'transactions' | 'programs' | 'demoData';
+interface NavigationItem { key: SectionKey; icon: string; path?: string; }
 interface Client { legalName: string; nip: string; jurisdiction: string; address: string; }
 
 @Component({
@@ -27,6 +28,7 @@ interface Client { legalName: string; nip: string; jurisdiction: string; address
     CardManagementComponent,
     TransactionReportComponent,
     ProgramsComponent,
+    AdminDemoComponent,
     ButtonComponent,
     StatusBadgeComponent,
   ],
@@ -46,7 +48,8 @@ export class ShellComponent {
   protected client: Client | null = null;
   protected readonly navigation: NavigationItem[] = [
     { key: 'overview', icon: '◒' }, { key: 'cars', icon: '▱' },
-    { key: 'cards', icon: '▭' }, { key: 'transactions', icon: '↗' }, { key: 'programs', icon: '✦' },
+    { key: 'cards', icon: '▭' }, { key: 'transactions', icon: '↗' },
+    { key: 'programs', icon: '✦' }, { key: 'demoData', icon: '✧', path: 'admin/demo' },
   ];
 
   private readonly destroyRef = inject(DestroyRef);
@@ -61,7 +64,9 @@ export class ShellComponent {
   }
 
   protected get visibleNavigation(): NavigationItem[] {
-    return this.auth.user()?.permission === 'ReadOnly' ? this.navigation.filter((item) => item.key !== 'programs') : this.navigation;
+    return this.auth.user()?.permission === 'ReadOnly'
+      ? this.navigation.filter((item) => item.key !== 'programs' && item.key !== 'demoData')
+      : this.navigation;
   }
   protected get activeTitle(): string { return this.language.text(this.activeSection === 'cars' ? 'vehicles' : this.activeSection); }
   protected get summaryStateLabel(): TranslationKey {

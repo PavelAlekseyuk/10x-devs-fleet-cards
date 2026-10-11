@@ -149,16 +149,16 @@ Source: [frame.md](./frame.md) (confidence MEDIUM).
 
 #### Automated
 
-- [x] 5.1 Programs list, history and removal of Add new
-- [x] 5.2 Change-program popup and specs
-- [x] 5.3 Schedule an unassigned period from Programs UI and specs
+- [x] 5.1 Programs list, history and removal of Add new — 8b02e4f
+- [x] 5.2 Change-program popup and specs — 8b02e4f
+- [x] 5.3 Schedule an unassigned period from Programs UI and specs — 8b02e4f
 
 ### Phase 6: Demo generator
 
 #### Automated
 
-- [ ] 6.1 Demo generator endpoint with tests
-- [ ] 6.2 Admin demo page, route and nav
+- [x] 6.1 Demo generator endpoint with tests
+- [x] 6.2 Admin demo page, route and nav
 
 ### Phase 7: E2E and snapshots
 

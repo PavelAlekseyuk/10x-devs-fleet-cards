@@ -4,7 +4,7 @@
     <div class="brand-copy"><strong>Fleet Cards</strong><span>{{ language.text('clientPortal') }}</span></div>
     <nav [attr.aria-label]="language.text('clientPortal')">
       @for (item of visibleNavigation; track item.key) {
-        <a [class.active]="activeSection === item.key" [routerLink]="'/' + item.key">
+        <a [class.active]="activeSection === item.key" [routerLink]="'/' + (item.path ?? item.key)">
           <span class="nav-icon" aria-hidden="true">{{ item.icon }}</span><span>{{ language.text(item.key === 'cars' ? 'vehicles' : item.key) }}</span>
         </a>
       }
@@ -99,6 +99,8 @@
           <app-transaction-report />
         } @else if (activeSection === 'programs') {
           <app-programs />
+        } @else if (activeSection === 'demoData') {
+          <app-admin-demo />
         } @else {
           <section class="section-intro"><div><p class="eyebrow">{{ language.text('clientWorkspace') }}</p><h2>{{ activeTitle }}</h2><p class="muted">{{ language.text('authenticatedAccess') }} {{ displayName }}.</p></div>@if (canWrite()) {<app-button type="button">{{ language.text('addNew') }} <span>+</span></app-button>}</section>
           <section class="panel table-panel"><div class="panel-heading"><div><p class="eyebrow">{{ language.text('seededData') }}</p><h3>{{ activeTitle }}</h3></div><span class="record-count">{{ language.text('programCount') }}</span></div><div class="table-row table-header"><span>{{ language.text('name') }}</span><span>{{ language.text('status') }}</span><span>{{ language.text('updated') }}</span><span></span></div><div class="table-row"><span><strong>{{ activeTitle }}</strong><small>{{ client?.legalName }}</small></span><span><app-status-badge [label]="language.text('active')" /></span><span class="muted">{{ language.text('today') }}</span><span class="row-arrow">→</span></div></section>

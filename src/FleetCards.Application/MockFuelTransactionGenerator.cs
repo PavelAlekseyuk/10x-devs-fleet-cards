@@ -58,13 +58,70 @@ public sealed class MockFuelTransactionGenerator
 
         var random = CreateRandom(cardId, vehicle.Id, issuedAtUtc);
         var count = random.Next(5, 16);
+        return Generate(
+            cardId,
+            vehicle,
+            issuedAtUtc,
+            periodStart,
+            periodEnd,
+            count,
+            random,
+            minutePrecision: period is null
+        );
+    }
+
+    public IReadOnlyList<FuelTransaction> Generate(
+        Guid cardId,
+        FleetCar vehicle,
+        DateTimeOffset issuedAt,
+        DateTimeOffset from,
+        DateTimeOffset to,
+        int count
+    )
+    {
+        if (count <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(count));
+        }
+
+        var periodStart = from.ToUniversalTime();
+        var periodEnd = to.ToUniversalTime();
+        if (periodEnd <= periodStart)
+        {
+            throw new ArgumentException("The transaction period must have a positive duration.");
+        }
+
+        var issuedAtUtc = issuedAt.ToUniversalTime();
+        return Generate(
+            cardId,
+            vehicle,
+            issuedAtUtc,
+            periodStart,
+            periodEnd,
+            count,
+            CreateRandom(cardId, vehicle.Id, issuedAtUtc),
+            minutePrecision: false
+        );
+    }
+
+    private IReadOnlyList<FuelTransaction> Generate(
+        Guid cardId,
+        FleetCar vehicle,
+        DateTimeOffset issuedAtUtc,
+        DateTimeOffset periodStart,
+        DateTimeOffset periodEnd,
+        int count,
+        StableRandom random,
+        bool minutePrecision
+    )
+    {
         var transactions = new FuelTransaction[count];
 
         for (var index = 0; index < count; index++)
         {
             var quantity = random.Next(15_000, 55_001) / 1_000m;
             var unitPrice = random.Next(450, 801) / 100m;
-            var occurredAt = period is null
+            var occurredAt = minutePrecision
                 ? periodStart.AddMinutes(
                     random.Next(0, (int)(periodEnd - periodStart).TotalMinutes)
                 )
