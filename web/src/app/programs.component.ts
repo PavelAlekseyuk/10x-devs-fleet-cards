@@ -225,7 +225,7 @@ export class ProgramsComponent implements OnInit {
       style: 'percent',
       maximumFractionDigits: 2,
       signDisplay: 'exceptZero',
-    }).format(value);
+    }).format(value === 0 ? 0 : -value);
   }
 
   protected formatDateTime(value: string | Date): string {

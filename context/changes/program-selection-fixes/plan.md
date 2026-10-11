@@ -202,27 +202,27 @@ The migration deletes all transactions (append-only rule intentionally bypassed 
 
 #### Automated
 
-- [x] 1.1 Solution builds: `dotnet build`
-- [x] 1.2 Tests pass: `dotnet test`
-- [x] 1.3 Migration test asserts swapped names, default assignment on Nebula Basic and empty transactions after upgrade
+- [x] 1.1 Solution builds: `dotnet build` — bf51a48
+- [x] 1.2 Tests pass: `dotnet test` — bf51a48
+- [x] 1.3 Migration test asserts swapped names, default assignment on Nebula Basic and empty transactions after upgrade — bf51a48
 
 #### Manual
 
-- [x] 1.4 After running AppHost on an existing database, the Programs page shows "Nebula Basic" as active
-- [x] 1.5 After regenerating demo transactions, comparison baseline equals the "Nebula Basic" row (zero savings)
+- [x] 1.4 After running AppHost on an existing database, the Programs page shows "Nebula Basic" as active — bf51a48
+- [x] 1.5 After regenerating demo transactions, comparison baseline equals the "Nebula Basic" row (zero savings) — bf51a48
 
 ### Phase 2: Frontend — discount and surcharge signs
 
 #### Automated
 
-- [ ] 2.1 Angular tests pass: `npm test` (from `web/`)
-- [ ] 2.2 Build passes: `npm run build` (from `web/`)
-- [ ] 2.3 Literal-colour check reports no matches
+- [x] 2.1 Angular tests pass: `npm test` (from `web/`)
+- [x] 2.2 Build passes: `npm run build` (from `web/`)
+- [x] 2.3 Literal-colour check reports no matches
 
 #### Manual
 
-- [ ] 2.4 Discounts show as negative, surcharges as positive (e.g. Andromeda Petrol petrol `-9%`)
-- [ ] 2.5 Zero-percent rules show `0%`
+- [x] 2.4 Discounts show as negative, surcharges as positive (e.g. Andromeda Petrol petrol `-9%`)
+- [x] 2.5 Zero-percent rules show `0%`
 
 ### Phase 3: Frontend — sortable comparison table
 

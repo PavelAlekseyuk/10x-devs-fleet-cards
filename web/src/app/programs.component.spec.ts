@@ -14,7 +14,8 @@ const programsResponse: ProgramsResponse = {
       activeTo: null,
       rules: [
         { fuelType: 'Diesel', percent: 0.05 },
-        { fuelType: '95', percent: 0.02 },
+        { fuelType: '95', percent: -0.02 },
+        { fuelType: '98', percent: 0 },
       ],
     },
     {
@@ -121,7 +122,9 @@ describe('ProgramsComponent', () => {
     const element = fixture.nativeElement as HTMLElement;
     expect(element.textContent).toContain('Nebula Basic');
     expect(element.textContent).toContain('Orion Diesel');
-    expect(element.textContent).toContain('5%');
+    expect(element.textContent).toContain('-5%');
+    expect(element.textContent).toContain('+2%');
+    expect(element.textContent).toContain('0%');
     expect(element.textContent).toContain('Unassigned');
     expect(element.textContent).toContain('No successor scheduled');
     expect(element.querySelector('button')?.textContent).not.toContain('Add new');
