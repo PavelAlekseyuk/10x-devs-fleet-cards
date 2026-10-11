@@ -188,11 +188,11 @@ No data migration is required. Existing screenshot baselines will change and mus
 
 #### Automated
 
-- [x] 2.1 `cd web; npm run test:e2e -- e2e/portal-visual.spec.ts` passes with reviewed desktop/mobile baselines and added route/state coverage.
-- [x] 2.2 `cd web; npm run test:e2e` passes the complete Playwright suite.
-- [x] 2.3 `git diff --check` reports no whitespace errors in the planned changes.
+- [x] 2.1 `cd web; npm run test:e2e -- e2e/portal-visual.spec.ts` passes with reviewed desktop/mobile baselines and added route/state coverage. — 163612f
+- [x] 2.2 `cd web; npm run test:e2e` passes the complete Playwright suite. — 163612f
+- [x] 2.3 `git diff --check` reports no whitespace errors in the planned changes. — 163612f
 
 #### Manual
 
-- [x] 2.4 Review all portal routes at desktop and mobile sizes, including admin/demo and feedback/focus states.
-- [x] 2.5 Confirm palette consistency, accessible status meaning, and unchanged layout, typography, spacing, and workflows.
+- [x] 2.4 Review all portal routes at desktop and mobile sizes, including admin/demo and feedback/focus states. — 163612f
+- [x] 2.5 Confirm palette consistency, accessible status meaning, and unchanged layout, typography, spacing, and workflows. — 163612f

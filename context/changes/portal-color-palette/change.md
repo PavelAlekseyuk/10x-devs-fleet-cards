@@ -1,7 +1,7 @@
 ---
 change_id: portal-color-palette
 title: Portal color palette
-status: implementing
+status: implemented
 created: 2026-10-11
 updated: 2026-10-11
 archived_at: null
