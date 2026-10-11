@@ -174,25 +174,25 @@ No data migration is required. Existing screenshot baselines will change and mus
 
 #### Automated
 
-- [x] 1.1 `cd web; npm run build` succeeds.
-- [x] 1.2 `cd web; npm test` passes the Angular/Vitest suite.
-- [x] 1.3 `cd web; npm run test:e2e -- e2e/palette-contrast.spec.ts` passes against the rendered CSS token values.
-- [x] 1.4 `git diff --check` reports no whitespace errors in the planned changes.
+- [x] 1.1 `cd web; npm run build` succeeds. — 4bfb750
+- [x] 1.2 `cd web; npm test` passes the Angular/Vitest suite. — 4bfb750
+- [x] 1.3 `cd web; npm run test:e2e -- e2e/palette-contrast.spec.ts` passes against the rendered CSS token values. — 4bfb750
+- [x] 1.4 `git diff --check` reports no whitespace errors in the planned changes. — 4bfb750
 
 #### Manual
 
-- [x] 1.5 Review the login and shell at desktop and mobile widths; confirm the agreed palette hierarchy and readable accents.
-- [x] 1.6 Confirm destructive/error feedback, controls, and focus indicators remain clear without relying on color alone.
+- [x] 1.5 Review the login and shell at desktop and mobile widths; confirm the agreed palette hierarchy and readable accents. — 4bfb750
+- [x] 1.6 Confirm destructive/error feedback, controls, and focus indicators remain clear without relying on color alone. — 4bfb750
 
 ### Phase 2: Verify the Whole Portal
 
 #### Automated
 
-- [ ] 2.1 `cd web; npm run test:e2e -- e2e/portal-visual.spec.ts` passes with reviewed desktop/mobile baselines and added route/state coverage.
-- [ ] 2.2 `cd web; npm run test:e2e` passes the complete Playwright suite.
-- [ ] 2.3 `git diff --check` reports no whitespace errors in the planned changes.
+- [x] 2.1 `cd web; npm run test:e2e -- e2e/portal-visual.spec.ts` passes with reviewed desktop/mobile baselines and added route/state coverage.
+- [x] 2.2 `cd web; npm run test:e2e` passes the complete Playwright suite.
+- [x] 2.3 `git diff --check` reports no whitespace errors in the planned changes.
 
 #### Manual
 
-- [ ] 2.4 Review all portal routes at desktop and mobile sizes, including admin/demo and feedback/focus states.
-- [ ] 2.5 Confirm palette consistency, accessible status meaning, and unchanged layout, typography, spacing, and workflows.
+- [x] 2.4 Review all portal routes at desktop and mobile sizes, including admin/demo and feedback/focus states.
+- [x] 2.5 Confirm palette consistency, accessible status meaning, and unchanged layout, typography, spacing, and workflows.

@@ -244,14 +244,14 @@ test('composed card issue keeps its assignment immutable and shows state history
   await page.keyboard.press('ArrowDown');
   expect((await stateResponsePromise).status()).toBe(200);
   await expect(stateSelector).toHaveValue('Blocked');
-  await expect(cardItem.locator('.badge')).toHaveText('Blocked');
+  await expect(cardItem.locator('.status-badge')).toHaveText('Blocked');
 
   await page.reload();
   await expect(page.getByRole('heading', { level: 2, name: 'Fleet cards' })).toBeVisible();
   await expect(cardItem.getByRole('combobox', {
     name: `Status: ${issuedCard.maskedPan}`,
   })).toHaveValue('Blocked');
-  await expect(cardItem.locator('.badge')).toHaveText('Blocked');
+  await expect(cardItem.locator('.status-badge')).toHaveText('Blocked');
 
   const historyResponse = await requestApi<StateHistoryEntry[]>(
     page,
@@ -267,7 +267,7 @@ test('composed card issue keeps its assignment immutable and shows state history
   await expect(cardItem.getByRole('combobox', {
     name: `Status: ${issuedCard.maskedPan}`,
   })).toHaveValue('Blocked');
-  await expect(cardItem.locator('.badge')).toHaveText('Zablokowana');
+  await expect(cardItem.locator('.status-badge')).toHaveText('Zablokowana');
   await expect(cardItem.getByRole('button', { name: 'Historia statusu' })).toBeVisible();
   await expect(cardItem.getByRole('heading', { name: 'Historia statusu karty' })).toBeVisible();
   await expect(cardItem.locator('.state-timeline li strong')).toHaveText([

@@ -11,6 +11,7 @@ const routes = [
   { name: 'cards', path: '/cards', heading: 'Fleet cards' },
   { name: 'transactions', path: '/transactions', heading: 'Transactions' },
   { name: 'programs', path: '/programs', heading: 'Programs' },
+  { name: 'admin-demo', path: '/admin/demo', heading: 'Demo data' },
 ] as const;
 
 const maskedPan = '**** **** **** 4242';
@@ -33,6 +34,7 @@ const fixtures = {
   vehicles: [
     { id: 'vehicle-1', registrationPlate: 'WA 12345', fuelType: 'Diesel', make: 'Volvo', model: 'FH', isArchived: false },
     { id: 'vehicle-2', registrationPlate: 'PO 98765', fuelType: 'Petrol', make: 'Skoda', model: 'Octavia', isArchived: false },
+    { id: 'vehicle-3', registrationPlate: 'GD 55555', fuelType: 'Diesel', make: 'BMW', model: 'i3', isArchived: true },
   ],
   cards: [
     {
@@ -64,7 +66,7 @@ const fixtures = {
     totals,
     transactions: [
       reportRow('transaction-1', 'WA 12345', 'Diesel', '2026-09-03T08:15:00Z', 400, 1.9),
-      reportRow('transaction-2', 'PO 98765', 'Petrol', '2026-09-12T14:40:00Z', 250, 1.5),
+      reportRow('transaction-2', 'PO 98765', 'Petrol', '2026-09-12T14:40:00Z', 250, 1.5, 'Refunded'),
     ],
   },
 };
@@ -76,6 +78,7 @@ function reportRow(
   occurredAtUtc: string,
   netTotal: number,
   unitPrice: number,
+  status = 'Completed',
 ) {
   const vatAmount = netTotal * 0.23;
   return {
@@ -99,7 +102,7 @@ function reportRow(
     vatRate: 0.23,
     vatAmount,
     grossTotal: netTotal + vatAmount,
-    status: 'Completed',
+    status,
   };
 }
 
@@ -186,6 +189,12 @@ for (const viewport of viewports) {
         }
         if (route.name === 'transactions') {
           await expect(page.getByRole('table')).toBeVisible();
+          await expect(page.getByText('Refunded')).toBeVisible();
+        }
+        if (route.name === 'admin-demo') {
+          await page.getByLabel('From date (UTC)').fill('2026-09-01');
+          await page.getByLabel('Through date (UTC)').fill('2026-09-30');
+          await page.getByLabel('Number of transactions').fill('12');
         }
         await settle(page);
         await expect(page).toHaveScreenshot(`${route.name}-${viewport.name}.png`, {
@@ -194,6 +203,64 @@ for (const viewport of viewports) {
         });
       });
     }
+
+    test('vehicle archive error and destructive feedback', async ({ page }) => {
+      await signIn(page);
+      await page.goto('/cars');
+      const archiveButton = page.getByRole('button', { name: 'Archive', exact: true }).first();
+      await expect(archiveButton).toBeVisible();
+      await page.route('**/api/cars/vehicle-1/archive', async route => {
+        if (route.request().method() === 'POST') {
+          await route.fulfill({ status: 503, json: { title: 'Service unavailable' } });
+          return;
+        }
+        await route.fallback();
+      });
+
+      await archiveButton.click();
+      await expect(page.getByRole('alert')).toContainText(
+        'Could not change the vehicle status. Please try again.',
+      );
+      await settle(page);
+      await expect(page).toHaveScreenshot(`cars-archive-error-${viewport.name}.png`, {
+        animations: 'disabled',
+        caret: 'hide',
+      });
+    });
+
+    test('archived vehicles use warning status styling', async ({ page }) => {
+      await signIn(page);
+      await page.goto('/cars');
+      await page.getByRole('button', { name: 'Archived vehicles', exact: true }).click();
+
+      const archivedVehicle = page.getByRole('row').filter({ hasText: 'GD 55555' });
+      await expect(archivedVehicle).toBeVisible();
+      await expect(archivedVehicle.getByText('Archived', { exact: true })).toHaveAttribute(
+        'data-tone',
+        'warning',
+      );
+      await settle(page);
+      await expect(page).toHaveScreenshot(`cars-archived-warning-${viewport.name}.png`, {
+        animations: 'disabled',
+        caret: 'hide',
+      });
+    });
+
+    test('keyboard focus-visible treatment on a destructive action', async ({ page }) => {
+      await signIn(page);
+      await page.goto('/cars');
+      const archiveButton = page.getByRole('button', { name: 'Archive', exact: true }).first();
+      await expect(archiveButton).toBeVisible();
+      await page.keyboard.press('Tab');
+      await archiveButton.focus();
+      await expect(archiveButton).toBeFocused();
+      expect(await archiveButton.evaluate(element => element.matches(':focus-visible'))).toBe(true);
+      await settle(page);
+      await expect(archiveButton).toHaveScreenshot(
+        `cars-archive-focus-visible-${viewport.name}.png`,
+        { animations: 'disabled', caret: 'hide' },
+      );
+    });
   });
 }
 
