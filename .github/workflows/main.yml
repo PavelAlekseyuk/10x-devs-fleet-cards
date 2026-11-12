@@ -38,6 +38,9 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
+      - name: Test workflow cleanup policy
+        run: node --test scripts/select-workflow-runs.test.cjs
+
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:

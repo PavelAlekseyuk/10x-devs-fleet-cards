@@ -102,6 +102,12 @@ session values, full PAN, CVV, or PIN data.
 
 ## Release and recovery
 
+- Once present on the default branch, `Clean up old workflow runs` runs daily and can also be started
+  manually from the Actions tab. It deletes completed runs older than 30 days, retaining the newest 10
+  runs per workflow regardless of age or status.
+  Deleting a run permanently removes its logs and artifacts; queued and in-progress runs are never deleted.
+  The deployment artifact separately expires after seven days, even if its run is retained. GitHub Actions
+  caches have separate retention and are not affected by this cleanup.
 - The concurrency group prevents overlapping deployments. A newly queued run replaces an older pending run,
   but never stops an active migration or deployment.
 - Deployed schema changes are applied by the workflow's generated idempotent SQL script before application
