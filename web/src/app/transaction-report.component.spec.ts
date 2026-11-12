@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { LanguageService } from './language.service';
 import { TransactionReportComponent } from './transaction-report.component';
-import { TransactionReport } from './transaction-report.service';
+import { TransactionReport, TransactionReportService } from './transaction-report.service';
 
 const reportResponse: TransactionReport = {
   year: 2026,
@@ -97,23 +97,218 @@ describe('TransactionReportComponent', () => {
     expect(cells[1].textContent).toContain('Europe/Warsaw');
   });
 
-  it('requests the selected year and month when the month picker changes', async () => {
+  it('requests the selected year and month when the period controls change', async () => {
+    const reports = TestBed.inject(TransactionReportService);
+    reports.setSelectedMonth('2025-01');
     const fixture = createFixture();
     reportRequest().flush({ ...reportResponse, transactions: [] });
     await fixture.whenStable();
 
-    const monthInput = (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
-      'input[type="month"]',
-    )!;
-    monthInput.value = '2026-09';
+    const element = fixture.nativeElement as HTMLElement;
+    const monthInput = element.querySelector<HTMLSelectElement>('.month-picker select')!;
+    const yearInput = element.querySelector<HTMLInputElement>('.year-picker input')!;
+    yearInput.value = '2026';
+    yearInput.dispatchEvent(new Event('input'));
+    yearInput.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+
+    const yearRequest = reportRequest();
+    expect(yearRequest.request.params.get('year')).toBe('2026');
+    expect(yearRequest.request.params.get('month')).toBe('01');
+    yearRequest.flush({ ...reportResponse, transactions: [] });
+    monthInput.value = '09';
     monthInput.dispatchEvent(new Event('change'));
     await fixture.whenStable();
 
     const request = reportRequest();
     expect(request.request.params.get('year')).toBe('2026');
     expect(request.request.params.get('month')).toBe('09');
+    expect(reports.selectedMonth()).toBe('2026-09');
     request.flush({ ...reportResponse, transactions: [] });
     await fixture.whenStable();
+  });
+
+  it('updates all month names on language switches without changing the shared period or loading', async () => {
+    const reports = TestBed.inject(TransactionReportService);
+    reports.setSelectedMonth('2026-09');
+    const fixture = createFixture();
+    reportRequest().flush(reportResponse);
+    await fixture.whenStable();
+
+    const element = fixture.nativeElement as HTMLElement;
+    const month = element.querySelector<HTMLSelectElement>('.month-picker select')!;
+    const labels = () => Array.from(month.options, (option) => option.textContent?.trim());
+    expect(month.value).toBe('09');
+    expect(labels()).toEqual([
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ]);
+
+    const language = TestBed.inject(LanguageService);
+    language.toggle();
+    await fixture.whenStable();
+    expect(labels()).toEqual([
+      'styczeń',
+      'luty',
+      'marzec',
+      'kwiecień',
+      'maj',
+      'czerwiec',
+      'lipiec',
+      'sierpień',
+      'wrzesień',
+      'październik',
+      'listopad',
+      'grudzień',
+    ]);
+    expect(month.value).toBe('09');
+    expect(reports.selectedMonth()).toBe('2026-09');
+    expect(element.querySelector('.month-picker')?.textContent).toContain('Miesiąc raportu');
+    http.expectNone((request) => request.url === '/api/transactions/report');
+
+    language.toggle();
+    await fixture.whenStable();
+    expect(labels()[8]).toBe('September');
+    expect(reports.selectedMonth()).toBe('2026-09');
+    http.expectNone((request) => request.url === '/api/transactions/report');
+
+    language.toggle();
+    await fixture.whenStable();
+    month.value = '03';
+    month.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    const request = reportRequest();
+    expect(request.request.params.get('year')).toBe('2026');
+    expect(request.request.params.get('month')).toBe('03');
+    expect(reports.selectedMonth()).toBe('2026-03');
+    request.flush(reportResponse);
+  });
+
+  it('does not commit or request invalid or incomplete years, even when changing month', async () => {
+    const reports = TestBed.inject(TransactionReportService);
+    reports.setSelectedMonth('2026-01');
+    const fixture = createFixture();
+    reportRequest().flush(reportResponse);
+    await fixture.whenStable();
+
+    const element = fixture.nativeElement as HTMLElement;
+    const year = element.querySelector<HTMLInputElement>('.year-picker input')!;
+    const month = element.querySelector<HTMLSelectElement>('.month-picker select')!;
+    for (const invalid of ['', '2', '202', '0000', '9999', '20a6']) {
+      year.value = invalid;
+      year.dispatchEvent(new Event('input'));
+      year.dispatchEvent(new Event('change'));
+      await fixture.whenStable();
+      expect(year.getAttribute('aria-invalid')).toBe('true');
+      expect(element.querySelector('#report-period-error')?.textContent).toContain('0001 to 9998');
+      expect(reports.selectedMonth()).toBe('2026-01');
+      http.expectNone((request) => request.url === '/api/transactions/report');
+    }
+
+    month.value = '12';
+    month.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    expect(reports.selectedMonth()).toBe('2026-01');
+    http.expectNone((request) => request.url === '/api/transactions/report');
+
+    year.value = '0001';
+    year.dispatchEvent(new Event('input'));
+    year.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    const request = reportRequest();
+    expect(request.request.params.get('year')).toBe('0001');
+    expect(request.request.params.get('month')).toBe('12');
+    expect(reports.selectedMonth()).toBe('0001-12');
+    request.flush(reportResponse);
+    await fixture.whenStable();
+    expect(year.getAttribute('aria-invalid')).toBe('false');
+  });
+
+  it('discards an invalid draft when navigating to a different month', async () => {
+    const reports = TestBed.inject(TransactionReportService);
+    reports.setSelectedMonth('2026-01');
+    const fixture = createFixture();
+    reportRequest().flush(reportResponse);
+    await fixture.whenStable();
+    const element = fixture.nativeElement as HTMLElement;
+    const year = element.querySelector<HTMLInputElement>('.year-picker input')!;
+    year.value = '20';
+    year.dispatchEvent(new Event('input'));
+    element.querySelector<HTMLButtonElement>('[aria-label="Next month"]')!.click();
+    await fixture.whenStable();
+
+    const request = reportRequest();
+    expect(request.request.params.get('year')).toBe('2026');
+    expect(request.request.params.get('month')).toBe('02');
+    request.flush(reportResponse);
+    await fixture.whenStable();
+    expect(year.value).toBe('2026');
+    expect(year.getAttribute('aria-invalid')).toBe('false');
+    expect(reports.selectedMonth()).toBe('2026-02');
+  });
+
+  it('navigates year boundaries and preserves the period at the supported limits', async () => {
+    const reports = TestBed.inject(TransactionReportService);
+    reports.setSelectedMonth('2026-01');
+    const fixture = createFixture();
+    reportRequest().flush(reportResponse);
+    await fixture.whenStable();
+    const element = fixture.nativeElement as HTMLElement;
+    const previous = element.querySelector<HTMLButtonElement>('[aria-label="Previous month"]')!;
+    const next = element.querySelector<HTMLButtonElement>('[aria-label="Next month"]')!;
+
+    previous.click();
+    await fixture.whenStable();
+    let request = reportRequest();
+    expect(request.request.params.get('year')).toBe('2025');
+    expect(request.request.params.get('month')).toBe('12');
+    request.flush(reportResponse);
+    next.click();
+    await fixture.whenStable();
+    request = reportRequest();
+    expect(request.request.params.get('year')).toBe('2026');
+    expect(request.request.params.get('month')).toBe('01');
+    request.flush(reportResponse);
+    await fixture.whenStable();
+
+    const year = element.querySelector<HTMLInputElement>('.year-picker input')!;
+    year.value = '0001';
+    year.dispatchEvent(new Event('input'));
+    year.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    reportRequest().flush(reportResponse);
+    previous.click();
+    await fixture.whenStable();
+    expect(reports.selectedMonth()).toBe('0001-01');
+    http.expectNone((item) => item.url === '/api/transactions/report');
+
+    const month = element.querySelector<HTMLSelectElement>('.month-picker select')!;
+    year.value = '9998';
+    year.dispatchEvent(new Event('input'));
+    year.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    reportRequest().flush(reportResponse);
+    month.value = '12';
+    month.dispatchEvent(new Event('change'));
+    await fixture.whenStable();
+    request = reportRequest();
+    expect(request.request.params.get('year')).toBe('9998');
+    expect(request.request.params.get('month')).toBe('12');
+    request.flush(reportResponse);
+    next.click();
+    await fixture.whenStable();
+    expect(reports.selectedMonth()).toBe('9998-12');
+    http.expectNone((item) => item.url === '/api/transactions/report');
   });
 
   it('shows an empty state for a period without transactions', async () => {
