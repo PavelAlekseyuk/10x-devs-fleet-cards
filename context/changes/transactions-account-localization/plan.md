@@ -199,23 +199,23 @@ No database, API or stored-settings migration is expected. Existing saved langua
 
 #### Automated
 
-- [x] 1.1 Focused transaction report and service unit tests pass: `cd web; npm test -- --include=src/app/transaction-report.component.spec.ts --include=src/app/transaction-report.service.spec.ts`.
-- [x] 1.2 A language switch updates month labels without changing `YYYY-MM` or requesting a new report; valid and invalid selections and year boundaries are covered by unit tests.
+- [x] 1.1 Focused transaction report and service unit tests pass: `cd web; npm test -- --include=src/app/transaction-report.component.spec.ts --include=src/app/transaction-report.service.spec.ts`. — 32cb195
+- [x] 1.2 A language switch updates month labels without changing `YYYY-MM` or requesting a new report; valid and invalid selections and year boundaries are covered by unit tests. — 32cb195
 
 #### Manual
 
-- [x] 1.3 With the browser set to English, switch the app between English and Polish and verify the month controls, direct selection and previous/next navigation use the chosen language and period.
+- [x] 1.3 With the browser set to English, switch the app between English and Polish and verify the month controls, direct selection and previous/next navigation use the chosen language and period. — 32cb195
 
 ### Phase 2: Responsive account controls
 
 #### Automated
 
-- [ ] 2.1 Focused shell and language unit tests pass: `cd web; npm test -- --include=src/app/shell.component.spec.ts --include=src/app/language.service.spec.ts`.
-- [ ] 2.2 Shell tests cover identity-before-logout ordering, both logout labels and the existing logout action.
+- [x] 2.1 Focused shell and language unit tests pass: `cd web; npm test -- --include=src/app/shell.component.spec.ts --include=src/app/language.service.spec.ts`.
+- [x] 2.2 Shell tests cover identity-before-logout ordering, both logout labels and the existing logout action.
 
 #### Manual
 
-- [ ] 2.3 At desktop, 641–900px and mobile widths, verify that the user name and logout appear at the top, logout is below the name, language switching works, and keyboard focus reaches each visible control.
+- [x] 2.3 At desktop, 641–900px and mobile widths, verify that the user name and logout appear at the top, logout is below the name, language switching works, and keyboard focus reaches each visible control.
 
 ### Phase 3: Regression verification
 
