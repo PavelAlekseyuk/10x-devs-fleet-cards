@@ -221,11 +221,11 @@ No database, API or stored-settings migration is expected. Existing saved langua
 
 #### Automated
 
-- [x] 3.1 Angular production build passes: `cd web; npm run build`.
-- [x] 3.2 Targeted transaction-report and responsive account browser tests pass using the existing Aspire-backed Playwright configuration: `cd web; npm run test:e2e -- e2e/transaction-report.spec.ts` plus the focused account regression test.
-- [x] 3.3 Existing visual coverage is reviewed and passes for affected desktop and mobile routes, with only intentional snapshot changes.
+- [x] 3.1 Angular production build passes: `cd web; npm run build`. — b86bf99
+- [x] 3.2 Targeted transaction-report and responsive account browser tests pass using the existing Aspire-backed Playwright configuration: `cd web; npm run test:e2e -- e2e/transaction-report.spec.ts` plus the focused account regression test. — b86bf99
+- [x] 3.3 Existing visual coverage is reviewed and passes for affected desktop and mobile routes, with only intentional snapshot changes. — b86bf99
 
 #### Manual
 
-- [x] 3.4 With a long transactions report, return to the page top and confirm identity, translated logout and language switching are available on desktop and mobile; confirm controls need not remain visible when scrolled down.
-- [x] 3.5 Verify keyboard selection and logout, switching EN/PL with a mismatched browser locale, and overview/report period consistency.
+- [x] 3.4 With a long transactions report, return to the page top and confirm identity, translated logout and language switching are available on desktop and mobile; confirm controls need not remain visible when scrolled down. — b86bf99
+- [x] 3.5 Verify keyboard selection and logout, switching EN/PL with a mismatched browser locale, and overview/report period consistency. — b86bf99

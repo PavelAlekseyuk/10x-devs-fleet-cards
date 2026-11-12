@@ -1,7 +1,7 @@
 ---
 change_id: transactions-account-localization
 title: Localize transaction month selection and improve account access
-status: implementing
+status: implemented
 created: 2026-11-12
 updated: 2026-11-12
 archived_at: null
