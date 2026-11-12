@@ -21,3 +21,11 @@ crash.log
 *.suo
 
 /artifacts/
+
+# Playwright sessions and local E2E credentials
+**/playwright/.auth/
+**/playwright/.cache/
+**/blob-report/
+web/.env.e2e
+# Playwright CLI output (may contain credentials)
+.playwright-cli/
