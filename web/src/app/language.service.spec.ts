@@ -17,6 +17,16 @@ describe('LanguageService', () => {
     expect(localStorage.getItem('fleetcards-language')).toBe('PL');
   });
 
+  it('provides logout wording in both languages when toggled', () => {
+    const service = TestBed.inject(LanguageService);
+
+    expect(service.text('logout')).toBe('Log out');
+    service.toggle();
+    expect(service.text('logout')).toBe('Wyloguj');
+    service.toggle();
+    expect(service.text('logout')).toBe('Log out');
+  });
+
   it('provides matching English and Polish report and status labels', () => {
     const service = TestBed.inject(LanguageService);
 

@@ -68,4 +68,23 @@ describe('TransactionReportService', () => {
     expect(reports.moveSelectedMonth(1)).toBe(true);
     expect(reports.selectedMonth()).toBe('2026-01');
   });
+
+  it('retains the shared selection for invalid values and navigation beyond supported years', () => {
+    expect(reports.setSelectedMonth('0001-01')).toBe(true);
+    expect(reports.moveSelectedMonth(-1)).toBe(false);
+    for (const invalid of ['0000-12', '9999-01', '202-01', '2026-1', '2026-00', '2026-13']) {
+      expect(reports.setSelectedMonth(invalid)).toBe(false);
+      expect(reports.selectedMonth()).toBe('0001-01');
+    }
+    expect(reports.setSelectedMonth('9998-12')).toBe(true);
+    expect(reports.moveSelectedMonth(1)).toBe(false);
+    expect(reports.moveSelectedMonth(0.5)).toBe(false);
+    expect(reports.selectedMonth()).toBe('9998-12');
+
+    reports.getSummary().subscribe();
+    const request = http.expectOne((item) => item.url === '/api/dashboard/summary');
+    expect(request.request.params.get('year')).toBe('9998');
+    expect(request.request.params.get('month')).toBe('12');
+    request.flush({});
+  });
 });

@@ -1,9 +1,10 @@
-import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, inject, linkedSignal, OnInit, signal } from '@angular/core';
 import { ButtonComponent } from './shared/ui/button.component';
 import { StatusBadgeComponent } from './shared/ui/status-badge.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subscription } from 'rxjs';
 import { LanguageService, TranslationKey } from './language.service';
+import { formatMonthYear } from './month-year';
 import { TransactionReport, TransactionReportRow, TransactionReportService } from './transaction-report.service';
 import { UserSettingsService } from './user-settings.service';
 
@@ -23,6 +24,21 @@ const statusTranslationKeys: Record<string, TranslationKey> = {
   cancelled: 'transactionCancelled',
 };
 
+const monthTranslationKeys: TranslationKey[] = [
+  'monthJanuary',
+  'monthFebruary',
+  'monthMarch',
+  'monthApril',
+  'monthMay',
+  'monthJune',
+  'monthJuly',
+  'monthAugust',
+  'monthSeptember',
+  'monthOctober',
+  'monthNovember',
+  'monthDecember',
+];
+
 @Component({
   selector: 'app-transaction-report',
   standalone: true,
@@ -39,6 +55,9 @@ export class TransactionReportComponent implements OnInit {
   protected readonly loading = signal(true);
   protected readonly error = signal(false);
   protected readonly invalidMonth = signal(false);
+  protected readonly monthTranslationKeys = monthTranslationKeys;
+  protected readonly monthDraft = linkedSignal(() => this.reports.selectedMonth().slice(5));
+  protected readonly yearDraft = linkedSignal(() => this.reports.selectedMonth().slice(0, 4));
   protected readonly invalidTimeZone = signal(false);
   protected readonly timeZoneDraft = signal(this.settings.timeZone());
 
@@ -50,15 +69,23 @@ export class TransactionReportComponent implements OnInit {
   }
 
   protected onMonthChange(event: Event): void {
-    const month = (event.target as HTMLInputElement).value;
-    this.invalidMonth.set(!this.reports.setSelectedMonth(month));
-    if (!this.invalidMonth()) {
-      this.loadReport();
-    }
+    this.monthDraft.set((event.target as HTMLSelectElement).value);
+    this.commitPeriod();
+  }
+
+  protected onYearInput(event: Event): void {
+    this.yearDraft.set((event.target as HTMLInputElement).value);
+    this.invalidMonth.set(!this.isValidYear(this.yearDraft()));
+  }
+
+  protected onYearChange(): void {
+    this.commitPeriod();
   }
 
   protected moveMonth(offset: number): void {
     if (this.reports.moveSelectedMonth(offset)) {
+      this.monthDraft.set(this.reports.selectedMonth().slice(5));
+      this.yearDraft.set(this.reports.selectedMonth().slice(0, 4));
       this.invalidMonth.set(false);
       this.loadReport();
     }
@@ -85,11 +112,7 @@ export class TransactionReportComponent implements OnInit {
   }
 
   protected formatMonth(month: string): string {
-    return new Intl.DateTimeFormat(this.locale, {
-      month: 'long',
-      year: 'numeric',
-      timeZone: 'UTC',
-    }).format(new Date(`${month}-01T00:00:00Z`));
+    return formatMonthYear(month, this.locale);
   }
 
   protected formatUserTime(value: string): string {
@@ -145,6 +168,24 @@ export class TransactionReportComponent implements OnInit {
 
   private get locale(): string {
     return this.language.language() === 'PL' ? 'pl-PL' : 'en-GB';
+  }
+
+  private isValidYear(year: string): boolean {
+    return /^\d{4}$/.test(year) && Number(year) >= 1 && Number(year) <= 9998;
+  }
+
+  private commitPeriod(): void {
+    const period = `${this.yearDraft()}-${this.monthDraft()}`;
+    if (!this.isValidYear(this.yearDraft())) {
+      this.invalidMonth.set(true);
+      return;
+    }
+
+    const changed = period !== this.reports.selectedMonth();
+    this.invalidMonth.set(!this.reports.setSelectedMonth(period));
+    if (!this.invalidMonth() && changed) {
+      this.loadReport();
+    }
   }
 
   private loadReport(): void {

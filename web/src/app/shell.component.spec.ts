@@ -1,7 +1,8 @@
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
+import { vi } from 'vitest';
 import { AuthService } from './auth.service';
 import { LanguageService } from './language.service';
 import { ShellComponent } from './shell.component';
@@ -45,6 +46,71 @@ describe('ShellComponent', () => {
   function flushClient(http: HttpTestingController): void {
     http.expectOne('/api/client').flush(clientResponse);
   }
+
+  it('places identity before logout and updates account labels when switching language', async () => {
+    const { fixture, http } = createFixture('ReadWrite');
+    flushClient(http);
+    http.expectOne((request) => request.url === '/api/dashboard/summary').flush(summaryResponse);
+    await fixture.whenStable();
+
+    const element = fixture.nativeElement as HTMLElement;
+    const account = element.querySelector<HTMLElement>('.sidebar-account')!;
+    const identity = account.querySelector<HTMLElement>('.user-chip')!;
+    const logout = account.querySelector<HTMLButtonElement>('.logout-button')!;
+    const language = account.querySelector<HTMLButtonElement>('.language-button')!;
+
+    expect(
+      element.querySelector('.brand-copy')!.compareDocumentPosition(account) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      account.compareDocumentPosition(element.querySelector('nav')!) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      identity.compareDocumentPosition(logout) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(identity.textContent).toContain('Piotr Wisniewski');
+    expect(identity.textContent).toContain('Read-write');
+    expect(logout.textContent?.trim()).toBe('Log out');
+    expect(element.querySelectorAll('.logout-button').length).toBe(1);
+    expect(element.querySelectorAll('.language-button').length).toBe(1);
+
+    language.click();
+    await fixture.whenStable();
+    expect(identity.textContent).toContain('Pełny dostęp');
+    expect(logout.textContent?.trim()).toBe('Wyloguj');
+    expect(language.textContent).toContain('PL');
+
+    language.click();
+    await fixture.whenStable();
+    expect(logout.textContent?.trim()).toBe('Log out');
+    expect(language.textContent).toContain('EN');
+    http.verify();
+  });
+
+  it('posts logout, clears the user, and navigates to login', async () => {
+    const { fixture, http } = createFixture();
+    flushClient(http);
+    http.expectOne((request) => request.url === '/api/dashboard/summary').flush(summaryResponse);
+    await fixture.whenStable();
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    const account = (fixture.nativeElement as HTMLElement).querySelector<HTMLElement>(
+      '.sidebar-account',
+    )!;
+    expect(account.querySelector('.user-chip')?.textContent).toContain('Read-only');
+
+    account.querySelector<HTMLButtonElement>('.logout-button')!.click();
+    const request = http.expectOne('/api/auth/logout');
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({});
+    request.flush(null);
+    await fixture.whenStable();
+
+    expect(TestBed.inject(AuthService).user()).toBeNull();
+    expect(navigate).toHaveBeenCalledWith('/login');
+    http.verify();
+  });
 
   it('binds ReadOnly users, hides mutations, and links the live period report', async () => {
     const { fixture, http } = createFixture();
@@ -169,6 +235,7 @@ describe('ShellComponent', () => {
   it('shows explicit net, gross, and savings labels in English and Polish', async () => {
     const { fixture, http } = createFixture();
     flushClient(http);
+    TestBed.inject(TransactionReportService).setSelectedMonth('2026-09');
     http.expectOne((request) => request.url === '/api/dashboard/summary').flush(summaryResponse);
     await fixture.whenStable();
 
@@ -184,6 +251,9 @@ describe('ShellComponent', () => {
     expect(element.textContent).toContain('Wydatki brutto');
     expect(element.textContent).toContain('Oszczędności brutto');
     expect(element.textContent).toContain('Wydatki netto');
+    expect(element.querySelector('.period-link')?.textContent).toContain('Wrzesień 2026');
+    expect(element.querySelector('.metric-card.accent-gold small')?.textContent).toBe('Wrzesień 2026');
+    http.expectNone((request) => request.url === '/api/dashboard/summary');
     http.verify();
   });
 });

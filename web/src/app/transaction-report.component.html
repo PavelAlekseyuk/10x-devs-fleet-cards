@@ -15,14 +15,31 @@
           <span aria-hidden="true">←</span>
         </button>
         <label class="month-picker">
-          <span class="visually-hidden">{{ language.text('reportPeriod') }}</span>
-          <input
-            type="month"
-            min="0001-01"
-            max="9998-12"
-            [value]="reports.selectedMonth()"
+          <span class="visually-hidden">{{ language.text('reportMonth') }}</span>
+          <select
             [attr.aria-invalid]="invalidMonth()"
+            [attr.aria-describedby]="invalidMonth() ? 'report-period-error' : null"
             (change)="onMonthChange($event)"
+          >
+            @for (month of monthTranslationKeys; track month; let index = $index) {
+              <option
+                [value]="(index + 1).toString().padStart(2, '0')"
+                [selected]="monthDraft() === (index + 1).toString().padStart(2, '0')"
+              >{{ language.text(month) }}</option>
+            }
+          </select>
+        </label>
+        <label class="year-picker">
+          <span class="visually-hidden">{{ language.text('reportYear') }}</span>
+          <input
+            type="text"
+            inputmode="numeric"
+            maxlength="4"
+            [value]="yearDraft()"
+            [attr.aria-invalid]="invalidMonth()"
+            [attr.aria-describedby]="invalidMonth() ? 'report-period-error' : null"
+            (input)="onYearInput($event)"
+            (change)="onYearChange()"
           />
         </label>
         <button
@@ -61,7 +78,7 @@
   </div>
 
   @if (invalidMonth()) {
-    <p class="message error-message" role="alert">{{ language.text('invalidReportMonth') }}</p>
+    <p id="report-period-error" class="message error-message" role="alert">{{ language.text('invalidReportMonth') }}</p>
   }
   @if (invalidTimeZone()) {
     <p id="report-time-zone-error" class="message error-message" role="alert">
