@@ -239,6 +239,7 @@ for (const viewport of viewports) {
         'data-tone',
         'warning',
       );
+      await archivedVehicle.scrollIntoViewIfNeeded();
       await settle(page);
       await expect(page).toHaveScreenshot(`cars-archived-warning-${viewport.name}.png`, {
         animations: 'disabled',

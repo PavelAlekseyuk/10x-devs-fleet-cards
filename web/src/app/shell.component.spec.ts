@@ -235,6 +235,7 @@ describe('ShellComponent', () => {
   it('shows explicit net, gross, and savings labels in English and Polish', async () => {
     const { fixture, http } = createFixture();
     flushClient(http);
+    TestBed.inject(TransactionReportService).setSelectedMonth('2026-09');
     http.expectOne((request) => request.url === '/api/dashboard/summary').flush(summaryResponse);
     await fixture.whenStable();
 
@@ -250,6 +251,9 @@ describe('ShellComponent', () => {
     expect(element.textContent).toContain('Wydatki brutto');
     expect(element.textContent).toContain('Oszczędności brutto');
     expect(element.textContent).toContain('Wydatki netto');
+    expect(element.querySelector('.period-link')?.textContent).toContain('Wrzesień 2026');
+    expect(element.querySelector('.metric-card.accent-gold small')?.textContent).toBe('Wrzesień 2026');
+    http.expectNone((request) => request.url === '/api/dashboard/summary');
     http.verify();
   });
 });

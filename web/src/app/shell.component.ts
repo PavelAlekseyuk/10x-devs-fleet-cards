@@ -7,6 +7,7 @@ import { AuthService } from './auth.service';
 import { CardManagementComponent } from './card-management.component';
 import { FleetVehiclesComponent } from './fleet-vehicles.component';
 import { LanguageService, TranslationKey } from './language.service';
+import { formatMonthYear } from './month-year';
 import { AdminDemoComponent } from './admin-demo.component';
 import { ProgramsComponent } from './programs.component';
 import { DashboardSummary, TransactionReportService } from './transaction-report.service';
@@ -84,11 +85,7 @@ export class ShellComponent {
   }
 
   protected formatSelectedMonth(): string {
-    return new Intl.DateTimeFormat(this.locale, {
-      month: 'long',
-      year: 'numeric',
-      timeZone: 'UTC',
-    }).format(new Date(`${this.reports.selectedMonth()}-01T00:00:00Z`));
+    return formatMonthYear(this.reports.selectedMonth(), this.locale);
   }
 
   protected retrySummary(): void {

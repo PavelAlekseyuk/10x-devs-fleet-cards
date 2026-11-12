@@ -210,22 +210,22 @@ No database, API or stored-settings migration is expected. Existing saved langua
 
 #### Automated
 
-- [x] 2.1 Focused shell and language unit tests pass: `cd web; npm test -- --include=src/app/shell.component.spec.ts --include=src/app/language.service.spec.ts`.
-- [x] 2.2 Shell tests cover identity-before-logout ordering, both logout labels and the existing logout action.
+- [x] 2.1 Focused shell and language unit tests pass: `cd web; npm test -- --include=src/app/shell.component.spec.ts --include=src/app/language.service.spec.ts`. — f0c421c
+- [x] 2.2 Shell tests cover identity-before-logout ordering, both logout labels and the existing logout action. — f0c421c
 
 #### Manual
 
-- [x] 2.3 At desktop, 641–900px and mobile widths, verify that the user name and logout appear at the top, logout is below the name, language switching works, and keyboard focus reaches each visible control.
+- [x] 2.3 At desktop, 641–900px and mobile widths, verify that the user name and logout appear at the top, logout is below the name, language switching works, and keyboard focus reaches each visible control. — f0c421c
 
 ### Phase 3: Regression verification
 
 #### Automated
 
-- [ ] 3.1 Angular production build passes: `cd web; npm run build`.
-- [ ] 3.2 Targeted transaction-report and responsive account browser tests pass using the existing Aspire-backed Playwright configuration: `cd web; npm run test:e2e -- e2e/transaction-report.spec.ts` plus the focused account regression test.
-- [ ] 3.3 Existing visual coverage is reviewed and passes for affected desktop and mobile routes, with only intentional snapshot changes.
+- [x] 3.1 Angular production build passes: `cd web; npm run build`.
+- [x] 3.2 Targeted transaction-report and responsive account browser tests pass using the existing Aspire-backed Playwright configuration: `cd web; npm run test:e2e -- e2e/transaction-report.spec.ts` plus the focused account regression test.
+- [x] 3.3 Existing visual coverage is reviewed and passes for affected desktop and mobile routes, with only intentional snapshot changes.
 
 #### Manual
 
-- [ ] 3.4 With a long transactions report, return to the page top and confirm identity, translated logout and language switching are available on desktop and mobile; confirm controls need not remain visible when scrolled down.
-- [ ] 3.5 Verify keyboard selection and logout, switching EN/PL with a mismatched browser locale, and overview/report period consistency.
+- [x] 3.4 With a long transactions report, return to the page top and confirm identity, translated logout and language switching are available on desktop and mobile; confirm controls need not remain visible when scrolled down.
+- [x] 3.5 Verify keyboard selection and logout, switching EN/PL with a mismatched browser locale, and overview/report period consistency.

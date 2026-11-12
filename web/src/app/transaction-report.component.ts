@@ -4,6 +4,7 @@ import { StatusBadgeComponent } from './shared/ui/status-badge.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subscription } from 'rxjs';
 import { LanguageService, TranslationKey } from './language.service';
+import { formatMonthYear } from './month-year';
 import { TransactionReport, TransactionReportRow, TransactionReportService } from './transaction-report.service';
 import { UserSettingsService } from './user-settings.service';
 
@@ -111,11 +112,7 @@ export class TransactionReportComponent implements OnInit {
   }
 
   protected formatMonth(month: string): string {
-    return new Intl.DateTimeFormat(this.locale, {
-      month: 'long',
-      year: 'numeric',
-      timeZone: 'UTC',
-    }).format(new Date(`${month}-01T00:00:00Z`));
+    return formatMonthYear(month, this.locale);
   }
 
   protected formatUserTime(value: string): string {

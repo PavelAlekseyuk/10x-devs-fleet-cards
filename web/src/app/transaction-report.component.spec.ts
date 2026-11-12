@@ -158,19 +158,20 @@ describe('TransactionReportComponent', () => {
     language.toggle();
     await fixture.whenStable();
     expect(labels()).toEqual([
-      'styczeń',
-      'luty',
-      'marzec',
-      'kwiecień',
-      'maj',
-      'czerwiec',
-      'lipiec',
-      'sierpień',
-      'wrzesień',
-      'październik',
-      'listopad',
-      'grudzień',
+      'Styczeń',
+      'Luty',
+      'Marzec',
+      'Kwiecień',
+      'Maj',
+      'Czerwiec',
+      'Lipiec',
+      'Sierpień',
+      'Wrzesień',
+      'Październik',
+      'Listopad',
+      'Grudzień',
     ]);
+    expect(element.querySelector('.totals-heading h3')?.textContent).toBe('Wrzesień 2026');
     expect(month.value).toBe('09');
     expect(reports.selectedMonth()).toBe('2026-09');
     expect(element.querySelector('.month-picker')?.textContent).toContain('Miesiąc raportu');
@@ -179,6 +180,7 @@ describe('TransactionReportComponent', () => {
     language.toggle();
     await fixture.whenStable();
     expect(labels()[8]).toBe('September');
+    expect(element.querySelector('.totals-heading h3')?.textContent).toBe('September 2026');
     expect(reports.selectedMonth()).toBe('2026-09');
     http.expectNone((request) => request.url === '/api/transactions/report');
 

@@ -298,13 +298,15 @@ test('Aspire transaction reporting reconciles generated spending and timezone di
   await page.getByRole('link', { name: /View transactions for this period/ }).click();
   await expect(page).toHaveURL(/\/transactions$/);
   const nextUiReport = await nextUiReportResponse;
-  await expect(page.locator('input[type="month"]')).toHaveValue(nextMonth);
+  await expect(page.getByRole('combobox', { name: 'Reporting month' })).toHaveValue('10');
+  await expect(page.getByRole('textbox', { name: 'Reporting year' })).toHaveValue('2026');
   expectSummaryToReconcile(nextSummary, nextUiReport);
 
   const defaultUiReportResponse = waitForReportResponse(page, reportingMonth, defaultTimeZone);
   await page.getByRole('button', { name: 'Previous month' }).click();
   const defaultUiReport = await defaultUiReportResponse;
-  await expect(page.locator('input[type="month"]')).toHaveValue(reportingMonth);
+  await expect(page.getByRole('combobox', { name: 'Reporting month' })).toHaveValue('09');
+  await expect(page.getByRole('textbox', { name: 'Reporting year' })).toHaveValue('2026');
   expectSummaryToReconcile(defaultSummary, defaultUiReport);
   await expect(page.locator('.report-table-wrap tbody tr')).toHaveCount(
     defaultUiReport.transactions.length,
