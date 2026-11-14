@@ -115,6 +115,9 @@ session values, full PAN, CVV, or PIN data.
    and approval decision before applying a destructive migration.
 - The migration script is forward-only and idempotent. A migration failure stops the workflow before app
   deployment.
+- The workflow temporarily allows the runner's public IPv4 address through the SQL firewall and removes the
+  rule after the migration, including on failure or cancellation. If a runner terminates before cleanup,
+  inspect and remove any stale `github-run-*` firewall rule manually.
 - F1 has no slots. To roll back application code, rerun a successful prior workflow or deploy its retained
   `fleet-cards-deployment` artifact. Do not attempt to reverse a schema migration automatically.
 - Inspect failures in GitHub Actions first. Azure deployment details are available through the Web App

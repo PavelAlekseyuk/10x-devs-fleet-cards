@@ -25,9 +25,10 @@ removed by the legacy unassigned-card cleanup migration.
   `allow_paid_resources = true`, and update this document with the SKU, estimated monthly price, and date.
 - Add an Azure Cost Management budget and email alert before the first paid deployment.
 - The F1 Web App plan does not expose stable outbound IP addresses before creation. This demo therefore uses
-  Azure SQL's `AllowAzureServicesForDemo` firewall rule, which permits Azure-hosted services and the
-  GitHub-hosted deployment runner. It is acceptable only for synthetic demo data and must be replaced before
-  handling any non-demo data.
+  Azure SQL's `AllowAzureServicesForDemo` firewall rule for Azure-hosted services. GitHub-hosted runners may
+  have different outbound addresses, so the deployment adds a temporary rule for the runner's public IPv4
+  address and removes it after migration. The Azure-services rule is acceptable only for synthetic demo data
+  and must be replaced before handling any non-demo data.
 
 ## Required Preflight Record
 

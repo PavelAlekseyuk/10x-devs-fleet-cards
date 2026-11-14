@@ -41,6 +41,9 @@ jobs:
       - name: Test workflow cleanup policy
         run: node --test scripts/select-workflow-runs.test.cjs
 
+      - name: Test deployment firewall handling
+        run: python3 -m unittest scripts.test_deployment_firewall
+
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v4
         with:
@@ -189,10 +192,25 @@ jobs:
             | sudo tar --extract --bzip2 --file - --directory /usr/local/bin sqlcmd
           sqlcmd --version
 
+      - name: Allow deployment runner to access Azure SQL
+        id: runner-firewall
+        shell: bash
+        run: |
+          runner_ip="$(curl -4 --fail --silent --show-error --connect-timeout 10 --max-time 30 https://api.ipify.org \
+            | python3 -c 'import ipaddress, sys; ip = ipaddress.ip_address(sys.stdin.read().strip()); assert ip.version == 4 and ip.is_global; print(ip)')"
+          rule_name="github-run-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          echo "rule_name=$rule_name" >> "$GITHUB_OUTPUT"
+          az sql server firewall-rule create \
+            --resource-group "$TF_VAR_resource_group_name" --server "$SQL_SERVER_NAME" \
+            --name "$rule_name" --start-ip-address "$runner_ip" --end-ip-address "$runner_ip" \
+            --output none
+
       - name: Apply database schema and grant application access
+        shell: bash
         run: |
           token_file="$(mktemp "$RUNNER_TEMP/sqlcmd-federated-token.XXXXXX")"
-          trap 'rm -f "$token_file"' EXIT
+          trap 'rm -f "$token_file" "${probe_log:-}"' EXIT
+          probe_log="$(mktemp "$RUNNER_TEMP/sqlcmd-probe.XXXXXX")"
           curl --fail --location --silent --show-error \
             -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
             "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=api://AzureADTokenExchange" \
@@ -202,8 +220,29 @@ jobs:
           export AZURE_TENANT_ID="$ARM_TENANT_ID"
           export AZURE_FEDERATED_TOKEN_FILE="$token_file"
 
+          for attempt in {1..31}; do
+            if sqlcmd -S "$SQL_SERVER_NAME.database.windows.net" -d "$SQL_DATABASE_NAME" -G -b -Q "SELECT 1" > "$probe_log" 2>&1; then
+              break
+            else
+              status=$?
+            fi
+            cat "$probe_log" >&2
+            if ! grep -q "Client with IP address .* is not allowed to access the server" "$probe_log" || [ "$attempt" -eq 31 ]; then
+              exit "$status"
+            fi
+            echo "Waiting for the Azure SQL firewall rule to propagate (attempt $attempt/31)."
+            sleep 10
+          done
+
           sqlcmd -S "$SQL_SERVER_NAME.database.windows.net" -d "$SQL_DATABASE_NAME" -G -b -i artifacts/database-migration.sql
           sqlcmd -S "$SQL_SERVER_NAME.database.windows.net" -d "$SQL_DATABASE_NAME" -G -b -Q "IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = N'$APP_SERVICE_NAME') BEGIN CREATE USER [$APP_SERVICE_NAME] FROM EXTERNAL PROVIDER; END; IF NOT EXISTS (SELECT 1 FROM sys.database_role_members memberships JOIN sys.database_principals roles ON roles.principal_id = memberships.role_principal_id JOIN sys.database_principals members ON members.principal_id = memberships.member_principal_id WHERE roles.name = N'db_datareader' AND members.name = N'$APP_SERVICE_NAME') ALTER ROLE [db_datareader] ADD MEMBER [$APP_SERVICE_NAME]; IF NOT EXISTS (SELECT 1 FROM sys.database_role_members memberships JOIN sys.database_principals roles ON roles.principal_id = memberships.role_principal_id JOIN sys.database_principals members ON members.principal_id = memberships.member_principal_id WHERE roles.name = N'db_datawriter' AND members.name = N'$APP_SERVICE_NAME') ALTER ROLE [db_datawriter] ADD MEMBER [$APP_SERVICE_NAME];"
+
+      - name: Remove deployment runner SQL firewall rule
+        if: ${{ always() && steps.runner-firewall.outputs.rule_name != '' }}
+        run: |
+          az sql server firewall-rule delete \
+            --resource-group "$TF_VAR_resource_group_name" --server "$SQL_SERVER_NAME" \
+            --name "${{ steps.runner-firewall.outputs.rule_name }}" --output none
 
       - name: Deploy application archive
         uses: azure/webapps-deploy@v3

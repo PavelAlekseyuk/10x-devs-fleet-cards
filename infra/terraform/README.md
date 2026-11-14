@@ -55,6 +55,7 @@ configuration or CI variables:
 - a Microsoft Entra user or group acting as the Azure SQL administrator;
 - acknowledgement of the `AllowAzureServicesForDemo` firewall rule.
 
-The firewall exception permits Azure-hosted workloads, including the F1 App Service and the GitHub-hosted
-deployment runner, to reach the SQL server. It is acceptable only for this synthetic-data demo. Replace it
-with explicit outbound IP allow rules or private networking before any non-demo data is deployed.
+The firewall exception permits Azure-hosted workloads, including the F1 App Service, to reach the SQL server.
+The deployment workflow separately adds a temporary rule for the GitHub-hosted runner's public IPv4 address
+and removes it after migration. The Azure-services rule is acceptable only for this synthetic-data demo. Replace
+it with explicit outbound IP allow rules or private networking before any non-demo data is deployed.
